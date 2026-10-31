@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, readFile, readdir, realpath, rm } from 'node:fs/promises';
+import { mkdtemp, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:net';
@@ -57,9 +57,12 @@ try {
   const plan = await (await fetch(`http://127.0.0.1:${port}/api/plan`)).json();
   assert.deepEqual(plan.backlog.find(item => item.id === task.id), saved);
   assert.equal(sql('SELECT version || applied_at::text FROM public.schema_migrations'), migration);
-  const backups = (await readdir(join(directory, 'backups'))).filter(name => /^\d{4}-\d{2}-\d{2}\.dump$/.test(name));
+  // Backups belong to the container's node user and may be unreadable on the host.
+  const backups = compose('exec', '-T', '--user', 'node', 'app', 'ls', '-1', '/data/backups')
+    .split('\n').filter(name => /^\d{4}-\d{2}-\d{2}\.dump$/.test(name));
   assert.equal(backups.length, 1, 'one daily backup exists after restart');
-  const dump = await readFile(join(directory, 'backups', backups[0]));
+  // Keep stdout as a Buffer: decoding or trimming would corrupt the binary dump.
+  const dump = execFileSync('docker', ['compose', '-f', 'compose.yaml', '-p', project, 'exec', '-T', '--user', 'node', 'app', 'cat', `/data/backups/${backups[0]}`], { env });
   assert.equal(dump.subarray(0, 5).toString(), 'PGDMP');
   const contents = execFileSync('docker', ['compose', '-f', 'compose.yaml', '-p', project, 'exec', '-T', 'db', 'pg_restore', '--list'], { env, input: dump, encoding: 'utf8' });
   assert.match(contents, /schema_migrations/);
