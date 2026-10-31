@@ -3,10 +3,18 @@ import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
 import { tagRoutes } from './tags.js';
 import { taskRoutes } from './tasks.js';
+import { rollover } from './rollover.js';
 
 export function createApp({ pool, clock, webDirectory }: { pool: Pool; clock: Clock; webDirectory?: string }) {
   const app = express();
   app.disable('x-powered-by');
+  app.use(async (request, response, next) => {
+    try { await rollover(pool, clock); next(); }
+    catch (error) {
+      if (request.path === '/api/health') response.status(503).json({ server: 'ready', database: 'unavailable' });
+      else next(error);
+    }
+  });
   app.get('/api/health', async (_request, response) => {
     try {
       await pool.query('SELECT 1 FROM public.schema_migrations LIMIT 1');

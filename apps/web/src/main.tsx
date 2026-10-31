@@ -5,7 +5,7 @@ import { TagEditor } from './TagEditor';
 
 type Priority = 'high' | 'medium' | 'low' | null;
 type Tag = { id: string; name: string; color: string };
-type Task = { id: string; title: string; note: string | null; priority: Priority; tags: Tag[]; placement: string; status: 'open' | 'done' | 'not_done' };
+type Task = { id: string; title: string; note: string | null; priority: Priority; tags: Tag[]; placement: string; status: 'open' | 'done' | 'not_done'; notDoneFrom: string | null };
 type Day = { date: string; tasks: Task[] };
 type Plan = { backlog: Task[]; today: Day; tomorrow: Day };
 async function request(path: string, method = 'GET', body?: unknown) {
@@ -32,6 +32,30 @@ function App() {
   const titleInput = useRef<HTMLInputElement | null>(null);
   const closePanel = () => { setSelected(null); opener.current?.focus(); };
   useEffect(() => { request('/plan').then(setPlan).catch(e => setError(e.message)); request('/tags').then(setTags).catch(e => setError(e.message)); }, []);
+  useEffect(() => {
+    if (!plan) return;
+    let active = true;
+    let checking = false;
+    const checkDate = async () => {
+      if (document.visibilityState !== 'visible' || checking) return;
+      checking = true;
+      try {
+        const health = await request('/health');
+        const date = new Intl.DateTimeFormat('en-CA', { timeZone: health.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date(health.now));
+        if (active && date !== plan.today.date) {
+          // Let queued saves finish before replacing yesterday's Plan.
+          await queue.current;
+          const refreshed = await request('/plan');
+          if (active) { setPlan(refreshed); setSelected(null); setDeleted(null); }
+        }
+      } catch (e) { if (active) setError((e as Error).message); }
+      finally { checking = false; }
+    };
+    const timer = window.setInterval(() => { void checkDate(); }, 30_000);
+    const visible = () => { void checkDate(); };
+    document.addEventListener('visibilitychange', visible);
+    return () => { active = false; window.clearInterval(timer); document.removeEventListener('visibilitychange', visible); };
+  }, [plan?.today.date]);
   useEffect(() => {
     if (!selected) return;
     titleInput.current?.focus();
@@ -91,7 +115,10 @@ function App() {
                 mutate(`/tasks/${task.id}`, 'PATCH', { status });
                 setPlan(current => current && { ...current, today: { ...current.today, tasks: current.today.tasks.map(t => t.id === task.id ? { ...t, status } : t) }, tomorrow: { ...current.tomorrow, tasks: current.tomorrow.tasks.map(t => t.id === task.id ? { ...t, status } : t) } });
               }} />}
-              <button className={`min-w-0 flex-1 break-words text-left ${task.status === 'done' ? 'line-through opacity-60' : ''}`} onClick={event => { opener.current = event.currentTarget; setSelected(task); setPickerOpen(false); }}>{task.title}</button>
+              <div className="min-w-0 flex-1">
+                <button className={`w-full break-words text-left ${task.status === 'done' ? 'line-through opacity-60' : ''}`} onClick={event => { opener.current = event.currentTarget; setSelected(task); setPickerOpen(false); }}>{task.title}</button>
+                {column.placement === 'backlog' && task.notDoneFrom && <p className="mt-1 text-xs opacity-60">Not done · <time dateTime={task.notDoneFrom}>{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${task.notDoneFrom}T12:00:00Z`))}</time></p>}
+              </div>
               <div className="flex flex-wrap gap-1">{task.tags.map(tag => <span key={tag.id} className="rounded border px-2 text-xs" style={{ borderColor: tag.color }}><span style={{ color: tag.color }} aria-hidden="true">● </span><span>{tag.name}</span></span>)}</div>
               {task.priority && <span className={`priority priority-${task.priority}`} aria-label={`${task.priority} priority`} title={`${task.priority} priority`}>●</span>}
             </li>)}
