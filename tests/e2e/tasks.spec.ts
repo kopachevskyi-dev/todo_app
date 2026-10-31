@@ -52,7 +52,7 @@ for (const theme of ['light', 'dark'] as const) {
     await expect(card.getByRole('checkbox')).toBeChecked();
     await page.reload();
     await expect(card.getByRole('checkbox')).toBeChecked();
-    await card.getByRole('button').click();
+    await card.getByRole('button', { name: `${title} edited`, exact: true }).click();
     await panel.getByRole('button', { name: 'Delete task' }).click();
     await expect(today.getByRole('button', { name: `${title} edited`, exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: 'Undo', exact: true }).click();

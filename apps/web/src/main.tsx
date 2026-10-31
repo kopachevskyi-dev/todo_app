@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 import { TagEditor } from './TagEditor';
+import { PlanBoard } from './PlanBoard';
 
 type Priority = 'high' | 'medium' | 'low' | null;
 type Tag = { id: string; name: string; color: string };
@@ -150,46 +151,18 @@ function App() {
           <p className="mt-1 text-sm opacity-60">What went well? What would you change?</p>
           <ReflectionEditor key={plan.yesterday.date} date={plan.yesterday.date} initial={plan.yesterday.reflection} label="Yesterday's reflection" onEditingChange={editing => setEditingYesterday(editing ? plan.yesterday.date : null)} onSaved={() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }} />
         </section>}
-        <div className="grid gap-6 md:grid-cols-3">
-        {[
-          { name: 'Backlog', date: null, placement: 'backlog', tasks: plan.backlog.filter(task => !tagFilter || task.tags.some(tag => tag.id === tagFilter)), hint: 'Keep ideas here for another day.' },
-          { name: 'Today', date: plan.today.date, placement: plan.today.date, tasks: plan.today.tasks, hint: 'Add a task to start your day.' },
-          { name: 'Tomorrow', date: plan.tomorrow.date, placement: plan.tomorrow.date, tasks: plan.tomorrow.tasks, hint: 'Make a little room for tomorrow.' },
-        ].map(column => <section key={column.name} aria-label={column.name} className="column flex min-h-64 flex-col rounded-xl border border-current/15 p-4">
-          <h2 className="text-lg font-semibold">{column.name}</h2>
-          {column.name === 'Backlog' && <label className="mt-2 text-sm">Filter by tag<select className="mt-1 block w-full rounded border border-current/20 p-2" value={tagFilter} onChange={event => setTagFilter(event.target.value)}>
-            <option value="">All tags</option>{tags.map(tag => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
-          </select></label>}
-          {column.date && <p className="mt-1 text-sm">{column.tasks.filter(task => task.status === 'done').length} of {column.tasks.length} done</p>}
-          {column.date && <time dateTime={column.date} className="mb-3 text-sm opacity-60">{column.date}</time>}
-          {!column.tasks.length && <p className="my-6 text-sm opacity-60">{column.hint}</p>}
-          <ul className="my-3 space-y-2">
-            {column.tasks.map(task => <li key={task.id} className="task-card flex items-center gap-2 rounded-lg border border-current/10 p-3">
-              {column.placement !== 'backlog' && <input type="checkbox" aria-label={`Mark ${task.title} ${task.status === 'done' ? 'open' : 'done'}`} checked={task.status === 'done'} onChange={() => {
-                const status = task.status === 'done' ? 'open' : 'done';
-                mutate(`/tasks/${task.id}`, 'PATCH', { status });
-                setPlan(current => current && { ...current, today: { ...current.today, tasks: current.today.tasks.map(t => t.id === task.id ? { ...t, status } : t) }, tomorrow: { ...current.tomorrow, tasks: current.tomorrow.tasks.map(t => t.id === task.id ? { ...t, status } : t) } });
-              }} />}
-              <div className="min-w-0 flex-1">
-                <button className={`w-full break-words text-left ${task.status === 'done' ? 'line-through opacity-60' : ''}`} onClick={event => { opener.current = event.currentTarget; setSelected(task); setPickerOpen(false); }}>{task.title}</button>
-                {column.placement === 'backlog' && task.notDoneFrom && <p className="mt-1 text-xs opacity-60">Not done · <time dateTime={task.notDoneFrom}>{new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${task.notDoneFrom}T12:00:00Z`))}</time></p>}
-              </div>
-              <div className="flex flex-wrap gap-1">{task.tags.map(tag => <span key={tag.id} className="rounded border px-2 text-xs" style={{ borderColor: tag.color }}><span style={{ color: tag.color }} aria-hidden="true">● </span><span>{tag.name}</span></span>)}</div>
-              {task.priority && <span className={`priority priority-${task.priority}`} aria-label={`${task.priority} priority`} title={`${task.priority} priority`}>●</span>}
-            </li>)}
-          </ul>
-          <form className="mt-auto pt-3" onSubmit={event => {
-            event.preventDefault();
-            const input = event.currentTarget.elements.namedItem('title') as HTMLInputElement;
-            if (!input.value.trim()) { setError('Enter a title.'); return; }
-            const title = input.value;
-            mutate('/tasks', 'POST', { title, placement: column.placement }, () => { if (input.value === title) input.value = ''; });
-          }}>
-            <input className="w-full rounded-lg border border-current/20 px-3 py-2" name="title" aria-label="Add task" placeholder="Add task" autoComplete="off" />
-          </form>
-          {column.name === 'Today' && <ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} />}
-        </section>)}
-      </div></>}
+        <PlanBoard plan={plan} tags={tags} tagFilter={tagFilter} onFilter={setTagFilter} mutate={mutate} onError={setError}
+          onToggle={task => {
+            const status = task.status === 'done' ? 'open' : 'done';
+            mutate(`/tasks/${task.id}`, 'PATCH', { status });
+            setPlan(current => current && { ...current,
+              backlog: current.backlog.map(t => t.id === task.id ? { ...t, status } : t),
+              today: { ...current.today, tasks: current.today.tasks.map(t => t.id === task.id ? { ...t, status } : t) },
+              tomorrow: { ...current.tomorrow, tasks: current.tomorrow.tasks.map(t => t.id === task.id ? { ...t, status } : t) },
+            });
+          }}
+          onSelect={(task, button) => { opener.current = button; setSelected(task); setPickerOpen(false); }}
+          reflection={<ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} />} /></>}
     </section>
     {selected && <aside role="dialog" aria-modal="false" aria-label="Task details" className="details fixed inset-y-0 right-0 z-10 w-full max-w-md overflow-y-auto border-l border-current/20 p-6 shadow-xl">
       <div className="mb-8 flex items-center justify-between"><h2 className="text-xl font-semibold">Task details</h2><button onClick={closePanel} aria-label="Close task details">Close</button></div>
