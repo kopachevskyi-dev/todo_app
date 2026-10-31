@@ -429,3 +429,26 @@ select option { background: var(--color-surface); }
   from { opacity: 0; transform: translate(-50%, 8px); }
   to { opacity: 1; transform: translate(-50%, 0); }
 }
+
+
+@utility history-cell {
+  @apply type-body;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: var(--radius-item);
+  background: var(--history-background, var(--color-surface-raised));
+  &[aria-current="date"] { box-shadow: inset 0 0 0 2px var(--color-accent); }
+  &:disabled { color: var(--color-text-faint); }
+  &[aria-pressed="true"] { background: var(--color-inverse); color: var(--color-on-inverse); }
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-pressed="true"]) { background: var(--color-raised-hover); }
+  }
+}
+
+@utility history-reflection {
+  & > div { margin-top: 0; border: 0; padding-top: 0; }
+  & label { @apply type-label; }
+  & textarea { @apply field; }
+  & [role="status"] { @apply type-small; }
+  & [role="alert"] { @apply type-small; color: var(--color-danger); }
+}
