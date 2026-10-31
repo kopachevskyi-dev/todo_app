@@ -1,19 +1,26 @@
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
+import { planDates } from './rollover.js';
 
 export function taskRoutes(pool: Pool, clock: Clock) {
   const router = Router();
-  const dates = () => {
-    const parts = new Intl.DateTimeFormat('en', { timeZone: clock.timezone, year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(clock.now());
-    const part = (name: string) => parts.find(p => p.type === name)!.value;
-    const today = `${part('year')}-${part('month')}-${part('day')}`;
-    const next = new Date(`${today}T12:00:00Z`);
-    next.setUTCDate(next.getUTCDate() + 1);
-    return [today, next.toISOString().slice(0, 10)];
-  };
+  const dates = () => planDates(clock);
   const fields = `id, title, note, priority, placement, position::float8 AS position, status,
-    completed_at AS "completedAt", created_at AS "createdAt", deleted_at AS "deletedAt"`;
+    not_done_from::text AS "notDoneFrom", completed_at AS "completedAt", created_at AS "createdAt", deleted_at AS "deletedAt"`;
+  router.get('/days/:date', async (request, response) => {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(request.params.date)) { response.status(400).json({ message: 'Use a calendar date.' }); return; }
+    const { rows } = await pool.query(`SELECT ${fields} FROM planner.tasks WHERE placement = $1 AND deleted_at IS NULL ORDER BY position`, [request.params.date]);
+    response.json({ date: request.params.date, tasks: rows });
+  });
+  router.use('/tasks/:id', async (request, response, next) => {
+    if (!['PATCH', 'POST', 'DELETE'].includes(request.method)) { next(); return; }
+    const { rows } = await pool.query('SELECT placement FROM planner.tasks WHERE id::text = $1', [request.params.id]);
+    if (rows[0] && rows[0].placement !== 'backlog' && rows[0].placement < dates()[0]) {
+      response.status(409).json({ message: 'Tasks on past days are read-only.' }); return;
+    }
+    next();
+  });
   router.get('/plan', async (_request, response) => {
     const [today, tomorrow] = dates();
     const { rows } = await pool.query(`SELECT ${fields} FROM planner.tasks WHERE deleted_at IS NULL AND placement IN ('backlog', $1, $2)
@@ -37,6 +44,14 @@ export function taskRoutes(pool: Pool, clock: Clock) {
     const { title, note = null, priority = null, placement } = request.body;
     const { rows } = await pool.query(`INSERT INTO planner.tasks (title, note, priority, placement, created_at) VALUES ($1,$2,$3,$4,$5) RETURNING ${fields}`, [title.trim(), note, priority, placement, clock.now()]);
     response.status(201).json(rows[0]);
+  });
+  router.post('/tasks/:id/move', async (request, response) => {
+    const placement = request.body?.placement;
+    if (!['backlog', ...dates()].includes(placement)) { response.status(400).json({ message: 'Choose Backlog, Today or Tomorrow.' }); return; }
+    const { rows } = await pool.query(`UPDATE planner.tasks SET placement = $2, not_done_from = NULL
+      WHERE id::text = $1 AND deleted_at IS NULL RETURNING ${fields}`, [request.params.id, placement]);
+    if (!rows.length) { response.status(404).json({ message: 'Task not found.' }); return; }
+    response.json(rows[0]);
   });
   router.patch('/tasks/:id', async (request, response) => {
     if (!valid(request.body, false)) { response.status(400).json({ message: 'Use a non-empty title, text note, valid priority and open or done status.' }); return; }

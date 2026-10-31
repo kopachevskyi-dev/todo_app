@@ -3,6 +3,7 @@ import { createApp } from './app.js';
 import { backupDatabase } from './backups.js';
 import type { Clock } from './clock.js';
 import { migrate } from './migrate.js';
+import { rollover } from './rollover.js';
 
 export async function startServer(options: {
   pool: Pool;
@@ -14,6 +15,7 @@ export async function startServer(options: {
   host?: string;
 }) {
   await migrate(options.pool);
+  await rollover(options.pool, options.clock);
   try { await backupDatabase(options); }
   catch (error) { console.error('Daily backup failed; starting without a new backup:', error); }
   const app = createApp(options);
