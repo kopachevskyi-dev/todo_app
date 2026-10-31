@@ -174,33 +174,35 @@ function App() {
           onSelect={(task, button) => { opener.current = button; setSelected(task); setPickerOpen(false); }}
           reflection={<ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} />} /></>}
     </section>
-    {selected && <aside role="dialog" aria-modal="false" aria-label="Task details" className="details fixed inset-y-0 right-0 z-10 w-full max-w-md overflow-y-auto border-l border-line p-6 shadow-xl">
-      <div className="mb-8 flex items-center justify-between"><h2 className="text-xl font-semibold">Task details</h2><button onClick={closePanel} aria-label="Close task details">Close</button></div>
-      <label className="mb-6 block">Title<input ref={titleInput} className="mt-2 block w-full rounded border border-line p-2" value={selected.title} onChange={e => edit('title', e.target.value)} /></label>
-      <label className="mb-6 block">Note<textarea className="mt-2 block min-h-32 w-full rounded border border-line p-2" value={selected.note || ''} onChange={e => edit('note', e.target.value)} /></label>
-      <label className="mb-6 block">Priority<select className="mt-2 block w-full rounded border border-line p-2" value={selected.priority || ''} onChange={e => edit('priority', e.target.value)}>
+    {selected && <>
+    <div aria-hidden="true" className="panel-backdrop pointer-events-none" />
+    <aside role="dialog" aria-modal="false" aria-label="Task details" className="details side-panel">
+      <div className="mb-8 flex items-center justify-between"><h2 className="type-h2">Task details</h2><button className="button-ghost" onClick={closePanel} aria-label="Close task details">Close</button></div>
+      <label className="type-label mb-6 block">Title<input ref={titleInput} className="field mt-2 block" value={selected.title} onChange={e => edit('title', e.target.value)} /></label>
+      <label className="type-label mb-6 block">Note<textarea className="field mt-2 block min-h-32" value={selected.note || ''} onChange={e => edit('note', e.target.value)} /></label>
+      <label className="type-label mb-6 block">Priority<select className="field mt-2 block" value={selected.priority || ''} onChange={e => edit('priority', e.target.value)}>
         <option value="">None</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
       </select></label>
       <div className="mb-6">
-        <button aria-expanded={pickerOpen} onClick={() => setPickerOpen(!pickerOpen)}>Tags</button>
-        {pickerOpen && <fieldset className="mt-2 space-y-2 rounded border border-line p-3"><legend className="sr-only">Choose tags</legend>
-          {tags.map(tag => <label key={tag.id} className="flex items-center gap-2"><input type="checkbox" checked={selected.tags.some(t => t.id === tag.id)} onChange={event => {
+        <button className="button-secondary" aria-expanded={pickerOpen} onClick={() => setPickerOpen(!pickerOpen)}>Tags</button>
+        {pickerOpen && <fieldset className="mt-4 min-w-0 space-y-6"><legend className="sr-only">Choose tags</legend>
+          <div className="flex flex-wrap gap-2">{tags.map(tag => <label key={tag.id} className="tag-toggle"><input className="tag-toggle-input" type="checkbox" checked={selected.tags.some(t => t.id === tag.id)} onChange={event => {
             const next = event.target.checked ? [...selected.tags, tag] : selected.tags.filter(t => t.id !== tag.id);
             setSelected({ ...selected, tags: next });
             mutate(`/tasks/${selected.id}`, 'PATCH', { tagIds: next.map(t => t.id) });
-          }} /><span style={{ color: tag.color }} aria-hidden="true">●</span>{tag.name}</label>)}
-          <button className="block border-t border-line pt-2" aria-expanded={editingTags} onClick={() => setEditingTags(!editingTags)}>Edit tags</button>
+          }} /><span className="size-2 shrink-0 rounded-pill" style={{ backgroundColor: tag.color }} aria-hidden="true" />{tag.name}</label>)}</div>
+          <button className="button-ghost" aria-expanded={editingTags} onClick={() => setEditingTags(!editingTags)}>Edit tags</button>
           {editingTags && <TagEditor tags={tags} mutate={mutate} />}
         </fieldset>}
       </div>
-      <p role="status" className="mb-6 text-sm text-text-muted">{saving ? 'Saving…' : error ? 'Changes not saved' : 'Saved'}</p>
-      <button className="text-danger" onClick={() => {
+      <p role="status" className="type-small mb-6 text-text-muted">{saving ? 'Saving…' : error ? 'Changes not saved' : 'Saved'}</p>
+      <button className="button-destructive" onClick={() => {
         const task = selected;
         mutate(`/tasks/${task.id}`, 'DELETE', undefined, () => { setSelected(null); setDeleted(task); });
       }}>Delete task</button>
-    </aside>}
-    {deleted && <div role="status" className="toast fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-line px-5 py-3 shadow-lg">
-      <span>Task deleted ·</span><button className="font-semibold underline" onClick={() => mutate(`/tasks/${deleted.id}/restore`, 'POST', undefined, () => setDeleted(null))}>Undo</button>
+    </aside></>}
+    {deleted && <div role="status" className="undo-toast">
+      <span>Task deleted ·</span><button className="toast-action" onClick={() => mutate(`/tasks/${deleted.id}/restore`, 'POST', undefined, () => setDeleted(null))}>Undo</button>
     </div>}
   </main>;
 }

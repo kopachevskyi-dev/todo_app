@@ -2,26 +2,26 @@ type Tag = { id: string; name: string; color: string };
 type Mutate = (path: string, method: string, body?: unknown, after?: () => void) => void;
 
 export function TagEditor({ tags, mutate }: { tags: Tag[]; mutate: Mutate }) {
-  return <section aria-label="Edit tags" className="mt-3 space-y-3 border-t border-line pt-3">
-    <h3 className="font-semibold">Edit tags</h3>
-    {tags.map(tag => <form key={`${tag.id}-${tag.name}-${tag.color}`} aria-label={tag.name} role="group" className="space-y-2 rounded border border-line p-2" onSubmit={event => {
+  return <section aria-label="Edit tags" className="space-y-6">
+    <h3 className="type-h2">Edit tags</h3>
+    {tags.map(tag => <form key={`${tag.id}-${tag.name}-${tag.color}`} aria-label={tag.name} role="group" className="inner-panel space-y-4" onSubmit={event => {
       event.preventDefault();
       const fields = event.currentTarget.elements;
       mutate(`/tags/${tag.id}`, 'PATCH', { name: (fields.namedItem('name') as HTMLInputElement).value, color: (fields.namedItem('color') as HTMLInputElement).value });
     }}>
-      <label className="block text-sm">Tag name<input name="name" defaultValue={tag.name} className="block w-full rounded border border-line p-2" /></label>
-      <label className="flex items-center gap-2 text-sm">Tag color<input name="color" type="color" defaultValue={tag.color} /></label>
-      <div className="flex justify-between"><button type="submit">Save tag</button><button type="button" className="text-danger" onClick={() => mutate(`/tags/${tag.id}`, 'DELETE')}>Delete tag</button></div>
+      <label className="type-label block">Tag name<input name="name" defaultValue={tag.name} className="field mt-2 block" /></label>
+      <label className="type-label flex items-center gap-2">Tag color<input name="color" type="color" className="color-swatch" defaultValue={tag.color} /></label>
+      <div className="flex flex-wrap gap-3"><button type="submit" className="button-secondary">Save tag</button><button type="button" className="button-destructive" onClick={() => mutate(`/tags/${tag.id}`, 'DELETE')}>Delete tag</button></div>
     </form>)}
-    <form className="space-y-2" onSubmit={event => {
+    <form className="space-y-4" onSubmit={event => {
       event.preventDefault();
       const form = event.currentTarget;
       const fields = form.elements;
       mutate('/tags', 'POST', { name: (fields.namedItem('name') as HTMLInputElement).value, color: (fields.namedItem('color') as HTMLInputElement).value }, () => form.reset());
     }}>
-      <label className="block text-sm">New tag name<input name="name" className="block w-full rounded border border-line p-2" /></label>
-      <label className="flex items-center gap-2 text-sm">New tag color<input name="color" type="color" defaultValue={getComputedStyle(document.documentElement).getPropertyValue('--color-accent-text').trim()} /></label>
-      <button type="submit">Add tag</button>
+      <label className="type-label block">New tag name<input name="name" className="field mt-2 block" /></label>
+      <label className="type-label flex items-center gap-2">New tag color<input name="color" type="color" className="color-swatch" defaultValue={getComputedStyle(document.documentElement).getPropertyValue('--color-accent-text').trim()} /></label>
+      <button type="submit" className="button-secondary">Add tag</button>
     </form>
   </section>;
 }
