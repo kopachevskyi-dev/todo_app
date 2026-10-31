@@ -10,6 +10,10 @@
 - Gates: pre-commit runs fast checks (lint, typecheck, related tests); CI runs everything above. Never bypass them (`--no-verify`, disabling a check). Hook installed by `npm ci`; related tests select API/E2E by staged paths. Docker must be running.
 - Domain docs: `GLOSSARY.md` and `docs/adr/` at the root, if present. Use their vocabulary and flag conflicts with an ADR instead of silently overriding it. If they don't exist, proceed without them.
 
+## User data
+
+- The user's real data (PostgreSQL and daily backups) lives in `DATA_DIR`, by default `~/code/private/todo-app-data`, outside the repository. Never read, change, move or delete it, and never point tests, smoke or a worktree's app at it: they create their own temporary data. Changing its location is the user's decision.
+
 ## Design
 
 - Any change to the web UI (`apps/web`) follows `docs/design/design-language.md` (reference image: `docs/design/inspiration.jpg`). Reviews treat a violation of it as a standards finding.

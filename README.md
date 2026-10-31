@@ -24,7 +24,7 @@ There is no restart policy or autostart. Starting again keeps your data.
 
 ## Data and timezone
 
-The default `DATA_DIR=~/Desktop/todo-app-data` is **temporary, to be changed**.
+The default is `DATA_DIR=~/code/private/todo-app-data`, next to the repository.
 PostgreSQL is stored in `DATA_DIR/db`; daily dumps are stored in `DATA_DIR/backups`.
 Both folders are outside the repository. Set an
 absolute path (or a leading `~/`) in `.env` to choose a different location.
