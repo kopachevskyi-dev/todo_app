@@ -154,13 +154,6 @@ function App() {
     <section id={`panel-${screen}`} role="tabpanel" aria-labelledby={`tab-${screen}`} className={screen === 'Plan' ? 'plan-panel' : undefined}>
       <h1 className="type-h1 mb-6">{screen}</h1>
       {screen === 'History' ? plan ? <History today={plan.today.date} ReflectionEditor={ReflectionEditor} /> : <p role="status">Loading your days…</p> : !plan ? <p role="status">Loading your plan…</p> : <>
-        {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="mb-6 rounded-xl border border-line p-4">
-          <div className="flex items-center justify-between gap-4"><h2 className="text-lg font-semibold">Reflect on yesterday</h2>
-            <button onClick={() => mutate(`/days/${plan.yesterday.date}/dismiss-prompt`, 'POST')}>Dismiss</button>
-          </div>
-          <p className="mt-1 text-sm text-text-muted">What went well? What would you change?</p>
-          <ReflectionEditor key={plan.yesterday.date} date={plan.yesterday.date} initial={plan.yesterday.reflection} label="Yesterday's reflection" onEditingChange={editing => setEditingYesterday(editing ? plan.yesterday.date : null)} onSaved={() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }} />
-        </section>}
         <PlanBoard plan={plan} tags={tags} tagFilter={tagFilter} onFilter={setTagFilter} mutate={mutate} onError={setError}
           onToggle={task => {
             const status = task.status === 'done' ? 'open' : 'done';
@@ -172,7 +165,15 @@ function App() {
             });
           }}
           onSelect={(task, button) => { opener.current = button; setSelected(task); setPickerOpen(false); }}
-          reflection={<ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} />} /></>}
+          reflection={<>
+            {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="inner-panel plan-reflection mt-6">
+              <div className="flex items-center justify-between gap-4"><h2 className="type-label">Reflect on yesterday</h2>
+                <button className="button-ghost px-3 py-2" onClick={() => mutate(`/days/${plan.yesterday.date}/dismiss-prompt`, 'POST')}>Dismiss</button>
+              </div>
+              <p className="type-small mt-2 text-text-muted">What went well? What would you change?</p>
+              <ReflectionEditor key={plan.yesterday.date} date={plan.yesterday.date} initial={plan.yesterday.reflection} label="Yesterday's reflection" onEditingChange={editing => setEditingYesterday(editing ? plan.yesterday.date : null)} onSaved={() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }} />
+            </section>}
+            <div className="inner-panel plan-reflection mt-6"><ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} /></div></>} /></>}
     </section>
     {selected && <>
     <div aria-hidden="true" className="panel-backdrop pointer-events-none" />

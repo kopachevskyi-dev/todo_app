@@ -1,5 +1,22 @@
 import { expect, test } from '@playwright/test';
 
+test('task priorities show their words and preserve accessible names', async ({ page, request }) => {
+  const plan = await (await request.get('/api/plan')).json();
+  const suffix = Date.now();
+  for (const priority of ['high', 'medium', 'low']) {
+    await request.post('/api/tasks', { data: { title: `Priority ${priority} ${suffix}`, placement: plan.tomorrow.date, priority } });
+  }
+  await page.goto('/');
+  const tomorrow = page.getByRole('region', { name: 'Tomorrow', exact: true });
+  for (const priority of ['high', 'medium', 'low']) {
+    const task = tomorrow.getByRole('listitem').filter({ has: page.getByRole('button', { name: `Priority ${priority} ${suffix}`, exact: true }) });
+    const chip = task.getByLabel(`${priority} priority`, { exact: true });
+    await expect(chip).toBeVisible();
+    await expect(chip).toHaveText(priority);
+    await expect(chip).toHaveAttribute('title', `${priority} priority`);
+  }
+});
+
 for (const theme of ['light', 'dark'] as const) {
   test(`quick add validates titles in every column in ${theme} theme`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: theme });

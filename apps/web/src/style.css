@@ -201,6 +201,11 @@ select option { background: var(--color-surface); }
 }
 @utility chip-accent { @apply chip; color: var(--color-on-accent); background: var(--color-accent); }
 @utility chip-neutral { @apply chip; color: var(--color-text-muted); background: var(--color-surface-raised); }
+@utility chip-danger {
+  @apply chip;
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
 @utility chip-priority {
   @apply chip-neutral;
   &::before { content: ""; width: 8px; height: 8px; border-radius: var(--radius-pill); background: currentColor; }
@@ -327,6 +332,34 @@ select option { background: var(--color-surface); }
   .plan-panel { display: flex; flex-direction: column; }
   .plan-panel .plan-board { display: contents; }
   .column-tabs { order: -1; padding-inline: 12px; }
+}
+
+.plan-column[data-drag-over="true"] {
+  box-shadow: inset 0 0 0 2px var(--color-accent);
+}
+.task-card[data-dragging="true"] {
+  z-index: 1;
+  box-shadow: var(--shadow-floating);
+  scale: 1.02;
+}
+.task-card .drag-handle { cursor: grab; }
+.task-card[data-dragging="true"] .drag-handle { cursor: grabbing; }
+.plan-reflection > div:last-child {
+  margin-top: 0;
+  border: 0;
+  padding-top: 0;
+}
+.plan-reflection > p + div:last-child { margin-top: 24px; }
+.plan-reflection label { @apply type-label; }
+.plan-reflection textarea { @apply field; text-transform: none; letter-spacing: normal; }
+.plan-reflection [role="status"] { @apply type-small; }
+.plan-reflection [role="alert"] { @apply type-small text-danger; }
+@media (hover: hover) {
+  .task-card:hover { background: var(--color-raised-hover); }
+  .task-card:hover .drag-handle { color: var(--color-text-muted); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .task-card[data-dragging="true"] { scale: 1; }
 }
 
 /* Keep the native checkbox accessible while its chip carries the visual states. */
