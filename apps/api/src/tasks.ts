@@ -3,6 +3,7 @@ import { Router } from 'express';
 import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
 import { planDates } from './rollover.js';
+import { moveTask } from './moves.js';
 
 export function taskRoutes(pool: Pool, clock: Clock) {
   const router = Router();
@@ -55,10 +56,24 @@ export function taskRoutes(pool: Pool, clock: Clock) {
   router.post('/tasks/:id/move', async (request, response) => {
     const placement = request.body?.placement;
     if (!['backlog', ...dates()].includes(placement)) { response.status(400).json({ message: 'Choose Backlog, Today or Tomorrow.' }); return; }
-    const { rows } = await pool.query(`UPDATE planner.tasks SET placement = $2, not_done_from = NULL
-      WHERE id::text = $1 AND deleted_at IS NULL RETURNING ${fields}`, [request.params.id, placement]);
-    if (!rows.length) { response.status(404).json({ message: 'Task not found.' }); return; }
-    response.json(rows[0]);
+    const position = request.body?.position;
+    if (position !== undefined && (!Number.isSafeInteger(position) || position < 0)) {
+      response.status(400).json({ message: 'Position must be a non-negative integer.' }); return;
+    }
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(817422)');
+      const result = await moveTask(client, request.params.id, placement, position, dates()[0]);
+      if (result !== 200) {
+        await client.query('ROLLBACK');
+        response.status(result).json({ message: result === 404 ? 'Task not found.' : 'Tasks on past days are read-only.' }); return;
+      }
+      const { rows } = await client.query(`SELECT ${fields} FROM planner.tasks WHERE id::text = $1`, [request.params.id]);
+      await client.query('COMMIT');
+      response.json(rows[0]);
+    } catch (error) { await client.query('ROLLBACK'); throw error; }
+    finally { client.release(); }
   });
   router.patch('/tasks/:id', async (request, response) => {
     if (!valid(request.body, false)) { response.status(400).json({ message: 'Use a non-empty title, text note, valid priority and open or done status.' }); return; }
@@ -71,6 +86,11 @@ export function taskRoutes(pool: Pool, clock: Clock) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
+      await client.query('SELECT pg_advisory_xact_lock(817422)');
+      if (request.body.status === 'done') {
+        const existing = await client.query('SELECT placement FROM planner.tasks WHERE id::text = $1 AND deleted_at IS NULL', [request.params.id]);
+        if (existing.rows[0]?.placement === 'backlog') await moveTask(client, request.params.id, dates()[0], undefined, dates()[0]);
+      }
       const { tagIds } = request.body;
       if (tagIds) {
         const tags = await client.query('SELECT id FROM planner.tags WHERE id = ANY($1::uuid[]) FOR KEY SHARE', [tagIds]);

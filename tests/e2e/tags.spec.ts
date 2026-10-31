@@ -17,7 +17,7 @@ test('attach several tags from Task details, show them on cards and detach', asy
   await expect(card.getByText('work', { exact: true })).toBeVisible();
   await expect(card.getByText('home', { exact: true })).toBeVisible();
   await page.reload();
-  await card.getByRole('button').click();
+  await card.getByRole('button', { name: title, exact: true }).click();
   await panel.getByRole('button', { name: 'Tags', exact: true }).click();
   await expect(panel.getByRole('checkbox', { name: 'work', exact: true })).toBeChecked();
   await panel.getByRole('checkbox', { name: 'work', exact: true }).uncheck();

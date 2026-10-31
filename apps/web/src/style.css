@@ -17,3 +17,13 @@ button { cursor: pointer; }
   .priority-low { color: #8cbae3; }
   select option { background: #232823; }
 }
+.column-tabs, .move-task { display: none; }
+@media (width < 48rem) {
+  .column-tabs { display: flex; }
+  .move-task { display: block; }
+  .drag-handle { display: none; }
+  .plan-board .plan-column { display: none; }
+  .plan-board[data-active-column="Backlog"] .plan-column[data-column="Backlog"],
+  .plan-board[data-active-column="Today"] .plan-column[data-column="Today"],
+  .plan-board[data-active-column="Tomorrow"] .plan-column[data-column="Tomorrow"] { display: flex; }
+}
