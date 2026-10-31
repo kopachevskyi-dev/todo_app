@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
+import { tagRoutes } from './tags.js';
 import { taskRoutes } from './tasks.js';
 
 export function createApp({ pool, clock, webDirectory }: { pool: Pool; clock: Clock; webDirectory?: string }) {
@@ -15,6 +16,7 @@ export function createApp({ pool, clock, webDirectory }: { pool: Pool; clock: Cl
     }
   });
   app.use(express.json());
+  app.use('/api', tagRoutes(pool));
   app.use('/api', taskRoutes(pool, clock));
   app.use((error: { status?: number }, _request: express.Request, response: express.Response, next: express.NextFunction) => {
     if (response.headersSent) { next(error); return; }
