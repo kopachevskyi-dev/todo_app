@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
-import { mkdtemp, rm } from 'node:fs/promises';
+import { mkdtemp, readFile, readdir, realpath, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createServer } from 'node:net';
 
-const directory = await mkdtemp(join(tmpdir(), 'day-planner-smoke-'));
+const directory = await realpath(await mkdtemp(join(tmpdir(), 'day-planner-smoke-')));
 const portServer = createServer();
 await new Promise(resolve => portServer.listen(0, '127.0.0.1', resolve));
 const port = portServer.address().port;
@@ -46,7 +46,13 @@ try {
   await ready();
   assert.equal(sql('SELECT value FROM planner.smoke_marker'), 'survives restart');
   assert.equal(sql('SELECT version || applied_at::text FROM public.schema_migrations'), migration);
-  console.log('Smoke passed: empty-folder startup, UI, database persistence and migration idempotency.');
+  const backups = (await readdir(join(directory, 'backups'))).filter(name => /^\d{4}-\d{2}-\d{2}\.dump$/.test(name));
+  assert.equal(backups.length, 1, 'one daily backup exists after restart');
+  const dump = await readFile(join(directory, 'backups', backups[0]));
+  assert.equal(dump.subarray(0, 5).toString(), 'PGDMP');
+  const contents = execFileSync('docker', ['compose', '-f', 'compose.yaml', '-p', project, 'exec', '-T', 'db', 'pg_restore', '--list'], { env, input: dump, encoding: 'utf8' });
+  assert.match(contents, /schema_migrations/);
+  console.log('Smoke passed: empty-folder startup, UI, database persistence, migration idempotency and daily backup.');
 } finally {
   compose('down', '-v');
   await rm(directory, { recursive: true, force: true });

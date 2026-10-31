@@ -1,8 +1,8 @@
 # Day Planner
 
 A personal day planner. This first version provides an empty Plan / History shell,
-a PostgreSQL baseline, and the tools for later features. No tasks or backups are
-created yet. The theme follows your system setting.
+a PostgreSQL baseline, daily backups, and the tools for later features. No tasks
+are created yet. The theme follows your system setting.
 
 ## Start and stop
 
@@ -25,8 +25,8 @@ There is no restart policy or autostart. Starting again keeps your data.
 ## Data and timezone
 
 The default `DATA_DIR=~/Desktop/todo-app-data` is **temporary, to be changed**.
-PostgreSQL is stored in `DATA_DIR/db`; `DATA_DIR/backups` is mounted and reserved
-for the later backup feature. Both folders are outside the repository. Set an
+PostgreSQL is stored in `DATA_DIR/db`; daily dumps are stored in `DATA_DIR/backups`.
+Both folders are outside the repository. Set an
 absolute path (or a leading `~/`) in `.env` to choose a different location.
 
 To move existing data: stop the app, copy the whole data directory to the new
@@ -40,6 +40,34 @@ Migrations are forward-only SQL files in `apps/api/migrations`, ordered by their
 numbered filenames. They run transactionally before the server listens, with a
 PostgreSQL advisory lock and an applied-version ledger. Add a new numbered file
 for schema changes; never edit an applied migration.
+
+## Backups and manual restore
+
+After migrations on each server start, the app creates `YYYY-MM-DD.dump` in
+`DATA_DIR/backups` if that date has no backup yet. Dates use the configured
+timezone. Restarting on the same day preserves the existing file; only the three
+newest dated backups are kept. These are PostgreSQL custom-format dumps. A failed
+backup is logged (`docker compose logs app`) and the app still starts; the next
+start retries. Restart the app on a later date to create another backup; there
+is no background backup timer. Keep separate copies if you need longer history.
+
+To restore, replace the example path below with the absolute path to your dump.
+This replaces the current database contents with the selected backup. Run
+`docker compose down` and copy your data folder first to preserve the current state.
+
+```sh
+docker compose stop app
+docker compose up -d db --wait
+docker compose exec -T db dropdb -U planner --force planner
+docker compose exec -T db createdb -U planner planner
+docker compose exec -T db pg_restore -U planner -d planner \
+  --no-owner --no-privileges --exit-on-error --single-transaction \
+  < /absolute/path/to/backups/2026-11-01.dump
+docker compose up -d app
+```
+
+The database client runs inside Docker; no local PostgreSQL installation is
+needed. Starting the app afterwards applies any newer migrations automatically.
 
 ## Development and tests
 
@@ -92,9 +120,9 @@ started dev instance before running it.
 Smoke uses the user Compose configuration under a unique project name, random
 port, and new temporary data folder. It checks first startup, health, UI delivery,
 and persistence across full container recreation, then removes its own data.
-It also checks that migration timestamps do not change on restart. Since this
-skeleton has no Task API or backup feature, smoke uses a temporary database marker;
-later tickets should replace it with a Task round trip and a backup assertion.
+It also checks that migration timestamps do not change on restart and a valid
+daily backup exists. Since this skeleton has no Task API, smoke uses a temporary
+database marker; the Task ticket should replace it with a Task round trip.
 
 If a sandbox prevents local Chromium from launching, Playwright can use a remote
 browser (matching the version in package-lock.json):
