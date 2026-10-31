@@ -7,8 +7,12 @@ for (const trigger of ['timer', 'visibility']) {
     const task = { id: 'unfinished', title: 'Finish report', note: 'Keep context', priority: 'high', status: 'open', tags: [], placement: '2026-10-31', notDoneFrom: null };
     await page.route('**/api/plan', route => route.fulfill({ json: crossedMidnight ? {
       backlog: [{ ...task, id: 'copy', placement: 'backlog', notDoneFrom: '2026-10-31' }],
-      today: { date: '2026-11-01', tasks: [] }, tomorrow: { date: '2026-11-02', tasks: [] },
-    } : { backlog: [], today: { date: '2026-10-31', tasks: [task] }, tomorrow: { date: '2026-11-01', tasks: [] } } }));
+      today: { date: '2026-11-01', tasks: [], reflection: '', done: 0, total: 0 }, tomorrow: { date: '2026-11-02', tasks: [], reflection: '', done: 0, total: 0 },
+      yesterday: { date: '2026-10-31', reflection: '', showReflectionPrompt: false },
+    } : {
+      backlog: [], today: { date: '2026-10-31', tasks: [task], reflection: '', done: 0, total: 1 }, tomorrow: { date: '2026-11-01', tasks: [], reflection: '', done: 0, total: 0 },
+      yesterday: { date: '2026-10-30', reflection: '', showReflectionPrompt: false },
+    } }));
     await page.route('**/api/health', route => route.fulfill({ json: { server: 'ready', database: 'ready', timezone: 'Europe/Warsaw', now: crossedMidnight ? '2026-10-31T23:01:00Z' : '2026-10-31T22:59:00Z' } }));
     await page.goto('/');
     const today = page.getByRole('region', { name: 'Today', exact: true });

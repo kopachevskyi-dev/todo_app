@@ -6,18 +6,64 @@ import { TagEditor } from './TagEditor';
 type Priority = 'high' | 'medium' | 'low' | null;
 type Tag = { id: string; name: string; color: string };
 type Task = { id: string; title: string; note: string | null; priority: Priority; tags: Tag[]; placement: string; status: 'open' | 'done' | 'not_done'; notDoneFrom: string | null };
-type Day = { date: string; tasks: Task[] };
-type Plan = { backlog: Task[]; today: Day; tomorrow: Day };
-async function request(path: string, method = 'GET', body?: unknown) {
-  const response = await fetch(`/api${path}`, { method, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
+type Day = { date: string; tasks: Task[]; reflection: string; done: number; total: number };
+type Plan = { backlog: Task[]; today: Day; tomorrow: Day; yesterday: { date: string; reflection: string; showReflectionPrompt: boolean } };
+async function request(path: string, method = 'GET', body?: unknown, keepalive = false) {
+  const response = await fetch(`/api${path}`, { method, keepalive, headers: { 'Content-Type': 'application/json' }, body: body === undefined ? undefined : JSON.stringify(body) });
   const data = await response.json();
   if (!response.ok) throw new Error(data.message || 'Unable to save changes. Please try again.');
   return data;
 }
 
+function ReflectionEditor({ date, initial, label = 'Reflection', onSaved, onEditingChange }: { date: string; initial: string; label?: string; onSaved?: (value: string) => void; onEditingChange?: (editing: boolean) => void }) {
+  const [draft, setDraft] = useState(initial);
+  const [status, setStatus] = useState('Saved');
+  const [error, setError] = useState('');
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const latest = useRef(initial);
+  const saved = useRef(initial);
+  const lastQueued = useRef(initial);
+  const queue = useRef(Promise.resolve());
+  const callback = useRef(onSaved);
+  callback.current = onSaved;
+  const flush = (keepalive = false) => {
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = null;
+    const value = latest.current;
+    if (value === lastQueued.current) return;
+    lastQueued.current = value;
+    queue.current = queue.current.then(async () => {
+      await request(`/days/${date}`, 'PUT', { reflection: value }, keepalive);
+      saved.current = value;
+      if (latest.current === value) { setStatus('Saved'); setError(''); callback.current?.(value); }
+    }).catch(e => { lastQueued.current = saved.current; setStatus('Changes not saved'); setError(e.message); });
+  };
+  const flushRef = useRef(flush);
+  flushRef.current = flush;
+  useEffect(() => {
+    const pagehide = () => flushRef.current(true);
+    window.addEventListener('pagehide', pagehide);
+    return () => {
+      window.removeEventListener('pagehide', pagehide);
+      if (timer.current) flushRef.current();
+    };
+  }, []);
+  return <div className="mt-6 border-t border-current/15 pt-4">
+    <label className="block text-sm font-semibold">{label}<textarea className="mt-2 block min-h-32 w-full rounded-lg border border-current/20 p-3 font-normal" value={draft} onFocus={() => onEditingChange?.(true)} onBlur={() => { flush(); onEditingChange?.(false); }} onChange={event => {
+      const value = event.target.value;
+      setDraft(value); latest.current = value; setStatus('Saving…'); setError('');
+      if (timer.current) clearTimeout(timer.current);
+      timer.current = setTimeout(flush, 400);
+    }} /></label>
+    <p role="status" aria-label={`${label} save status`} className="mt-2 text-sm opacity-60">{status}</p>
+    {error && <p role="alert">{error} <button className="underline" onClick={() => flush()}>Retry</button></p>}
+  </div>;
+}
+
 function App() {
   const [screen, setScreen] = useState<'Plan' | 'History'>('Plan');
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [editingYesterday, setEditingYesterday] = useState<string | null>(null);
   const [tagFilter, setTagFilter] = useState('');
   const [tags, setTags] = useState<Tag[]>([]);
   const [editingTags, setEditingTags] = useState(false);
@@ -96,7 +142,15 @@ function App() {
     {error && <p role="alert" className="mb-4 text-red-700 dark:text-red-300">{error}</p>}
     <section id={`panel-${screen}`} role="tabpanel" aria-labelledby={`tab-${screen}`}>
       <h1 className="mb-6 text-3xl font-semibold">{screen}</h1>
-      {screen === 'History' ? <p className="opacity-60">Your past days will appear here.</p> : !plan ? <p role="status">Loading your plan…</p> : <div className="grid gap-6 md:grid-cols-3">
+      {screen === 'History' ? <p className="opacity-60">Your past days will appear here.</p> : !plan ? <p role="status">Loading your plan…</p> : <>
+        {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="mb-6 rounded-xl border border-current/20 p-4">
+          <div className="flex items-center justify-between gap-4"><h2 className="text-lg font-semibold">Reflect on yesterday</h2>
+            <button onClick={() => mutate(`/days/${plan.yesterday.date}/dismiss-prompt`, 'POST')}>Dismiss</button>
+          </div>
+          <p className="mt-1 text-sm opacity-60">What went well? What would you change?</p>
+          <ReflectionEditor key={plan.yesterday.date} date={plan.yesterday.date} initial={plan.yesterday.reflection} label="Yesterday's reflection" onEditingChange={editing => setEditingYesterday(editing ? plan.yesterday.date : null)} onSaved={() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }} />
+        </section>}
+        <div className="grid gap-6 md:grid-cols-3">
         {[
           { name: 'Backlog', date: null, placement: 'backlog', tasks: plan.backlog.filter(task => !tagFilter || task.tags.some(tag => tag.id === tagFilter)), hint: 'Keep ideas here for another day.' },
           { name: 'Today', date: plan.today.date, placement: plan.today.date, tasks: plan.today.tasks, hint: 'Add a task to start your day.' },
@@ -106,6 +160,7 @@ function App() {
           {column.name === 'Backlog' && <label className="mt-2 text-sm">Filter by tag<select className="mt-1 block w-full rounded border border-current/20 p-2" value={tagFilter} onChange={event => setTagFilter(event.target.value)}>
             <option value="">All tags</option>{tags.map(tag => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
           </select></label>}
+          {column.date && <p className="mt-1 text-sm">{column.tasks.filter(task => task.status === 'done').length} of {column.tasks.length} done</p>}
           {column.date && <time dateTime={column.date} className="mb-3 text-sm opacity-60">{column.date}</time>}
           {!column.tasks.length && <p className="my-6 text-sm opacity-60">{column.hint}</p>}
           <ul className="my-3 space-y-2">
@@ -132,8 +187,9 @@ function App() {
           }}>
             <input className="w-full rounded-lg border border-current/20 px-3 py-2" name="title" aria-label="Add task" placeholder="Add task" autoComplete="off" />
           </form>
+          {column.name === 'Today' && <ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} />}
         </section>)}
-      </div>}
+      </div></>}
     </section>
     {selected && <aside role="dialog" aria-modal="false" aria-label="Task details" className="details fixed inset-y-0 right-0 z-10 w-full max-w-md overflow-y-auto border-l border-current/20 p-6 shadow-xl">
       <div className="mb-8 flex items-center justify-between"><h2 className="text-xl font-semibold">Task details</h2><button onClick={closePanel} aria-label="Close task details">Close</button></div>

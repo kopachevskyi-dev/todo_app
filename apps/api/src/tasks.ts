@@ -1,3 +1,4 @@
+import { readDay } from './days.js';
 import { Router } from 'express';
 import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
@@ -13,7 +14,7 @@ export function taskRoutes(pool: Pool, clock: Clock) {
   router.get('/days/:date', async (request, response) => {
     if (!/^\d{4}-\d{2}-\d{2}$/.test(request.params.date)) { response.status(400).json({ message: 'Use a calendar date.' }); return; }
     const { rows } = await pool.query(`SELECT ${fields} FROM planner.tasks WHERE placement = $1 AND deleted_at IS NULL ORDER BY position`, [request.params.date]);
-    response.json({ date: request.params.date, tasks: rows });
+    response.json({ ...await readDay(pool, request.params.date), tasks: rows });
   });
   router.use('/tasks/:id', async (request, response, next) => {
     if (!['PATCH', 'POST', 'DELETE'].includes(request.method)) { next(); return; }
@@ -29,7 +30,10 @@ export function taskRoutes(pool: Pool, clock: Clock) {
       ORDER BY CASE priority WHEN 'high' THEN 0 WHEN 'medium' THEN 1 WHEN 'low' THEN 2 ELSE 3 END,
       created_at DESC, position DESC`, [today, tomorrow]);
     const day = (date: string) => ({ date, tasks: rows.filter(t => t.placement === date).sort((a, b) => Number(a.status === 'done') - Number(b.status === 'done') || a.position - b.position) });
-    response.json({ backlog: rows.filter(t => t.placement === 'backlog' && (!request.query.tagId || t.tags.some((tag: { id: string }) => tag.id === request.query.tagId))), today: day(today), tomorrow: day(tomorrow) });
+    const previous = new Date(`${today}T12:00:00Z`);
+    previous.setUTCDate(previous.getUTCDate() - 1);
+    const [todayDay, tomorrowDay, yesterday] = await Promise.all([readDay(pool, today), readDay(pool, tomorrow), readDay(pool, previous.toISOString().slice(0, 10))]);
+    response.json({ backlog: rows.filter(t => t.placement === 'backlog' && (!request.query.tagId || t.tags.some((tag: { id: string }) => tag.id === request.query.tagId))), today: { ...day(today), ...todayDay }, tomorrow: { ...day(tomorrow), ...tomorrowDay }, yesterday });
   });
   function valid(body: Record<string, unknown>, creating: boolean) {
     const allowed = creating ? ['title', 'note', 'priority', 'placement'] : ['title', 'note', 'priority', 'status', 'tagIds'];

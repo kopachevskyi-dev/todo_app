@@ -119,11 +119,9 @@ test('server startup catches several missed days before the first request, even 
     const address = server.address();
     assert.ok(address && typeof address !== 'string');
     base = `http://127.0.0.1:${address.port}`;
-    // Move back before requesting: only startup could have closed these tasks.
-    instant = '2026-11-04T12:00:00Z';
-    const day = await (await api('/days/2026-11-04')).json();
-    assert.equal(day.tasks.find((t: { id: string }) => t.id === first.id).status, 'not_done');
-    assert.equal((await (await api('/days/2026-11-05')).json()).tasks.find((t: { id: string }) => t.id === second.id).status, 'not_done');
+    // Read the database directly, before any request: only startup could have closed these tasks.
+    const statuses = await pool.query('SELECT id, status FROM planner.tasks WHERE id = ANY($1)', [[first.id, second.id]]);
+    assert.deepEqual(statuses.rows.map(row => row.status), ['not_done', 'not_done']);
     instant = '2026-11-09T12:00:00Z';
     const plans = await Promise.all(Array.from({ length: 8 }, async () => (await api('/plan')).json()));
     for (const plan of plans) {
