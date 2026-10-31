@@ -1,0 +1,91 @@
+import { expect, test } from '@playwright/test';
+
+test('attach several tags from Task details, show them on cards and detach', async ({ page }) => {
+  await page.goto('/');
+  const backlog = page.getByRole('region', { name: 'Backlog', exact: true });
+  const title = `Tag task ${Date.now()}`;
+  await backlog.getByRole('textbox', { name: 'Add task' }).fill(title);
+  await backlog.getByRole('textbox', { name: 'Add task' }).press('Enter');
+  await backlog.getByRole('button', { name: title, exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Task details' });
+  await panel.getByRole('button', { name: 'Tags', exact: true }).click();
+  await panel.getByRole('checkbox', { name: 'work', exact: true }).check();
+  await panel.getByRole('checkbox', { name: 'home', exact: true }).check();
+  await expect(panel.getByRole('status')).toHaveText('Saved');
+  await page.keyboard.press('Escape');
+  const card = backlog.getByRole('listitem').filter({ has: page.getByRole('button', { name: title, exact: true }) });
+  await expect(card.getByText('work', { exact: true })).toBeVisible();
+  await expect(card.getByText('home', { exact: true })).toBeVisible();
+  await page.reload();
+  await card.getByRole('button').click();
+  await panel.getByRole('button', { name: 'Tags', exact: true }).click();
+  await expect(panel.getByRole('checkbox', { name: 'work', exact: true })).toBeChecked();
+  await panel.getByRole('checkbox', { name: 'work', exact: true }).uncheck();
+  await expect(panel.getByRole('status')).toHaveText('Saved');
+  await page.keyboard.press('Escape');
+  await expect(card.getByText('work', { exact: true })).toHaveCount(0);
+  await expect(card.getByText('home', { exact: true })).toBeVisible();
+});
+
+test('Edit tags adds, rejects duplicate names, renames, recolors and deletes a tag', async ({ page }) => {
+  await page.goto('/');
+  const backlog = page.getByRole('region', { name: 'Backlog', exact: true });
+  const title = `Manage tags ${Date.now()}`;
+  const name = `Errands ${Date.now()}`;
+  await backlog.getByRole('textbox', { name: 'Add task' }).fill(title);
+  await backlog.getByRole('textbox', { name: 'Add task' }).press('Enter');
+  await backlog.getByRole('button', { name: title, exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Task details' });
+  await panel.getByRole('button', { name: 'Tags', exact: true }).click();
+  await panel.getByRole('button', { name: 'Edit tags', exact: true }).click();
+  const editor = panel.getByRole('region', { name: 'Edit tags', exact: true });
+  await editor.getByRole('textbox', { name: 'New tag name' }).fill('WORK');
+  await editor.getByRole('button', { name: 'Add tag', exact: true }).click();
+  await expect(page.getByRole('alert')).toHaveText('A tag with that name already exists.');
+  await editor.getByRole('textbox', { name: 'New tag name' }).fill(name);
+  await editor.getByLabel('New tag color').fill('#123456');
+  await editor.getByRole('button', { name: 'Add tag', exact: true }).click();
+  const row = editor.getByRole('group', { name, exact: true });
+  await row.getByRole('textbox', { name: 'Tag name', exact: true }).fill(`${name} renamed`);
+  await row.getByLabel('Tag color', { exact: true }).fill('#abcdef');
+  await row.getByRole('button', { name: 'Save tag', exact: true }).click();
+  const renamed = editor.getByRole('group', { name: `${name} renamed`, exact: true });
+  await expect(renamed.getByLabel('Tag color', { exact: true })).toHaveValue('#abcdef');
+  await panel.getByRole('checkbox', { name: `${name} renamed`, exact: true }).check();
+  await expect(panel.getByRole('status')).toHaveText('Saved');
+  await renamed.getByRole('button', { name: 'Delete tag', exact: true }).click();
+  await expect(renamed).toHaveCount(0);
+  await expect(panel.getByRole('checkbox', { name: `${name} renamed`, exact: true })).toHaveCount(0);
+  await expect(panel.getByRole('status')).toHaveText('Saved');
+  await page.keyboard.press('Escape');
+  await page.reload();
+  const card = backlog.getByRole('listitem').filter({ has: page.getByRole('button', { name: title, exact: true }) });
+  await expect(card.getByText(`${name} renamed`, { exact: true })).toHaveCount(0);
+});
+
+test('Backlog filters by tag, preserves Today and clears back to all tasks', async ({ page }) => {
+  await page.goto('/');
+  const backlog = page.getByRole('region', { name: 'Backlog', exact: true });
+  const today = page.getByRole('region', { name: 'Today', exact: true });
+  const suffix = Date.now();
+  const tagged = `Tagged ${suffix}`;
+  const plain = `Plain ${suffix}`;
+  const daily = `Daily ${suffix}`;
+  for (const [column, title] of [[backlog, tagged], [backlog, plain], [today, daily]] as const) {
+    await column.getByRole('textbox', { name: 'Add task' }).fill(title);
+    await column.getByRole('textbox', { name: 'Add task' }).press('Enter');
+    await expect(column.getByRole('button', { name: title, exact: true })).toBeVisible();
+  }
+  await backlog.getByRole('button', { name: tagged, exact: true }).click();
+  const panel = page.getByRole('dialog', { name: 'Task details' });
+  await panel.getByRole('button', { name: 'Tags', exact: true }).click();
+  await panel.getByRole('checkbox', { name: 'work', exact: true }).check();
+  await expect(panel.getByRole('status')).toHaveText('Saved');
+  await page.keyboard.press('Escape');
+  await backlog.getByLabel('Filter by tag').selectOption({ label: 'work' });
+  await expect(backlog.getByRole('button', { name: tagged, exact: true })).toBeVisible();
+  await expect(backlog.getByRole('button', { name: plain, exact: true })).toHaveCount(0);
+  await expect(today.getByRole('button', { name: daily, exact: true })).toBeVisible();
+  await backlog.getByLabel('Filter by tag').selectOption({ label: 'All tags' });
+  await expect(backlog.getByRole('button', { name: plain, exact: true })).toBeVisible();
+});

@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
+import { TagEditor } from './TagEditor';
 
 type Priority = 'high' | 'medium' | 'low' | null;
-type Task = { id: string; title: string; note: string | null; priority: Priority; placement: string; status: 'open' | 'done' | 'not_done' };
+type Tag = { id: string; name: string; color: string };
+type Task = { id: string; title: string; note: string | null; priority: Priority; tags: Tag[]; placement: string; status: 'open' | 'done' | 'not_done' };
 type Day = { date: string; tasks: Task[] };
 type Plan = { backlog: Task[]; today: Day; tomorrow: Day };
 async function request(path: string, method = 'GET', body?: unknown) {
@@ -16,6 +18,10 @@ async function request(path: string, method = 'GET', body?: unknown) {
 function App() {
   const [screen, setScreen] = useState<'Plan' | 'History'>('Plan');
   const [plan, setPlan] = useState<Plan | null>(null);
+  const [tagFilter, setTagFilter] = useState('');
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [editingTags, setEditingTags] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
   const [selected, setSelected] = useState<Task | null>(null);
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -25,7 +31,7 @@ function App() {
   const opener = useRef<HTMLButtonElement | null>(null);
   const titleInput = useRef<HTMLInputElement | null>(null);
   const closePanel = () => { setSelected(null); opener.current?.focus(); };
-  useEffect(() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }, []);
+  useEffect(() => { request('/plan').then(setPlan).catch(e => setError(e.message)); request('/tags').then(setTags).catch(e => setError(e.message)); }, []);
   useEffect(() => {
     if (!selected) return;
     titleInput.current?.focus();
@@ -45,6 +51,10 @@ function App() {
     queue.current = queue.current.then(async () => {
       await request(path, method, body);
       setPlan(await request('/plan'));
+      const freshTags: Tag[] = await request('/tags');
+      setTags(freshTags);
+      setTagFilter(current => freshTags.some(tag => tag.id === current) ? current : '');
+      setSelected(current => current && { ...current, tags: current.tags.flatMap(tag => freshTags.find(t => t.id === tag.id) || []) });
       after?.();
     }).catch(e => setError(e.message)).finally(() => { pending.current--; setSaving(pending.current > 0); });
   };
@@ -64,11 +74,14 @@ function App() {
       <h1 className="mb-6 text-3xl font-semibold">{screen}</h1>
       {screen === 'History' ? <p className="opacity-60">Your past days will appear here.</p> : !plan ? <p role="status">Loading your plan…</p> : <div className="grid gap-6 md:grid-cols-3">
         {[
-          { name: 'Backlog', date: null, placement: 'backlog', tasks: plan.backlog, hint: 'Keep ideas here for another day.' },
+          { name: 'Backlog', date: null, placement: 'backlog', tasks: plan.backlog.filter(task => !tagFilter || task.tags.some(tag => tag.id === tagFilter)), hint: 'Keep ideas here for another day.' },
           { name: 'Today', date: plan.today.date, placement: plan.today.date, tasks: plan.today.tasks, hint: 'Add a task to start your day.' },
           { name: 'Tomorrow', date: plan.tomorrow.date, placement: plan.tomorrow.date, tasks: plan.tomorrow.tasks, hint: 'Make a little room for tomorrow.' },
         ].map(column => <section key={column.name} aria-label={column.name} className="column flex min-h-64 flex-col rounded-xl border border-current/15 p-4">
           <h2 className="text-lg font-semibold">{column.name}</h2>
+          {column.name === 'Backlog' && <label className="mt-2 text-sm">Filter by tag<select className="mt-1 block w-full rounded border border-current/20 p-2" value={tagFilter} onChange={event => setTagFilter(event.target.value)}>
+            <option value="">All tags</option>{tags.map(tag => <option key={tag.id} value={tag.id}>{tag.name}</option>)}
+          </select></label>}
           {column.date && <time dateTime={column.date} className="mb-3 text-sm opacity-60">{column.date}</time>}
           {!column.tasks.length && <p className="my-6 text-sm opacity-60">{column.hint}</p>}
           <ul className="my-3 space-y-2">
@@ -78,7 +91,8 @@ function App() {
                 mutate(`/tasks/${task.id}`, 'PATCH', { status });
                 setPlan(current => current && { ...current, today: { ...current.today, tasks: current.today.tasks.map(t => t.id === task.id ? { ...t, status } : t) }, tomorrow: { ...current.tomorrow, tasks: current.tomorrow.tasks.map(t => t.id === task.id ? { ...t, status } : t) } });
               }} />}
-              <button className={`min-w-0 flex-1 break-words text-left ${task.status === 'done' ? 'line-through opacity-60' : ''}`} onClick={event => { opener.current = event.currentTarget; setSelected(task); }}>{task.title}</button>
+              <button className={`min-w-0 flex-1 break-words text-left ${task.status === 'done' ? 'line-through opacity-60' : ''}`} onClick={event => { opener.current = event.currentTarget; setSelected(task); setPickerOpen(false); }}>{task.title}</button>
+              <div className="flex flex-wrap gap-1">{task.tags.map(tag => <span key={tag.id} className="rounded border px-2 text-xs" style={{ borderColor: tag.color }}><span style={{ color: tag.color }} aria-hidden="true">● </span><span>{tag.name}</span></span>)}</div>
               {task.priority && <span className={`priority priority-${task.priority}`} aria-label={`${task.priority} priority`} title={`${task.priority} priority`}>●</span>}
             </li>)}
           </ul>
@@ -101,6 +115,18 @@ function App() {
       <label className="mb-6 block">Priority<select className="mt-2 block w-full rounded border border-current/25 p-2" value={selected.priority || ''} onChange={e => edit('priority', e.target.value)}>
         <option value="">None</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
       </select></label>
+      <div className="mb-6">
+        <button aria-expanded={pickerOpen} onClick={() => setPickerOpen(!pickerOpen)}>Tags</button>
+        {pickerOpen && <fieldset className="mt-2 space-y-2 rounded border border-current/20 p-3"><legend className="sr-only">Choose tags</legend>
+          {tags.map(tag => <label key={tag.id} className="flex items-center gap-2"><input type="checkbox" checked={selected.tags.some(t => t.id === tag.id)} onChange={event => {
+            const next = event.target.checked ? [...selected.tags, tag] : selected.tags.filter(t => t.id !== tag.id);
+            setSelected({ ...selected, tags: next });
+            mutate(`/tasks/${selected.id}`, 'PATCH', { tagIds: next.map(t => t.id) });
+          }} /><span style={{ color: tag.color }} aria-hidden="true">●</span>{tag.name}</label>)}
+          <button className="block border-t border-current/20 pt-2" aria-expanded={editingTags} onClick={() => setEditingTags(!editingTags)}>Edit tags</button>
+          {editingTags && <TagEditor tags={tags} mutate={mutate} />}
+        </fieldset>}
+      </div>
       <p role="status" className="mb-6 text-sm opacity-60">{saving ? 'Saving…' : error ? 'Changes not saved' : 'Saved'}</p>
       <button className="text-red-700 dark:text-red-300" onClick={() => {
         const task = selected;
