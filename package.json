@@ -11,7 +11,7 @@
   "scripts": {
     "prepare": "node scripts/install-hooks.mjs",
     "build": "npm run build --workspaces",
-    "lint": "eslint .",
+    "lint": "eslint . && node --test scripts/lint-web-colors.test.mjs && node scripts/lint-web-colors.mjs",
     "typecheck": "tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "test": "npm run test:api && npm run test:e2e",
     "test:api": "tsx --test apps/api/test/*.test.ts",

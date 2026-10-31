@@ -81,7 +81,8 @@ Layout:
 - Page: max width 1152 px (`max-w-6xl`), centred, side padding 24 px (16 px under 48 rem), top padding 32 px.
 - Gap between cards: 24 px (16 px under 48 rem). Card padding: 28 px (20 px under 48 rem).
 - Inside a card: 12 px between task rows, 24 px between groups.
-- Top of every screen, as in the reference: the `display` app name, then a pill **top bar** (`surface`, full width, 12 px × 20 px padding) holding the screen tabs on the left and muted context (today's date) on the right.
+- Top of every screen, as in the reference: the `display` app name, then a pill **top bar** (`surface`, full width, 12 px × 20 px padding) holding the screen tabs on the left. Muted context (such as today's date) on the right is optional; the current app leaves it empty.
+- Below 48 rem, the Backlog/Today/Tomorrow column tabs occupy a second pill bar directly below the top bar, before the screen title. Use the same `surface`, pill radius and tab states, with 12 px padding and equal-width tabs.
 - Breakpoint: one, at 48 rem, matching the existing mobile layout.
 
 Depth: no borders on cards and no shadows on in-flow content. Only floating layers (side panel, toast, dropdowns) get a shadow: `0 24px 48px -12px rgb(0 0 0 / 0.5)` in dark, `0 24px 48px -12px rgb(0 0 0 / 0.15)` in light.
@@ -131,7 +132,7 @@ The current UI maps to these patterns. Keep existing roles, labels and visible t
 
 **Input, textarea, select**: `field` background, 1 px `line` border, `radius-field`, 10 px × 14 px padding, `body` text, `text-muted` placeholder. Hover: border `line-strong`. Focus: border `accent`, no extra outline. Error: border `danger`, message below in `small` `danger` text. Labels above the field in `label` style, 8 px gap.
 
-**Side panel** (task details): fixed to the right, `surface`, left corners `radius-card`, floating shadow, 32 px padding, enters from the right (8 px translate). Backdrop: `page` at 60% opacity. Sections divided by 24 px of space, not lines.
+**Side panel** (task details): fixed to the right, `surface`, left corners `radius-card`, floating shadow, 32 px padding, enters from the right (8 px translate). Backdrop: `page` at 60% opacity. Sections divided by 24 px of space, not lines. Below 48 rem, the panel fills the screen, has square corners and uses 20 px padding.
 
 **Toast**: pill, `surface-raised`, floating shadow, `small` text, centred at the bottom. Its action is an `accent-text` text button with underline on hover.
 
@@ -140,6 +141,8 @@ The current UI maps to these patterns. Keep existing roles, labels and visible t
 **Stat block** (done counts, history totals, "97.4%" in the reference): `stat` number in `text`, then a `body` caption in `text` (as in the reference) or `text-muted`.
 
 **Calendar cell** (History): square, `radius-item`, `surface-raised`. Hover: `raised-hover`. Today: 2 px `accent` inset ring. Selected: `inverse` fill with `on-inverse` text. Outside the range: `text-faint`, no hover.
+
+**History heatmap**: a neutral `color-mix(in srgb, var(--color-surface-raised), var(--color-text) N%)` scale. Empty days use `surface-raised`; days with activity mix towards `text` in proportion to tasks done (12–70%, using `12 + 58 × done / total`). Today and selected states keep the calendar-cell treatments above.
 
 **Empty state**: inside the card, `text-muted` `body` text, centred vertically, optionally one secondary button.
 
