@@ -65,6 +65,24 @@ try {
   assert.match(contents, /schema_migrations/);
   console.log('Smoke passed: empty-folder startup, UI, task creation/edit persistence, migration idempotency and daily backup.');
 } finally {
-  compose('down', '-v');
-  await rm(directory, { recursive: true, force: true });
+  // Linux bind mounts retain the Postgres and node users' ownership. Remove
+  // both directories as container root before asking the host to remove them.
+  const cleanupSteps = [
+    ['stop smoke stack', () => compose('down', '-v')],
+    ['remove container-owned smoke data', () => {
+      const image = JSON.parse(compose('config', '--format', 'json')).services.db.image;
+      execFileSync('docker', [
+        'run', '--rm', '--user', '0:0', '--entrypoint', 'sh',
+        '-v', `${directory}:/data`, image, '-c', 'rm -rf /data/db /data/backups',
+      ], { env, stdio: 'inherit' });
+    }],
+    ['remove smoke directory', () => rm(directory, { recursive: true, force: true })],
+  ];
+  for (const [description, cleanup] of cleanupSteps) {
+    try { await cleanup(); }
+    catch (error) {
+      // Cleanup must neither fail a passing smoke nor replace its assertion error.
+      console.warn(`Smoke cleanup could not ${description}:`, error.message);
+    }
+  }
 }
