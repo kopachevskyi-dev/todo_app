@@ -92,9 +92,8 @@ started dev instance before running it.
 Smoke uses the user Compose configuration under a unique project name, random
 port, and new temporary data folder. It checks first startup, health, UI delivery,
 and persistence across full container recreation, then removes its own data.
-It also checks that migration timestamps do not change on restart. Since this
-skeleton has no Task API or backup feature, smoke uses a temporary database marker;
-later tickets should replace it with a Task round trip and a backup assertion.
+It also checks that migration timestamps do not change on restart. Smoke creates and edits a Task through the HTTP API and checks it after restart.
+Backup assertions will be added with the backup feature.
 
 If a sandbox prevents local Chromium from launching, Playwright can use a remote
 browser (matching the version in package-lock.json):
