@@ -2,3 +2,18 @@
 :root { font-family: system-ui, sans-serif; color: #252824; background: #f8f9f5; color-scheme: light dark; }
 @media (prefers-color-scheme: dark) { :root { color: #e6e9e1; background: #191c19; } }
 button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
+input, textarea, select { background: transparent; color: inherit; }
+input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #627b54; outline-offset: 2px; }
+input[type="checkbox"] { accent-color: #627b54; width: 1rem; height: 1rem; flex-shrink: 0; }
+button { cursor: pointer; }
+.column, .details, .toast { background: #fff; }
+.priority-high { color: #bb4235; }
+.priority-medium { color: #a66a10; }
+.priority-low { color: #4679a5; }
+@media (prefers-color-scheme: dark) {
+  .column, .details, .toast { background: #232823; }
+  .priority-high { color: #ff998a; }
+  .priority-medium { color: #eac071; }
+  .priority-low { color: #8cbae3; }
+  select option { background: #232823; }
+}

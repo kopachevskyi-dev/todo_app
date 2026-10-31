@@ -1,6 +1,7 @@
 import express from 'express';
 import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
+import { taskRoutes } from './tasks.js';
 
 export function createApp({ pool, clock, webDirectory }: { pool: Pool; clock: Clock; webDirectory?: string }) {
   const app = express();
@@ -12,6 +13,12 @@ export function createApp({ pool, clock, webDirectory }: { pool: Pool; clock: Cl
     } catch {
       response.status(503).json({ server: 'ready', database: 'unavailable' });
     }
+  });
+  app.use(express.json());
+  app.use('/api', taskRoutes(pool, clock));
+  app.use((error: { status?: number }, _request: express.Request, response: express.Response, next: express.NextFunction) => {
+    if (response.headersSent) { next(error); return; }
+    response.status(error.status === 400 ? 400 : 500).json({ message: error.status === 400 ? 'Invalid JSON.' : 'Unable to save changes. Please try again.' });
   });
   app.use('/api', (_request, response) => { response.status(404).json({ message: 'Not found' }); });
   if (webDirectory) app.use(express.static(webDirectory));

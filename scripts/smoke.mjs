@@ -39,14 +39,25 @@ try {
   await ready();
   const migration = sql('SELECT version || applied_at::text FROM public.schema_migrations');
   assert.match(migration, /^001_baseline\.sql/);
-  // No Task API exists in the skeleton: a startup-level sentinel proves disk persistence.
-  sql("CREATE TABLE planner.smoke_marker (value text); INSERT INTO planner.smoke_marker VALUES ('survives restart')");
+  const taskResponse = await fetch(`http://127.0.0.1:${port}/api/tasks`, {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: 'Survives restart', placement: 'backlog', note: 'Saved context', priority: 'high' }),
+  });
+  assert.equal(taskResponse.status, 201);
+  const task = await taskResponse.json();
+  const edited = await fetch(`http://127.0.0.1:${port}/api/tasks/${task.id}`, {
+    method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ title: 'Edited before restart', priority: 'low' }),
+  });
+  assert.equal(edited.status, 200);
+  const saved = await edited.json();
   compose('down');
   compose('up', '-d', '--wait');
   await ready();
-  assert.equal(sql('SELECT value FROM planner.smoke_marker'), 'survives restart');
+  const plan = await (await fetch(`http://127.0.0.1:${port}/api/plan`)).json();
+  assert.deepEqual(plan.backlog.find(item => item.id === task.id), saved);
   assert.equal(sql('SELECT version || applied_at::text FROM public.schema_migrations'), migration);
-  console.log('Smoke passed: empty-folder startup, UI, database persistence and migration idempotency.');
+  console.log('Smoke passed: empty-folder startup, UI, task creation/edit persistence and migration idempotency.');
 } finally {
   compose('down', '-v');
   await rm(directory, { recursive: true, force: true });
