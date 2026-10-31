@@ -102,8 +102,10 @@ localhost port, apply migrations, and expose the app on a random HTTP port. The
 harness injects a controllable clock; assertions use HTTP responses. Containers
 are removed afterwards. Tests never use the user's database or data directory.
 
-The E2E command starts and removes a separate Compose project (`todo-app-test`)
-on port 3100, with PostgreSQL stored in tmpfs. To run that instance manually:
+The E2E command starts and removes a separate Compose project
+(`todo-app-test-<folder name>`) on a port derived from the folder name (3100-3899;
+so parallel worktrees do not collide; override with `TEST_APP_PORT`), with
+PostgreSQL stored in tmpfs. To run that instance manually:
 
 ```sh
 docker compose -f compose.test.yaml up -d --build --wait
@@ -114,7 +116,7 @@ docker compose -f compose.test.yaml down -v
 This is a standalone Compose file; do not merge it with the user configuration.
 It can run beside the user instance and has no user data mounts or published
 PostgreSQL port. Override `TEST_APP_PORT` for manual instances if needed. E2E
-reserves port 3100 and refuses to reuse an existing server, so stop any manually
+reserves its port and refuses to reuse an existing server, so stop any manually
 started dev instance before running it.
 
 Smoke uses the user Compose configuration under a unique project name, random
@@ -130,7 +132,7 @@ docker run -d --rm --name todo-browser -p 127.0.0.1:3200:3200 \
   mcr.microsoft.com/playwright:v1.64.1-noble \
   npx -y playwright@1.64.1 run-server --port 3200 --host 0.0.0.0
 PLAYWRIGHT_WS_ENDPOINT=ws://127.0.0.1:3200/ \
-  E2E_BASE_URL=http://host.docker.internal:3100 npm run test:e2e
+  E2E_BASE_URL=http://host.docker.internal:<port> npm run test:e2e
 docker stop todo-browser
 ```
 

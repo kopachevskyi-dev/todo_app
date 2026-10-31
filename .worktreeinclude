@@ -1,0 +1,2 @@
+# Git-ignored files the tests need in a fresh worktree. None today: tests use
+# built-in test credentials. Never list production secrets here.
