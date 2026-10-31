@@ -1,0 +1,4 @@
+@import "tailwindcss";
+:root { font-family: system-ui, sans-serif; color: #252824; background: #f8f9f5; color-scheme: light dark; }
+@media (prefers-color-scheme: dark) { :root { color: #e6e9e1; background: #191c19; } }
+button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
