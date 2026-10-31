@@ -2,6 +2,7 @@ import express from 'express';
 import type { Pool } from 'pg';
 import type { Clock } from './clock.js';
 import { dayRoutes } from './days.js';
+import { historyRoutes } from './history.js';
 import { tagRoutes } from './tags.js';
 import { taskRoutes } from './tasks.js';
 import { rollover } from './rollover.js';
@@ -26,6 +27,7 @@ export function createApp({ pool, clock, webDirectory }: { pool: Pool; clock: Cl
   });
   app.use(express.json());
   app.use('/api', dayRoutes(pool, clock));
+  app.use('/api', historyRoutes(pool));
   app.use('/api', tagRoutes(pool));
   app.use('/api', taskRoutes(pool, clock));
   app.use((error: { status?: number }, _request: express.Request, response: express.Response, next: express.NextFunction) => {

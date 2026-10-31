@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import './style.css';
 import { TagEditor } from './TagEditor';
+import { History } from './History';
 
 type Priority = 'high' | 'medium' | 'low' | null;
 type Tag = { id: string; name: string; color: string };
@@ -134,15 +135,24 @@ function App() {
     if (field === 'title' && !value.trim()) { setError('Enter a title.'); return; }
     mutate(`/tasks/${selected.id}`, 'PATCH', { [field]: value || null });
   };
+  const switchScreen = (name: 'Plan' | 'History') => {
+    if (name === screen) return;
+    if (name === 'Plan') {
+      setPlan(null);
+      setEditingYesterday(null);
+      request('/plan').then(setPlan).catch(e => setError(e.message));
+    }
+    setScreen(name);
+  };
   return <main className="mx-auto max-w-6xl px-6 py-12">
     <p className="mb-8 text-sm font-semibold tracking-widest opacity-60">DAY PLANNER</p>
     <nav role="tablist" aria-label="Screens" className="mb-10 flex gap-6 border-b border-current/15">
-      {(['Plan', 'History'] as const).map(name => <button key={name} id={`tab-${name}`} role="tab" aria-selected={screen === name} aria-controls={`panel-${name}`} onClick={() => setScreen(name)} className={`cursor-pointer border-b-2 px-1 pb-3 text-lg ${screen === name ? 'border-current font-semibold' : 'border-transparent opacity-60'}`}>{name}</button>)}
+      {(['Plan', 'History'] as const).map(name => <button key={name} id={`tab-${name}`} role="tab" aria-selected={screen === name} aria-controls={`panel-${name}`} onClick={() => switchScreen(name)} className={`cursor-pointer border-b-2 px-1 pb-3 text-lg ${screen === name ? 'border-current font-semibold' : 'border-transparent opacity-60'}`}>{name}</button>)}
     </nav>
     {error && <p role="alert" className="mb-4 text-red-700 dark:text-red-300">{error}</p>}
     <section id={`panel-${screen}`} role="tabpanel" aria-labelledby={`tab-${screen}`}>
       <h1 className="mb-6 text-3xl font-semibold">{screen}</h1>
-      {screen === 'History' ? <p className="opacity-60">Your past days will appear here.</p> : !plan ? <p role="status">Loading your plan…</p> : <>
+      {screen === 'History' ? plan ? <History today={plan.today.date} ReflectionEditor={ReflectionEditor} /> : <p role="status">Loading your days…</p> : !plan ? <p role="status">Loading your plan…</p> : <>
         {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="mb-6 rounded-xl border border-current/20 p-4">
           <div className="flex items-center justify-between gap-4"><h2 className="text-lg font-semibold">Reflect on yesterday</h2>
             <button onClick={() => mutate(`/days/${plan.yesterday.date}/dismiss-prompt`, 'POST')}>Dismiss</button>
