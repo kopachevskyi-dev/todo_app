@@ -1,22 +1,86 @@
 @import "tailwindcss";
-:root { font-family: system-ui, sans-serif; color: #252824; background: #f8f9f5; color-scheme: light dark; }
-@media (prefers-color-scheme: dark) { :root { color: #e6e9e1; background: #191c19; } }
-button:focus-visible { outline: 2px solid currentColor; outline-offset: 4px; }
-input, textarea, select { background: transparent; color: inherit; }
-input:focus-visible, textarea:focus-visible, select:focus-visible { outline: 2px solid #627b54; outline-offset: 2px; }
-input[type="checkbox"] { accent-color: #627b54; width: 1rem; height: 1rem; flex-shrink: 0; }
-button { cursor: pointer; }
-.column, .details, .toast { background: #fff; }
-.priority-high { color: #bb4235; }
-.priority-medium { color: #a66a10; }
-.priority-low { color: #4679a5; }
-@media (prefers-color-scheme: dark) {
-  .column, .details, .toast { background: #232823; }
-  .priority-high { color: #ff998a; }
-  .priority-medium { color: #eac071; }
-  .priority-low { color: #8cbae3; }
-  select option { background: #232823; }
+@import "@fontsource-variable/geist-mono";
+
+@theme static {
+  --font-mono: "Geist Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-sans: var(--font-mono);
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+  --color-*: initial;
+  --color-page: #ececea;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f4f4f2;
+  --color-surface-hover: #f7f7f5;
+  --color-raised-hover: #ebebe8;
+  --color-field: #f4f4f2;
+  --color-line: #d6d6d2;
+  --color-line-strong: #8a8a86;
+  --color-text: #0a0a0a;
+  --color-text-muted: #5c5c58;
+  --color-text-faint: #9a9a96;
+  --color-accent: #dfff5f;
+  --color-accent-text: #4b6b00;
+  --color-on-accent: #0a0a0a;
+  --color-inverse: #0a0a0a;
+  --color-on-inverse: #ffffff;
+  --color-danger: #b3261e;
+  --color-warning: #8a5a00;
+  --color-info: #2f628f;
+  --radius-card: 28px;
+  --radius-item: 16px;
+  --radius-field: 12px;
+  --radius-pill: 9999px;
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --shadow-floating: 0 24px 48px -12px rgb(0 0 0 / 0.15);
+  /* Encoded SVG colours match text-muted and on-accent respectively. */
+  --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%235c5c58' stroke-width='1.5'/%3E%3C/svg%3E");
+  --checkbox-tick: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='m4 9 3 3 7-7' fill='none' stroke='%230a0a0a' stroke-width='1.5'/%3E%3C/svg%3E");
 }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-page: #000000;
+    --color-surface: #262626;
+    --color-surface-raised: #323232;
+    --color-surface-hover: #2e2e2e;
+    --color-raised-hover: #3b3b3b;
+    --color-field: #1a1a1a;
+    --color-line: #3d3d3d;
+    --color-line-strong: #8a8a8a;
+    --color-text: #ffffff;
+    --color-text-muted: #a3a3a3;
+    --color-text-faint: #6b6b6b;
+    --color-accent-text: #dfff5f;
+    --color-inverse: #ffffff;
+    --color-on-inverse: #0a0a0a;
+    --color-danger: #ff8a7a;
+    --color-warning: #f2c46d;
+    --color-info: #8cbae3;
+    --shadow-floating: 0 24px 48px -12px rgb(0 0 0 / 0.5);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 16 16'%3E%3Cpath d='m4 6 4 4 4-4' fill='none' stroke='%23a3a3a3' stroke-width='1.5'/%3E%3C/svg%3E");
+  }
+}
+
+:root {
+  font-family: var(--font-mono);
+  line-height: 1.6;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text);
+  background: var(--color-page);
+  color-scheme: light dark;
+}
+
+body { font-size: 15px; }
+
+@layer base {
+  input, textarea, select { background: transparent; color: inherit; }
+  .column, .details, .toast { background: var(--color-surface); }
+}
+.priority-high { color: var(--color-danger); }
+.priority-medium { color: var(--color-warning); }
+.priority-low { color: var(--color-info); }
+select option { background: var(--color-surface); }
 .column-tabs, .move-task { display: none; }
 @media (width < 48rem) {
   .column-tabs { display: flex; }
@@ -26,4 +90,239 @@ button { cursor: pointer; }
   .plan-board[data-active-column="Backlog"] .plan-column[data-column="Backlog"],
   .plan-board[data-active-column="Today"] .plan-column[data-column="Today"],
   .plan-board[data-active-column="Tomorrow"] .plan-column[data-column="Tomorrow"] { display: flex; }
+}
+
+/* Typography roles are shared by this shell and the later screen tickets. */
+@utility type-display {
+  font-size: 56px;
+  line-height: 1.05;
+  font-weight: 400;
+  letter-spacing: -0.02em;
+  @media (width < 48rem) { font-size: 40px; }
+}
+@utility type-stat {
+  font-size: 64px;
+  line-height: 1;
+  font-weight: 400;
+  letter-spacing: -0.03em;
+  @media (width < 48rem) { font-size: 48px; }
+}
+@utility type-h1 {
+  font-size: 36px;
+  line-height: 1.2;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  @media (width < 48rem) { font-size: 28px; }
+}
+@utility type-h2 { font-size: 24px; line-height: 1.25; font-weight: 400; }
+@utility type-body { font-size: 15px; line-height: 1.6; font-weight: 400; }
+@utility type-small { font-size: 13px; line-height: 1.6; font-weight: 400; }
+@utility type-label {
+  font-size: 11px;
+  line-height: 1.4;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+@utility pill-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border-radius: var(--radius-pill);
+  background: var(--color-surface);
+}
+@utility tab {
+  @apply type-body;
+  min-width: 0;
+  border-radius: var(--radius-pill);
+  padding: 8px 16px;
+  color: var(--color-text-muted);
+  background: transparent;
+  &[aria-selected="true"] { color: var(--color-text); background: var(--color-surface-raised); }
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) { color: var(--color-text); }
+  }
+}
+@utility button-base {
+  @apply type-body;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: var(--radius-pill);
+}
+@utility button-primary {
+  @apply button-base;
+  color: var(--color-on-inverse);
+  background: var(--color-inverse);
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) { opacity: 0.88; }
+  }
+}
+@utility button-secondary {
+  @apply button-base;
+  border: 1px solid var(--color-line-strong);
+  color: var(--color-text);
+  background: transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) {
+      border-color: var(--color-text);
+      background: color-mix(in srgb, var(--color-text) 6%, transparent);
+    }
+  }
+}
+@utility button-ghost {
+  @apply button-base;
+  color: var(--color-text-muted);
+  background: transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) { color: var(--color-text); background: var(--color-raised-hover); }
+  }
+}
+@utility button-destructive {
+  @apply button-base;
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  background: transparent;
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) { background: color-mix(in srgb, var(--color-danger) 12%, transparent); }
+  }
+}
+@utility chip {
+  @apply type-label;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 10px;
+  border-radius: var(--radius-pill);
+}
+@utility chip-accent { @apply chip; color: var(--color-on-accent); background: var(--color-accent); }
+@utility chip-neutral { @apply chip; color: var(--color-text-muted); background: var(--color-surface-raised); }
+@utility chip-priority {
+  @apply chip-neutral;
+  &::before { content: ""; width: 8px; height: 8px; border-radius: var(--radius-pill); background: currentColor; }
+  &[data-priority="high"] { color: var(--color-danger); }
+  &[data-priority="medium"] { color: var(--color-warning); }
+  &[data-priority="low"] { color: var(--color-info); }
+}
+@utility field {
+  @apply type-body;
+  width: 100%;
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-field);
+  padding: 10px 14px;
+  background: var(--color-field);
+  color: var(--color-text);
+  &::placeholder { color: var(--color-text-muted); }
+  &[aria-invalid="true"] { border-color: var(--color-danger); }
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) { border-color: var(--color-line-strong); }
+  }
+  &:focus-visible { border-color: var(--color-accent); outline: none; }
+  &:is(select) {
+    appearance: none;
+    padding-right: 40px;
+    background-image: var(--select-chevron);
+    background-repeat: no-repeat;
+    background-position: right 14px center;
+    background-size: 16px;
+  }
+}
+@utility select-field { @apply field; }
+@utility card {
+  border: 0;
+  border-radius: var(--radius-card);
+  padding: 28px;
+  background: var(--color-surface);
+  @media (width < 48rem) { padding: 20px; }
+  @media (hover: hover) {
+    &:is(button, a, [role="button"]):hover:not(:disabled):not([aria-disabled="true"]) { background: var(--color-surface-hover); }
+  }
+}
+@utility inner-panel { border-radius: var(--radius-item); padding: 16px; background: var(--color-surface-raised); }
+@utility checkbox {
+  appearance: none;
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--color-line-strong);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--color-on-accent);
+  &:checked {
+    border-color: var(--color-accent);
+    background: var(--color-accent);
+    background-image: var(--checkbox-tick);
+  }
+  @media (hover: hover) {
+    &:hover:not(:disabled):not([aria-disabled="true"]) { border-color: var(--color-text); }
+  }
+}
+@utility floating-shadow { box-shadow: var(--shadow-floating); }
+@utility side-panel {
+  @apply floating-shadow;
+  position: fixed;
+  inset: 0 0 0 auto;
+  z-index: 20;
+  width: min(100%, 28rem);
+  overflow-y: auto;
+  padding: 32px;
+  border-radius: var(--radius-card) 0 0 var(--radius-card);
+  background: var(--color-surface);
+  animation: panel-enter 200ms var(--ease-out);
+  @media (width < 48rem) { width: 100%; border-radius: 0; padding: 20px; }
+}
+@utility panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  background: color-mix(in srgb, var(--color-page) 60%, transparent);
+  animation: fade-in 200ms var(--ease-out);
+}
+@utility error-banner {
+  @apply type-body;
+  border-radius: var(--radius-item);
+  padding: 16px 20px;
+  overflow-wrap: anywhere;
+  color: var(--color-danger);
+  background: color-mix(in srgb, var(--color-danger) 12%, transparent);
+}
+
+@layer base {
+  :where(button, input, textarea, select, a, [role="button"], [tabindex]) {
+    transition-property: background-color, border-color, color, opacity, transform;
+    transition-duration: 150ms;
+    transition-timing-function: var(--ease-out);
+  }
+  :where(button, a, input, textarea, select, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+  :where(button, [role="button"]):active:not(:disabled):not([aria-disabled="true"]) { transform: scale(0.98); }
+  :where(button, a, input[type="checkbox"], select, [role="button"]) { cursor: pointer; }
+  :where(button, input, textarea, select, [aria-disabled="true"]):is(:disabled, [aria-disabled="true"]) {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  input[type="checkbox"] { accent-color: var(--color-accent); flex-shrink: 0; }
+}
+@keyframes panel-enter { from { opacity: 0; transform: translateX(8px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    transition-property: background-color, border-color, color, opacity !important;
+    animation-name: fade-in !important;
+  }
+  :where(button, [role="button"]):active:not(:disabled):not([aria-disabled="true"]) { transform: none; }
+}
+
+@media (width < 48rem) {
+  /* Keep the second pill bar directly below the screen tabs, before the title,
+     without moving the column controls out of their existing tab panel. */
+  .plan-panel { display: flex; flex-direction: column; }
+  .plan-panel .plan-board { display: contents; }
+  .column-tabs { order: -1; padding-inline: 12px; }
 }

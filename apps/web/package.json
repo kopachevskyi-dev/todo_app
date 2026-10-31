@@ -1,1 +1,1 @@
-{"name":"@day-planner/web","private":true,"type":"module","scripts":{"build":"vite build"}}
+{"name":"@day-planner/web","private":true,"type":"module","scripts":{"build":"vite build"},"dependencies":{"@fontsource-variable/geist-mono":"^5.3.0"}}

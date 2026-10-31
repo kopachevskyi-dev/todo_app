@@ -50,14 +50,14 @@ function ReflectionEditor({ date, initial, label = 'Reflection', onSaved, onEdit
       if (timer.current) flushRef.current();
     };
   }, []);
-  return <div className="mt-6 border-t border-current/15 pt-4">
-    <label className="block text-sm font-semibold">{label}<textarea className="mt-2 block min-h-32 w-full rounded-lg border border-current/20 p-3 font-normal" value={draft} onFocus={() => onEditingChange?.(true)} onBlur={() => { flush(); onEditingChange?.(false); }} onChange={event => {
+  return <div className="mt-6 border-t border-line pt-4">
+    <label className="block text-sm font-semibold">{label}<textarea className="mt-2 block min-h-32 w-full rounded-lg border border-line p-3 font-normal" value={draft} onFocus={() => onEditingChange?.(true)} onBlur={() => { flush(); onEditingChange?.(false); }} onChange={event => {
       const value = event.target.value;
       setDraft(value); latest.current = value; setStatus('Saving…'); setError('');
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(flush, 400);
     }} /></label>
-    <p role="status" aria-label={`${label} save status`} className="mt-2 text-sm opacity-60">{status}</p>
+    <p role="status" aria-label={`${label} save status`} className="mt-2 text-sm text-text-muted">{status}</p>
     {error && <p role="alert">{error} <button className="underline" onClick={() => flush()}>Retry</button></p>}
   </div>;
 }
@@ -145,20 +145,20 @@ function App() {
     }
     setScreen(name);
   };
-  return <main className="mx-auto max-w-6xl px-6 py-12">
-    <p className="mb-8 text-sm font-semibold tracking-widest opacity-60">DAY PLANNER</p>
-    <nav role="tablist" aria-label="Screens" className="mb-10 flex gap-6 border-b border-current/15">
-      {(['Plan', 'History'] as const).map(name => <button key={name} id={`tab-${name}`} role="tab" aria-selected={screen === name} aria-controls={`panel-${name}`} onClick={() => switchScreen(name)} className={`cursor-pointer border-b-2 px-1 pb-3 text-lg ${screen === name ? 'border-current font-semibold' : 'border-transparent opacity-60'}`}>{name}</button>)}
+  return <main className="mx-auto max-w-6xl px-4 py-8 md:px-6">
+    <p className="type-display mb-8">DAY PLANNER</p>
+    <nav role="tablist" aria-label="Screens" className="pill-bar mb-6">
+      {(['Plan', 'History'] as const).map(name => <button key={name} id={`tab-${name}`} role="tab" aria-selected={screen === name} aria-controls={`panel-${name}`} onClick={() => switchScreen(name)} className="tab">{name}</button>)}
     </nav>
-    {error && <p role="alert" className="mb-4 text-red-700 dark:text-red-300">{error}</p>}
-    <section id={`panel-${screen}`} role="tabpanel" aria-labelledby={`tab-${screen}`}>
-      <h1 className="mb-6 text-3xl font-semibold">{screen}</h1>
+    {error && <p role="alert" className="error-banner mb-4">{error}</p>}
+    <section id={`panel-${screen}`} role="tabpanel" aria-labelledby={`tab-${screen}`} className={screen === 'Plan' ? 'plan-panel' : undefined}>
+      <h1 className="type-h1 mb-6">{screen}</h1>
       {screen === 'History' ? plan ? <History today={plan.today.date} ReflectionEditor={ReflectionEditor} /> : <p role="status">Loading your days…</p> : !plan ? <p role="status">Loading your plan…</p> : <>
-        {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="mb-6 rounded-xl border border-current/20 p-4">
+        {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="mb-6 rounded-xl border border-line p-4">
           <div className="flex items-center justify-between gap-4"><h2 className="text-lg font-semibold">Reflect on yesterday</h2>
             <button onClick={() => mutate(`/days/${plan.yesterday.date}/dismiss-prompt`, 'POST')}>Dismiss</button>
           </div>
-          <p className="mt-1 text-sm opacity-60">What went well? What would you change?</p>
+          <p className="mt-1 text-sm text-text-muted">What went well? What would you change?</p>
           <ReflectionEditor key={plan.yesterday.date} date={plan.yesterday.date} initial={plan.yesterday.reflection} label="Yesterday's reflection" onEditingChange={editing => setEditingYesterday(editing ? plan.yesterday.date : null)} onSaved={() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }} />
         </section>}
         <PlanBoard plan={plan} tags={tags} tagFilter={tagFilter} onFilter={setTagFilter} mutate={mutate} onError={setError}
@@ -174,32 +174,32 @@ function App() {
           onSelect={(task, button) => { opener.current = button; setSelected(task); setPickerOpen(false); }}
           reflection={<ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} />} /></>}
     </section>
-    {selected && <aside role="dialog" aria-modal="false" aria-label="Task details" className="details fixed inset-y-0 right-0 z-10 w-full max-w-md overflow-y-auto border-l border-current/20 p-6 shadow-xl">
+    {selected && <aside role="dialog" aria-modal="false" aria-label="Task details" className="details fixed inset-y-0 right-0 z-10 w-full max-w-md overflow-y-auto border-l border-line p-6 shadow-xl">
       <div className="mb-8 flex items-center justify-between"><h2 className="text-xl font-semibold">Task details</h2><button onClick={closePanel} aria-label="Close task details">Close</button></div>
-      <label className="mb-6 block">Title<input ref={titleInput} className="mt-2 block w-full rounded border border-current/25 p-2" value={selected.title} onChange={e => edit('title', e.target.value)} /></label>
-      <label className="mb-6 block">Note<textarea className="mt-2 block min-h-32 w-full rounded border border-current/25 p-2" value={selected.note || ''} onChange={e => edit('note', e.target.value)} /></label>
-      <label className="mb-6 block">Priority<select className="mt-2 block w-full rounded border border-current/25 p-2" value={selected.priority || ''} onChange={e => edit('priority', e.target.value)}>
+      <label className="mb-6 block">Title<input ref={titleInput} className="mt-2 block w-full rounded border border-line p-2" value={selected.title} onChange={e => edit('title', e.target.value)} /></label>
+      <label className="mb-6 block">Note<textarea className="mt-2 block min-h-32 w-full rounded border border-line p-2" value={selected.note || ''} onChange={e => edit('note', e.target.value)} /></label>
+      <label className="mb-6 block">Priority<select className="mt-2 block w-full rounded border border-line p-2" value={selected.priority || ''} onChange={e => edit('priority', e.target.value)}>
         <option value="">None</option><option value="high">High</option><option value="medium">Medium</option><option value="low">Low</option>
       </select></label>
       <div className="mb-6">
         <button aria-expanded={pickerOpen} onClick={() => setPickerOpen(!pickerOpen)}>Tags</button>
-        {pickerOpen && <fieldset className="mt-2 space-y-2 rounded border border-current/20 p-3"><legend className="sr-only">Choose tags</legend>
+        {pickerOpen && <fieldset className="mt-2 space-y-2 rounded border border-line p-3"><legend className="sr-only">Choose tags</legend>
           {tags.map(tag => <label key={tag.id} className="flex items-center gap-2"><input type="checkbox" checked={selected.tags.some(t => t.id === tag.id)} onChange={event => {
             const next = event.target.checked ? [...selected.tags, tag] : selected.tags.filter(t => t.id !== tag.id);
             setSelected({ ...selected, tags: next });
             mutate(`/tasks/${selected.id}`, 'PATCH', { tagIds: next.map(t => t.id) });
           }} /><span style={{ color: tag.color }} aria-hidden="true">●</span>{tag.name}</label>)}
-          <button className="block border-t border-current/20 pt-2" aria-expanded={editingTags} onClick={() => setEditingTags(!editingTags)}>Edit tags</button>
+          <button className="block border-t border-line pt-2" aria-expanded={editingTags} onClick={() => setEditingTags(!editingTags)}>Edit tags</button>
           {editingTags && <TagEditor tags={tags} mutate={mutate} />}
         </fieldset>}
       </div>
-      <p role="status" className="mb-6 text-sm opacity-60">{saving ? 'Saving…' : error ? 'Changes not saved' : 'Saved'}</p>
-      <button className="text-red-700 dark:text-red-300" onClick={() => {
+      <p role="status" className="mb-6 text-sm text-text-muted">{saving ? 'Saving…' : error ? 'Changes not saved' : 'Saved'}</p>
+      <button className="text-danger" onClick={() => {
         const task = selected;
         mutate(`/tasks/${task.id}`, 'DELETE', undefined, () => { setSelected(null); setDeleted(task); });
       }}>Delete task</button>
     </aside>}
-    {deleted && <div role="status" className="toast fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-current/20 px-5 py-3 shadow-lg">
+    {deleted && <div role="status" className="toast fixed bottom-6 left-1/2 z-20 flex -translate-x-1/2 items-center gap-3 rounded-lg border border-line px-5 py-3 shadow-lg">
       <span>Task deleted ·</span><button className="font-semibold underline" onClick={() => mutate(`/tasks/${deleted.id}/restore`, 'POST', undefined, () => setDeleted(null))}>Undo</button>
     </div>}
   </main>;

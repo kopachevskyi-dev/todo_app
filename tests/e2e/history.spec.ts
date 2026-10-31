@@ -37,6 +37,7 @@ test.afterAll(async () => {
 });
 
 test('History navigates Monday-first months, shades past days, and opens read-only tasks with an editable reflection', async ({ page, request }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
   for (const title of ['Finished report', 'Unfinished call', 'Deleted task']) {
     const created = await request.post(`${apiBase}/api/tasks`, { data: { title, placement: '2026-10-31' } });
     expect(created.status()).toBe(201);
@@ -56,8 +57,10 @@ test('History navigates Monday-first months, shades past days, and opens read-on
   await page.getByRole('button', { name: 'Previous month' }).click();
   await expect(page.getByRole('table', { name: 'October 2026' })).toBeVisible();
   const pastDay = page.getByRole('button', { name: '2026-10-31, 1 of 2 done', exact: true });
-  await expect(pastDay).toHaveCSS('background-color', 'rgba(98, 123, 84, 0.41)');
-  await expect(page.getByRole('button', { name: '2026-10-30, 0 of 0 done', exact: true })).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  const emptyDay = page.getByRole('button', { name: '2026-10-30, 0 of 0 done', exact: true });
+  await expect(emptyDay).toHaveCSS('background-color', 'rgb(244, 244, 242)');
+  const emptyBackground = await emptyDay.evaluate(element => getComputedStyle(element).backgroundColor);
+  await expect(pastDay).not.toHaveCSS('background-color', emptyBackground);
   await pastDay.click();
   const panel = page.getByRole('dialog', { name: 'Day details' });
   await expect(panel).toContainText('2026-10-31');
