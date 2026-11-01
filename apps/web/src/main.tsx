@@ -50,15 +50,15 @@ function ReflectionEditor({ date, initial, label = 'Reflection', onSaved, onEdit
       if (timer.current) flushRef.current();
     };
   }, []);
-  return <div className="mt-6 border-t border-line pt-4">
-    <label className="block text-sm font-semibold">{label}<textarea className="mt-2 block min-h-32 w-full rounded-lg border border-line p-3 font-normal" value={draft} onFocus={() => onEditingChange?.(true)} onBlur={() => { flush(); onEditingChange?.(false); }} onChange={event => {
+  return <div className="reflection-editor">
+    <label className="type-label block text-text-muted">{label}<textarea className="field mt-2 block min-h-32" value={draft} onFocus={() => onEditingChange?.(true)} onBlur={() => { flush(); onEditingChange?.(false); }} onChange={event => {
       const value = event.target.value;
       setDraft(value); latest.current = value; setStatus('Saving…'); setError('');
       if (timer.current) clearTimeout(timer.current);
       timer.current = setTimeout(flush, 400);
     }} /></label>
-    <p role="status" aria-label={`${label} save status`} className="mt-2 text-sm text-text-muted">{status}</p>
-    {error && <p role="alert">{error} <button className="underline" onClick={() => flush()}>Retry</button></p>}
+    <p role="status" aria-label={`${label} save status`} className="type-small text-text-muted">{status}</p>
+    {error && <p role="alert" className="type-small text-danger">{error} <button className="underline" onClick={() => flush()}>Retry</button></p>}
   </div>;
 }
 
@@ -166,14 +166,14 @@ function App() {
           }}
           onSelect={(task, button) => { opener.current = button; setSelected(task); setPickerOpen(false); }}
           reflection={<>
-            {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="inner-panel plan-reflection mt-6">
+            {(plan.yesterday.showReflectionPrompt || editingYesterday === plan.yesterday.date) && <section aria-label="Reflect on yesterday" className="inner-panel mt-6">
               <div className="flex items-center justify-between gap-4"><h2 className="type-label">Reflect on yesterday</h2>
                 <button className="button-ghost px-3 py-2" onClick={() => mutate(`/days/${plan.yesterday.date}/dismiss-prompt`, 'POST')}>Dismiss</button>
               </div>
-              <p className="type-small mt-2 text-text-muted">What went well? What would you change?</p>
+              <p className="type-small mt-2 mb-6 text-text-muted">What went well? What would you change?</p>
               <ReflectionEditor key={plan.yesterday.date} date={plan.yesterday.date} initial={plan.yesterday.reflection} label="Yesterday's reflection" onEditingChange={editing => setEditingYesterday(editing ? plan.yesterday.date : null)} onSaved={() => { request('/plan').then(setPlan).catch(e => setError(e.message)); }} />
             </section>}
-            <div className="inner-panel plan-reflection mt-6"><ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} /></div></>} /></>}
+            <div className="inner-panel mt-6"><ReflectionEditor key={plan.today.date} date={plan.today.date} initial={plan.today.reflection} onSaved={reflection => setPlan(current => current && { ...current, today: { ...current.today, reflection } })} /></div></>} /></>}
     </section>
     {selected && <>
     <div aria-hidden="true" className="panel-backdrop pointer-events-none" />

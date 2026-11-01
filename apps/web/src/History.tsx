@@ -83,7 +83,7 @@ export function History({ today, ReflectionEditor }: { today: string; Reflection
       {!day ? !error && <p role="status">Loading your day…</p> : <>
         <p className="mb-6 text-text-muted">{day.done} of {day.total} done</p>
         {day.tasks.length ? <ul className="mb-6 space-y-3">{day.tasks.map(task => <li key={task.id} className="flex items-start justify-between gap-4 rounded-item bg-surface-raised px-4 py-3"><span className={task.status === 'done' ? 'min-w-0 break-words text-text-faint line-through' : 'min-w-0 break-words'}>{task.title}</span><span className="type-small shrink-0 text-text-muted">{task.status === 'done' ? 'Done' : task.status === 'not_done' ? 'Not done' : 'Open'}</span></li>)}</ul> : <p className="mb-6 text-text-muted">No tasks on this day.</p>}
-        <div className="history-reflection"><ReflectionEditor key={day.date} date={day.date} initial={day.reflection} /></div>
+        <ReflectionEditor key={day.date} date={day.date} initial={day.reflection} />
       </>}
     </aside></>}
   </div>;
