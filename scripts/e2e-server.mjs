@@ -1,5 +1,5 @@
 import { spawn, spawnSync } from 'node:child_process';
-const args = ['compose', '-f', 'compose.test.yaml', '-p', 'todo-app-test'];
+const args = ['compose', '-f', 'compose.test.yaml', '-p', process.env.E2E_PROJECT ?? 'todo-app-test'];
 const keepAlive = setInterval(() => {}, 1000);
 let stopping = false;
 function stop(code = 0) {

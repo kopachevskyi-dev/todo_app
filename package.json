@@ -11,13 +11,15 @@
   "scripts": {
     "prepare": "node scripts/install-hooks.mjs",
     "build": "npm run build --workspaces",
-    "lint": "eslint .",
+    "lint": "eslint . && node --test scripts/lint-web-colors.test.mjs && node scripts/lint-web-colors.mjs",
     "typecheck": "tsc -p apps/api/tsconfig.json --noEmit && tsc -p apps/web/tsconfig.json --noEmit && tsc -p tsconfig.tools.json --noEmit",
     "test": "npm run test:api && npm run test:e2e",
     "test:api": "tsx --test apps/api/test/*.test.ts",
     "test:e2e": "playwright test",
     "test:related": "node scripts/related-tests.mjs",
-    "smoke": "node scripts/smoke.mjs"
+    "smoke": "node scripts/smoke.mjs",
+    "verify": "npm run lint && npm run typecheck && npm test && npm run smoke",
+    "verify:fast": "npm run lint && npm run typecheck && npm run test:api"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

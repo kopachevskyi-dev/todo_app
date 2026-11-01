@@ -9,7 +9,7 @@ services:
       TZ: ${TZ:-}
       BACKUPS_DIR: /data/backups
     volumes:
-      - ${DATA_DIR:-~/Desktop/todo-app-data}/backups:/data/backups
+      - ${DATA_DIR:-~/code/private/todo-app-data}/backups:/data/backups
       - /etc/localtime:/host-localtime:ro
     depends_on:
       db:
@@ -26,7 +26,7 @@ services:
       POSTGRES_PASSWORD: planner
       POSTGRES_DB: planner
     volumes:
-      - ${DATA_DIR:-~/Desktop/todo-app-data}/db:/var/lib/postgresql/data
+      - ${DATA_DIR:-~/code/private/todo-app-data}/db:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U planner -d planner"]
       interval: 2s

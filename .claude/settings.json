@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm test)",
+      "Bash(npm run test:api)",
+      "Bash(npm run test:e2e)",
+      "Bash(npx tsx --test apps/api/test/*.test.ts)",
+      "Bash(npx playwright test tests/e2e/*.spec.ts)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run lint)",
+      "Bash(npm run smoke)",
+      "Bash(npm run verify)",
+      "Bash(npm run verify:fast)",
+      "Bash(*/run-check.sh verify npm run verify)",
+      "Bash(*/run-check.sh -C * verify npm run verify)",
+      "Bash(*/run-check.sh verify npm run verify:fast)",
+      "Bash(*/run-check.sh -C * verify npm run verify:fast)"
+    ]
+  }
+}

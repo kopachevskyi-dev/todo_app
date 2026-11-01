@@ -37,6 +37,7 @@ test.afterAll(async () => {
 });
 
 test('History navigates Monday-first months, shades past days, and opens read-only tasks with an editable reflection', async ({ page, request }) => {
+  await page.emulateMedia({ colorScheme: 'light' });
   for (const title of ['Finished report', 'Unfinished call', 'Deleted task']) {
     const created = await request.post(`${apiBase}/api/tasks`, { data: { title, placement: '2026-10-31' } });
     expect(created.status()).toBe(201);
@@ -56,8 +57,20 @@ test('History navigates Monday-first months, shades past days, and opens read-on
   await page.getByRole('button', { name: 'Previous month' }).click();
   await expect(page.getByRole('table', { name: 'October 2026' })).toBeVisible();
   const pastDay = page.getByRole('button', { name: '2026-10-31, 1 of 2 done', exact: true });
-  await expect(pastDay).toHaveCSS('background-color', 'rgba(98, 123, 84, 0.41)');
-  await expect(page.getByRole('button', { name: '2026-10-30, 0 of 0 done', exact: true })).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  const emptyDay = page.getByRole('button', { name: '2026-10-30, 0 of 0 done', exact: true });
+  await expect(emptyDay).toHaveCSS('background-color', 'rgb(244, 244, 242)');
+  const emptyBackground = await emptyDay.evaluate(element => getComputedStyle(element).backgroundColor);
+  await expect(pastDay).not.toHaveCSS('background-color', emptyBackground);
+  // A half-complete day is visibly darker in light mode and stays neutral.
+  const channels = await pastDay.evaluate(element => {
+    const canvas = document.createElement('canvas');
+    const context = canvas.getContext('2d')!;
+    context.fillStyle = getComputedStyle(element).backgroundColor;
+    context.fillRect(0, 0, 1, 1);
+    return [...context.getImageData(0, 0, 1, 1).data];
+  });
+  expect(channels[0]).toBeLessThan(190);
+  expect(Math.max(...channels.slice(0, 3)) - Math.min(...channels.slice(0, 3))).toBeLessThan(3);
   await pastDay.click();
   const panel = page.getByRole('dialog', { name: 'Day details' });
   await expect(panel).toContainText('2026-10-31');
@@ -106,3 +119,35 @@ test('returning to Plan after reflecting in History removes the stale yesterday 
   await expect(banner).toHaveCount(0);
   expect((await (await request.get(`${apiBase}/api/days/2026-11-02`)).json()).reflection).toBe('A conclusion saved from History.');
 });
+
+
+for (const colorScheme of ['light', 'dark'] as const) {
+  for (const width of [375, 1280]) {
+    test(`History calendar and selected day panel fit ${width}px in ${colorScheme}`, async ({ page }, testInfo) => {
+      now = new Date('2026-11-03T12:00:00Z');
+      await page.setViewportSize({ width, height: 900 });
+      await page.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
+      await page.goto(base);
+      await page.getByRole('tab', { name: 'History', exact: true }).click();
+      const today = page.getByRole('button', { name: '2026-11-03, 0 of 0 done', exact: true });
+      await expect(today).toBeVisible();
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      const cell = await today.boundingBox();
+      expect(Math.abs(cell!.width - cell!.height)).toBeLessThan(1);
+      await expect(today).toHaveCSS('box-shadow', /inset/);
+      await today.click();
+      await expect(today).toHaveAttribute('aria-pressed', 'true');
+      const panel = page.getByRole('dialog', { name: 'Day details' });
+      await expect(panel.getByRole('textbox', { name: 'Reflection', exact: true })).toBeVisible();
+      await expect(today).toHaveCSS('background-color', colorScheme === 'light' ? 'rgb(10, 10, 10)' : 'rgb(255, 255, 255)');
+      await expect(today).toHaveCSS('color', colorScheme === 'light' ? 'rgb(255, 255, 255)' : 'rgb(10, 10, 10)');
+      const bounds = await panel.boundingBox();
+      expect(bounds!.width).toBe(width < 768 ? width : 448);
+      await expect(panel).toHaveCSS('padding', width < 768 ? '20px' : '32px');
+      expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+      await page.screenshot({ path: testInfo.outputPath(`history-${width}-${colorScheme}.png`), fullPage: true });
+      await panel.getByRole('button', { name: 'Close day details' }).click();
+      await expect(today).toBeFocused();
+    });
+  }
+}

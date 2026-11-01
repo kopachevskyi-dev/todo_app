@@ -2,7 +2,7 @@ name: CI
 on:
   pull_request:
   push:
-    branches: [main]
+    branches: [main, 'spec/*']
 jobs:
   verify:
     runs-on: ubuntu-latest
@@ -14,7 +14,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run lint
-      - run: npm run typecheck
-      - run: npm test
-      - run: npm run smoke
+      - run: npm run verify
