@@ -344,16 +344,10 @@ select option { background: var(--color-surface); }
 }
 .task-card .drag-handle { cursor: grab; }
 .task-card[data-dragging="true"] .drag-handle { cursor: grabbing; }
-.plan-reflection > div:last-child {
-  margin-top: 0;
-  border: 0;
-  padding-top: 0;
+@utility reflection-editor {
+  display: grid;
+  gap: 8px;
 }
-.plan-reflection > p + div:last-child { margin-top: 24px; }
-.plan-reflection label { @apply type-label; }
-.plan-reflection textarea { @apply field; text-transform: none; letter-spacing: normal; }
-.plan-reflection [role="status"] { @apply type-small; }
-.plan-reflection [role="alert"] { @apply type-small text-danger; }
 @media (hover: hover) {
   .task-card:hover { background: var(--color-raised-hover); }
   .task-card:hover .drag-handle { color: var(--color-text-muted); }
@@ -443,12 +437,4 @@ select option { background: var(--color-surface); }
   @media (hover: hover) {
     &:hover:not(:disabled):not([aria-pressed="true"]) { background: var(--color-raised-hover); }
   }
-}
-
-@utility history-reflection {
-  & > div { margin-top: 0; border: 0; padding-top: 0; }
-  & label { @apply type-label; }
-  & textarea { @apply field; }
-  & [role="status"] { @apply type-small; }
-  & [role="alert"] { @apply type-small; color: var(--color-danger); }
 }
