@@ -1364,3 +1364,83 @@ h3 {
     font: var(--font-meta);
   }
 }
+
+.subtasks h3 {
+  margin-bottom: 6px;
+}
+.subtask-row,
+.subtask-add {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  font-size: 15px;
+}
+.subtask-row .checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+}
+.subtask-row .checkbox.checked svg {
+  animation-duration: 120ms;
+}
+.subtask-title,
+.subtask-add,
+.subtask-delete {
+  border: 0;
+  background: transparent;
+  padding: 0;
+  text-align: left;
+}
+.subtask-title,
+.subtask-row input,
+.subtask-add input {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font: inherit;
+  color: inherit;
+}
+.subtask-row input,
+.subtask-add input {
+  width: 100%;
+  border: 1px solid var(--check-border);
+  border-radius: 6px;
+  padding: 6px;
+  background: var(--surface-raised);
+}
+.subtask-title {
+  align-self: stretch;
+}
+.subtask-done,
+.subtask-add,
+.subtask-delete {
+  color: var(--text-muted);
+}
+.subtask-delete {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  min-height: 44px;
+  flex: none;
+  visibility: hidden;
+}
+.subtask-row:hover .subtask-delete,
+.subtask-row:focus-within .subtask-delete {
+  visibility: visible;
+}
+@media (max-width: 767px) {
+  .subtask-row .subtask-delete {
+    display: none;
+  }
+  .subtask-row.editing .subtask-delete {
+    display: flex;
+    visibility: visible;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .subtask-row .checkbox.checked svg {
+    animation: none;
+  }
+}

@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import {
   historyResponseSchema,
+  createSubtaskRequestSchema,
+  patchSubtaskRequestSchema,
+  subtaskResponseSchema,
+  type PatchSubtaskRequest,
   clockSchema,
   dayLoadResponseSchema,
   planTaskRequestSchema,
@@ -50,6 +54,27 @@ export const api = {
       createTaskResponseSchema,
       { method: 'POST' },
     ),
+  createSubtask: (taskId: string, title: string) =>
+    request(
+      `/tasks/${encodeURIComponent(taskId)}/subtasks`,
+      subtaskResponseSchema,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(createSubtaskRequestSchema.parse({ title })),
+      },
+    ),
+  patchSubtask: (id: string, input: PatchSubtaskRequest) =>
+    request(`/subtasks/${encodeURIComponent(id)}`, subtaskResponseSchema, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patchSubtaskRequestSchema.parse(input)),
+    }),
+  deleteSubtask: (id: string) =>
+    request(`/subtasks/${encodeURIComponent(id)}`, z.undefined(), {
+      method: 'DELETE',
+    }),
+
   clock: () => request('/clock', clockSchema),
   dayLoad: (from: string, to: string) =>
     request(`/day-load?from=${from}&to=${to}`, dayLoadResponseSchema),

@@ -159,6 +159,19 @@ export const subtaskSchema = z.object({
   position: z.number().int(),
   createdAt: z.iso.datetime(),
 });
+export const createSubtaskRequestSchema = z
+  .object({ title: taskTitleSchema })
+  .strict();
+export const patchSubtaskRequestSchema = z
+  .object({
+    title: taskTitleSchema.optional(),
+    done: z.boolean().optional(),
+  })
+  .strict();
+export const subtaskResponseSchema = z.object({ subtask: subtaskSchema });
+export type Subtask = z.infer<typeof subtaskSchema>;
+export type PatchSubtaskRequest = z.infer<typeof patchSubtaskRequestSchema>;
+
 export const taskDetailResponseSchema = z.object({
   task: taskSchema,
   subtasks: z.array(subtaskSchema),

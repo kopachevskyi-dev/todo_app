@@ -10,6 +10,7 @@ import type {
 import { formatActivityTimestamp } from '../domain/activity';
 import { api } from './api';
 import { DayPicker } from './DayPicker';
+import { Subtasks } from './Subtasks';
 import { formatDay, planButtonLabel } from '../domain/day-picker';
 import { localDate } from '../domain/time';
 import { completionTime, useCompletion } from './useCompletion';
@@ -354,7 +355,7 @@ export function TaskDetail({
           </button>
         </div>
       </div>
-      <h3>Subtasks</h3>
+      <Subtasks taskId={task.id} subtasks={detail.subtasks} />
       <section className="activity">
         <h3>Activity</h3>
         <ul>

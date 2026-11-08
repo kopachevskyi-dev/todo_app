@@ -8,6 +8,9 @@ import { serveStatic } from '@hono/node-server/serve-static';
 import { isTimeZone, localDate } from '../domain/time';
 import {
   historyResponseSchema,
+  createSubtaskRequestSchema,
+  patchSubtaskRequestSchema,
+  subtaskResponseSchema,
   planTaskRequestSchema,
   dayLoadResponseSchema,
   todayResponseSchema,
@@ -253,6 +256,81 @@ export function createApp(options: {
         task: repositories.tasks.patch(id, parsed.data, clock.now()),
       }),
     );
+  });
+  app.post('/api/tasks/:id/subtasks', async (c) => {
+    const id = c.req.param('id');
+    if (!repositories.tasks.get(id))
+      return c.json(
+        { error: { code: 'not_found', message: 'Task not found.' } },
+        404,
+      );
+    const parsed = createSubtaskRequestSchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!parsed.success)
+      return c.json(
+        {
+          error: {
+            code: 'invalid_title',
+            message: 'Title must be between 1 and 200 characters.',
+          },
+        },
+        400,
+      );
+    return c.json(
+      subtaskResponseSchema.parse({
+        subtask: repositories.subtasks.create(
+          id,
+          parsed.data.title,
+          clock.now(),
+        ),
+      }),
+      201,
+    );
+  });
+  app.patch('/api/subtasks/:id', async (c) => {
+    const id = c.req.param('id');
+    const subtask = repositories.subtasks.get(id);
+    if (!subtask)
+      return c.json(
+        { error: { code: 'not_found', message: 'Subtask not found.' } },
+        404,
+      );
+    const body: unknown = await c.req.json().catch(() => null);
+    const parsed = patchSubtaskRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      const invalidTitle =
+        body &&
+        typeof body === 'object' &&
+        'title' in body &&
+        !taskTitleSchema.safeParse(body.title).success;
+      return c.json(
+        {
+          error: {
+            code: invalidTitle ? 'invalid_title' : 'invalid_request',
+            message: 'Invalid subtask details.',
+          },
+        },
+        400,
+      );
+    }
+    return c.json(
+      subtaskResponseSchema.parse({
+        subtask: Object.keys(parsed.data).length
+          ? repositories.subtasks.patch(id, parsed.data, clock.now())
+          : subtask,
+      }),
+    );
+  });
+  app.delete('/api/subtasks/:id', (c) => {
+    const id = c.req.param('id');
+    if (!repositories.subtasks.get(id))
+      return c.json(
+        { error: { code: 'not_found', message: 'Subtask not found.' } },
+        404,
+      );
+    repositories.subtasks.delete(id, clock.now());
+    return c.body(null, 204);
   });
   app.get('/api/clock', (c) =>
     c.json(clockSchema.parse({ now: clock.now().toISOString() })),
