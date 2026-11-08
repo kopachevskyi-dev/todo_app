@@ -1,0 +1,7 @@
+:root {
+  --page-background: white;
+  --page-text: black;
+  font-family: system-ui, sans-serif;
+  color: var(--page-text);
+  background: var(--page-background);
+}
