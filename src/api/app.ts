@@ -1,8 +1,14 @@
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
-import { isTimeZone } from '../domain/time';
+import { isTimeZone, localDate } from '../domain/time';
 import {
   clockSchema,
+  createTaskRequestSchema,
+  createTaskResponseSchema,
+  taskTitleSchema,
+  backlogResponseSchema,
+  countsResponseSchema,
+  taskDetailResponseSchema,
   healthResponseSchema,
   listsResponseSchema,
 } from '../shared/contract';
@@ -39,6 +45,61 @@ export function createApp(options: {
   app.get('/api/lists', (c) =>
     c.json(listsResponseSchema.parse({ lists: repositories.lists.all() })),
   );
+  app.post('/api/tasks', async (c) => {
+    const body: unknown = await c.req.json().catch(() => null);
+    const parsed = createTaskRequestSchema.safeParse(body);
+    if (!parsed.success) {
+      const title =
+        body && typeof body === 'object' && 'title' in body
+          ? body.title
+          : undefined;
+      const invalidTitle = !taskTitleSchema.safeParse(title).success;
+      return c.json(
+        {
+          error: {
+            code: invalidTitle ? 'invalid_title' : 'invalid_request',
+            message: invalidTitle
+              ? 'Title must be between 1 and 200 characters.'
+              : 'Choose backlog or today.',
+          },
+        },
+        400,
+      );
+    }
+    const task = repositories.tasks.create(
+      parsed.data,
+      clock.now(),
+      c.req.header('X-Timezone')!,
+    );
+    return c.json(createTaskResponseSchema.parse({ task }), 201);
+  });
+  app.get('/api/views/backlog', (c) =>
+    c.json(
+      backlogResponseSchema.parse({
+        tasks: repositories.tasks.backlog(c.req.query('listId')),
+      }),
+    ),
+  );
+  app.get('/api/counts', (c) =>
+    c.json(
+      countsResponseSchema.parse(
+        repositories.tasks.counts(
+          localDate(clock.now(), c.req.header('X-Timezone')!),
+        ),
+      ),
+    ),
+  );
+  app.get('/api/tasks/:id', (c) => {
+    const task = repositories.tasks.get(c.req.param('id'));
+    if (!task)
+      return c.json(
+        { error: { code: 'not_found', message: 'Task not found.' } },
+        404,
+      );
+    return c.json(
+      taskDetailResponseSchema.parse({ task, subtasks: [], activity: [] }),
+    );
+  });
   if (options.testClock) {
     app.put('/api/test/clock', async (c) => {
       const body: unknown = await c.req.json().catch(() => null);
