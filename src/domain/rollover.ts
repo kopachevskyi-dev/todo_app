@@ -1,3 +1,5 @@
+import { localDate, startOfLocalDay } from './time';
+
 export interface RolloverCandidate {
   id: string;
   day: string | null;
@@ -18,7 +20,18 @@ export function rolloverTasks(
   timeZone: string,
   candidates: RolloverCandidate[],
 ): RolloverChange[] {
-  throw new Error(
-    `not implemented: ${now.toISOString()} ${timeZone} ${candidates.length}`,
+  const today = localDate(now, timeZone);
+  const overdue = candidates.filter(
+    (task) =>
+      task.day !== null && task.day < today && task.completedAt === null,
   );
+  if (!overdue.length) return [];
+  const at = startOfLocalDay(now, timeZone).toISOString();
+  return overdue.map((task) => ({
+    id: task.id,
+    day: null,
+    missedFrom: task.day!,
+    placedAt: at,
+    event: { type: 'missed', day: task.day!, at },
+  }));
 }
