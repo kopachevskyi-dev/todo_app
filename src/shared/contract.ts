@@ -142,3 +142,5 @@ export const searchResponseSchema = z.object({
     )
     .max(50),
 });
+
+export const todayResponseSchema = z.never();
