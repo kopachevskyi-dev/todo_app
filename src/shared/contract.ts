@@ -41,3 +41,9 @@ export const examples = {
   },
   clock: { now: '2026-11-04T19:20:00.000Z' },
 } as const;
+
+// Placeholders for ticket #16; replaced by the real schemas in the implementation.
+export const createTaskRequestSchema = z.never();
+export const createTaskResponseSchema = z.custom<{
+  task: Record<string, unknown>;
+}>(() => false);
