@@ -510,7 +510,7 @@ export function App() {
                       href={`/today?${new URLSearchParams({ ...(list ? { list } : {}), task: row.id })}`}
                       onOpen={() => openTask(row.id)}
                       onToggle={() =>
-                        completion.mutate({
+                        completion.mutateAsync({
                           id: row.id,
                           completed: !row.completedAt,
                         })
@@ -593,7 +593,7 @@ export function App() {
                       task={row}
                       selected={row.id === task}
                       onToggle={() =>
-                        completion.mutate({ id: row.id, completed: true })
+                        completion.mutateAsync({ id: row.id, completed: true })
                       }
                       pending={completion.isPending}
                       href={`/backlog?${params}`}

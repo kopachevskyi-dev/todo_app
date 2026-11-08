@@ -7,6 +7,7 @@ import {
   type ReactNode,
   type RefObject,
 } from 'react';
+import { flushSync } from 'react-dom';
 import { completionTime } from './useCompletion';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
@@ -96,34 +97,40 @@ export function Checkbox({
 }: {
   checked?: boolean;
   label: string;
-  onChange?: () => void;
+  onChange?: () => Promise<unknown>;
   disabled?: boolean;
 }) {
-  const [draft, setDraft] = useState({ checked, value: checked });
-  if (draft.checked !== checked) setDraft({ checked, value: checked });
-  const displayed = disabled && onChange ? draft.value : checked;
-  const toggle = () => {
-    if (disabled || !onChange) return;
-    setDraft({ checked, value: !checked });
-    onChange();
+  const [optimistic, setOptimistic] = useState<boolean>();
+  const displayed = optimistic ?? checked;
+  const toggle = async () => {
+    if (disabled || optimistic !== undefined || !onChange) return;
+    // Commit the check on this node before starting the request or reordering.
+    flushSync(() => setOptimistic(!checked));
+    try {
+      await onChange();
+    } catch {
+      // The mutation owner displays the error; restore the server state below.
+    } finally {
+      setOptimistic(undefined);
+    }
   };
   return (
     <span
       className="check-hit"
       role="checkbox"
       aria-checked={displayed}
-      aria-disabled={!onChange || disabled}
+      aria-disabled={!onChange || disabled || optimistic !== undefined}
       tabIndex={onChange ? 0 : undefined}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
-        toggle();
+        void toggle();
       }}
       onKeyDown={(event) => {
         if (event.key === ' ' || event.key === 'Enter') {
           event.preventDefault();
           event.stopPropagation();
-          toggle();
+          void toggle();
         }
       }}
       aria-label={label}
@@ -145,7 +152,7 @@ export function TaskRow({
   section,
 }: {
   section?: string;
-  onToggle?: () => void;
+  onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
   task: TaskRowData;
