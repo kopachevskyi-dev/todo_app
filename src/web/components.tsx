@@ -6,6 +6,7 @@ import {
   type ButtonHTMLAttributes,
   type ReactNode,
   type RefObject,
+  type Ref,
 } from 'react';
 import { flushSync } from 'react-dom';
 import { completionTime } from './useCompletion';
@@ -69,13 +70,16 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
 export function Button({
   variant = 'primary',
   className = '',
+  ref,
   ...props
 }: ButtonHTMLAttributes<HTMLButtonElement> & {
   variant?: 'primary' | 'outline' | 'strong' | 'icon' | 'ghost';
+  ref?: Ref<HTMLButtonElement>;
 }) {
   return (
     <button
       type="button"
+      ref={ref}
       className={`button button-${variant} ${className}`}
       {...props}
     />
@@ -430,7 +434,7 @@ export function Popover({
     const previous = document.activeElement as HTMLElement | null;
     const rect = anchor.current?.getBoundingClientRect();
     if (rect) {
-      element.style.left = `${Math.min(rect.left, window.innerWidth - 316)}px`;
+      element.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - element.offsetWidth - 16))}px`;
       element.style.top = `${rect.bottom + 8}px`;
     }
     element.focus();

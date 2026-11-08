@@ -16,6 +16,8 @@ import {
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
   planTaskRequestSchema,
+  planTodayRequestSchema,
+  planTodayResponseSchema,
   dayLoadResponseSchema,
   todayResponseSchema,
   searchResponseSchema,
@@ -420,6 +422,38 @@ export function createApp(options: {
   app.get('/api/clock', (c) =>
     c.json(clockSchema.parse({ now: clock.now().toISOString() })),
   );
+  app.post('/api/tasks/plan-today', async (c) => {
+    const parsed = planTodayRequestSchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!parsed.success)
+      return c.json(
+        {
+          error: {
+            code: 'invalid_request',
+            message: 'Choose 1 to 100 backlog tasks.',
+          },
+        },
+        400,
+      );
+    const now = clock.now();
+    const tasks = repositories.tasks.planToday(
+      parsed.data.taskIds,
+      localDate(now, c.req.header('X-Timezone')!),
+      now,
+    );
+    if (!tasks)
+      return c.json(
+        {
+          error: {
+            code: 'not_in_backlog',
+            message: 'One or more tasks are not in the backlog.',
+          },
+        },
+        409,
+      );
+    return c.json(planTodayResponseSchema.parse({ tasks }));
+  });
   app.post('/api/tasks/:id/plan', async (c) => {
     const id = c.req.param('id');
     const task = repositories.tasks.get(id);
