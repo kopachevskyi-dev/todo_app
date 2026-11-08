@@ -50,6 +50,40 @@ for (const { name, mobile, width, height } of viewports) {
     const detail = mobile
       ? page.getByRole('main')
       : page.getByRole('complementary');
+    // Mobile tabs have no badges: counts belong to the screen header.
+    const expectBacklogCount = async (count: string) => {
+      if (!mobile) {
+        await expect(navLink(page, /Backlog/)).toContainText(count);
+        return;
+      }
+      const fromToday = new URL(page.url()).pathname === '/today';
+      if (fromToday) await navLink(page, /Backlog/).click();
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+        `Backlog${count}`,
+      );
+      if (fromToday) await navLink(page, /Today/).click();
+    };
+    const expectTodayCount = async (count: string) => {
+      if (!mobile) {
+        await expect(navLink(page, /Today/)).toContainText(count);
+        return;
+      }
+      const fromBacklog = new URL(page.url()).pathname === '/backlog';
+      if (fromBacklog) await navLink(page, /Today/).click();
+      // The heading pill is the total; the progress header gives open tasks.
+      const progress = page.getByRole('progressbar', {
+        name: 'Tasks completed today',
+      });
+      await expect(async () => {
+        const total = Number(await progress.getAttribute('aria-valuemax'));
+        const done = Number(await progress.getAttribute('aria-valuenow'));
+        expect(total - done).toBe(Number(count));
+        await expect(page.getByRole('heading', { level: 1 })).toHaveText(
+          `Today${total}`,
+        );
+      }).toPass();
+      if (fromBacklog) await navLink(page, /Backlog/).click();
+    };
     try {
       await page.setViewportSize({ width, height });
 
@@ -62,8 +96,8 @@ for (const { name, mobile, width, height } of viewports) {
       for (let i = 1; i <= 3; i++)
         monday.push(await create(server.url, `Monday ${i}`, 'today'));
       await page.goto(`${server.url}/backlog`);
-      await expect(navLink(page, /Backlog/)).toContainText('7');
-      await expect(navLink(page, /Today/)).toContainText('3');
+      await expectBacklogCount('7');
+      await expectTodayCount('3');
       if (mobile) {
         await page.getByRole('button', { name: 'Add task' }).click();
         const sheet = page.getByRole('dialog');
@@ -75,7 +109,7 @@ for (const { name, mobile, width, height } of viewports) {
         await field.press('Enter');
       }
       await expect(rows(page).first()).toContainText(LICENSE);
-      await expect(navLink(page, /Backlog/)).toContainText('8');
+      await expectBacklogCount('8');
       await rows(page).first().click();
       await expect(detail).toContainText('added to backlog');
       for (const id of monday) await complete(server.url, id);
@@ -94,8 +128,8 @@ for (const { name, mobile, width, height } of viewports) {
         await plan(server.url, wednesday[title], '2026-11-04');
       }
       await page.goto(`${server.url}/backlog`);
-      await expect(navLink(page, /Backlog/)).toContainText('8');
-      await expect(navLink(page, /Today/)).toContainText('1');
+      await expectBacklogCount('8');
+      await expectTodayCount('1');
       await rows(page).filter({ hasText: LICENSE }).click();
       await page
         .getByPlaceholder('Add a description')
@@ -125,7 +159,9 @@ for (const { name, mobile, width, height } of viewports) {
       await page.getByRole('button', { name: /Tomorrow, Wed 4/ }).click();
       await page.getByRole('button', { name: 'Plan for Wed, Nov 4' }).click();
       await expect(detail).toContainText('planned for Nov 4');
-      await expect(navLink(page, /Backlog/)).toContainText('7');
+      if (mobile)
+        await page.getByRole('link', { name: 'Back to Backlog' }).click();
+      await expectBacklogCount('7');
       await complete(server.url, tuesday);
 
       // 3. Wed Nov 4, 2:20 PM: check it off in Today.
@@ -133,13 +169,13 @@ for (const { name, mobile, width, height } of viewports) {
       await complete(server.url, wednesday['Pay rent'] as string);
       await at('2026-11-04T19:20:00.000Z');
       await page.goto(`${server.url}/today`);
-      await expect(navLink(page, /Backlog/)).toContainText('7');
-      await expect(navLink(page, /Today/)).toContainText('4');
+      await expectBacklogCount('7');
+      await expectTodayCount('4');
       await expect(page.getByRole('main')).toContainText('1 of 5 done');
       await page.getByRole('checkbox', { name: LICENSE }).check();
       await expect(page.getByRole('main')).toContainText('DONE · 2');
       await expect(page.getByRole('main')).toContainText('2 of 5 done');
-      await expect(navLink(page, /Today/)).toContainText('3');
+      await expectTodayCount('3');
       await rows(page).filter({ hasText: LICENSE }).click();
       await expect(detail).toContainText('Completed at 2:20 PM');
       await at('2026-11-04T22:00:00.000Z');

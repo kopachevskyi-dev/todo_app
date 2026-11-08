@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
   addDays,
@@ -29,6 +29,14 @@ export function DayPicker({
     selected && selected >= today ? selected : today,
   );
   const grid = useRef<HTMLDivElement>(null);
+  const picker = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    picker.current
+      ?.querySelector<HTMLButtonElement>(
+        '.day-option[aria-pressed="true"], .day-option',
+      )
+      ?.focus();
+  }, []);
   const monthStart = `${month}-01`;
   const nextMonth = (offset: number) => {
     const date = new Date(`${monthStart}T12:00:00Z`);
@@ -49,7 +57,29 @@ export function DayPicker({
   const dates: string[] = [];
   for (let day = monthStart; day <= end; day = addDays(day, 1)) dates.push(day);
   return (
-    <div className="day-picker">
+    <div
+      className="day-picker"
+      ref={picker}
+      onKeyDown={(event) => {
+        if (calendar) return;
+        const options = Array.from(
+          event.currentTarget.querySelectorAll<HTMLButtonElement>(
+            '.day-option',
+          ),
+        );
+        const index = options.indexOf(event.target as HTMLButtonElement);
+        if (index < 0) return;
+        const next = {
+          ArrowDown: (index + 1) % options.length,
+          ArrowUp: (index - 1 + options.length) % options.length,
+          Home: 0,
+          End: options.length - 1,
+        }[event.key];
+        if (next === undefined) return;
+        event.preventDefault();
+        options[next]?.focus();
+      }}
+    >
       {calendar ? (
         <>
           <div className="calendar-header">

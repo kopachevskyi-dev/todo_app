@@ -1165,6 +1165,11 @@ h3 {
   background: var(--text);
   transition: width var(--motion-slide);
 }
+@starting-style {
+  .progress-fill {
+    width: 0 !important;
+  }
+}
 .today-capture {
   display: flex;
   align-items: flex-start;
@@ -1209,7 +1214,7 @@ h3 {
 }
 .check-hit:active .checkbox {
   transform: scale(0.92);
-  transition: transform 80ms;
+  transition: transform var(--motion-check);
 }
 @keyframes check-draw {
   from {

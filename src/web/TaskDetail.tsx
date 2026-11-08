@@ -281,7 +281,22 @@ export function TaskDetail({
     }
   };
   return (
-    <div className="task-detail">
+    <div
+      className="task-detail"
+      onKeyDown={(event) => {
+        if (
+          event.key === 'Escape' &&
+          !event.defaultPrevented &&
+          !choosingDay &&
+          !choosingList &&
+          !confirming
+        ) {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }
+      }}
+    >
       <textarea
         rows={1}
         className="detail-title"
