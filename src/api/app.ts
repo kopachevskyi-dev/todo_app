@@ -1,9 +1,13 @@
+import { z } from 'zod';
+import { addDays } from '../domain/day-picker';
 import { activityText } from '../domain/activity';
 import { parseSearchQuery, searchLocation } from '../domain/search';
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isTimeZone, localDate } from '../domain/time';
 import {
+  planTaskRequestSchema,
+  dayLoadResponseSchema,
   todayResponseSchema,
   searchResponseSchema,
   clockSchema,
@@ -206,6 +210,83 @@ export function createApp(options: {
         task: repositories.tasks.patch(id, parsed.data, clock.now()),
       }),
     );
+  });
+  app.get('/api/clock', (c) =>
+    c.json(clockSchema.parse({ now: clock.now().toISOString() })),
+  );
+  app.post('/api/tasks/:id/plan', async (c) => {
+    const id = c.req.param('id');
+    const task = repositories.tasks.get(id);
+    if (!task)
+      return c.json(
+        { error: { code: 'not_found', message: 'Task not found.' } },
+        404,
+      );
+    const parsed = planTaskRequestSchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!parsed.success)
+      return c.json(
+        { error: { code: 'invalid_request', message: 'Choose a valid day.' } },
+        400,
+      );
+    const now = clock.now();
+    if (
+      parsed.data.day &&
+      parsed.data.day < localDate(now, c.req.header('X-Timezone')!)
+    )
+      return c.json(
+        {
+          error: {
+            code: 'day_in_past',
+            message: 'Choose today or a later day.',
+          },
+        },
+        400,
+      );
+    if (task.completedAt)
+      return c.json(
+        {
+          error: {
+            code: 'task_completed',
+            message: 'Only open tasks can be planned.',
+          },
+        },
+        400,
+      );
+    return c.json(
+      createTaskResponseSchema.parse({
+        task: repositories.tasks.plan(id, parsed.data.day, now),
+      }),
+    );
+  });
+  app.get('/api/day-load', (c) => {
+    const range = z
+      .object({ from: z.iso.date(), to: z.iso.date() })
+      .safeParse(c.req.query());
+    if (
+      !range.success ||
+      range.data.to < range.data.from ||
+      (Date.parse(range.data.to) - Date.parse(range.data.from)) / 86400000 >= 62
+    )
+      return c.json(
+        {
+          error: {
+            code: 'invalid_range',
+            message: 'Choose a range of 1 to 62 days.',
+          },
+        },
+        400,
+      );
+    const { from, to } = range.data;
+    const days: Record<string, number> = {};
+    for (let day = from; ; day = addDays(day, 1)) {
+      days[day] = 0;
+      if (day === to) break;
+    }
+    for (const row of repositories.tasks.dayLoad(from, to))
+      if (row.day) days[row.day] = row.count;
+    return c.json(dayLoadResponseSchema.parse({ days }));
   });
   app.delete('/api/tasks/:id', (c) => {
     if (!repositories.tasks.get(c.req.param('id')))
