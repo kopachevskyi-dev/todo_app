@@ -7,9 +7,14 @@ export function useCompletion() {
     mutationFn: api.setCompletion,
     onSuccess: async (_result, { id }) => {
       await Promise.all(
-        [['today'], ['backlog'], ['counts'], ['search'], ['task', id]].map(
-          (queryKey) => client.invalidateQueries({ queryKey }),
-        ),
+        [
+          ['today'],
+          ['backlog'],
+          ['counts'],
+          ['search'],
+          ['day-load'],
+          ['task', id],
+        ].map((queryKey) => client.invalidateQueries({ queryKey })),
       );
     },
   });

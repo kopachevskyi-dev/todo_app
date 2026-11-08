@@ -9,6 +9,9 @@ import type {
 } from '../shared/contract';
 import { formatActivityTimestamp } from '../domain/activity';
 import { api } from './api';
+import { DayPicker } from './DayPicker';
+import { formatDay, planButtonLabel } from '../domain/day-picker';
+import { localDate } from '../domain/time';
 import { completionTime, useCompletion } from './useCompletion';
 import {
   BottomSheet,
@@ -36,6 +39,67 @@ export function TaskDetail({
   const [title, setTitle] = useState(task.title);
   const [description, setDescription] = useState(task.description);
   const [error, setError] = useState<string>();
+  const clock = useQuery({ queryKey: ['clock'], queryFn: api.clock });
+  const [choosingDay, setChoosingDay] = useState(false);
+  const [chosenDay, setChosenDay] = useState<string | null | undefined>(
+    undefined,
+  );
+  const [planning, setPlanning] = useState(false);
+  const dayAnchor = useRef<HTMLButtonElement>(null);
+  const day = chosenDay === undefined ? task.day : chosenDay;
+  const dismissDay = () => {
+    setChoosingDay(false);
+    setChosenDay(undefined);
+  };
+  const plan = async (target: string | null) => {
+    if (planning) return;
+    setPlanning(true);
+    flushDescription();
+    await queue.current;
+    try {
+      const result = await api.planTask(task.id, target);
+      client.setQueryData<Detail>(['task', task.id], (value) =>
+        value ? { ...value, task: result.task } : value,
+      );
+      if (
+        target &&
+        !task.day &&
+        !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+      ) {
+        const row = document.querySelector<HTMLElement>(
+          `[data-layout-id="${task.id}"]`,
+        );
+        if (row)
+          await row
+            .animate(
+              [
+                { opacity: 1, transform: 'none' },
+                { opacity: 0, transform: 'translateX(12px)' },
+              ],
+              { duration: 140, easing: 'ease-out' },
+            )
+            .finished.catch(() => undefined);
+      }
+      setChosenDay(undefined);
+      setError(undefined);
+      await Promise.all(
+        ['task', 'backlog', 'today', 'counts', 'search', 'day-load'].map(
+          (key) =>
+            client.invalidateQueries({
+              queryKey: key === 'task' ? [key, task.id] : [key],
+            }),
+        ),
+      );
+    } catch (failure) {
+      setError(
+        failure instanceof Error
+          ? failure.message
+          : 'Could not plan the task. Try again.',
+      );
+    } finally {
+      setPlanning(false);
+    }
+  };
   const [choosingList, setChoosingList] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -263,17 +327,18 @@ export function TaskDetail({
         </div>
         <div className="field-row">
           <span>Day</span>
-          <span className={`field-value ${!task.day ? 'empty-value' : ''}`}>
+          <button
+            ref={dayAnchor}
+            type="button"
+            className={`field-value ${!day ? 'empty-value' : ''}`}
+            aria-label={`Day ${day ? formatDay(day) : 'No day'}`}
+            aria-expanded={choosingDay}
+            disabled={Boolean(task.completedAt)}
+            onClick={() => setChoosingDay(true)}
+          >
             <Icon name="today" size={18} />
-            {task.day
-              ? new Intl.DateTimeFormat('en-US', {
-                  timeZone: 'UTC',
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                }).format(new Date(`${task.day}T12:00:00Z`))
-              : 'No day'}
-          </span>
+            {day ? formatDay(day) : 'No day'}
+          </button>
         </div>
       </div>
       <h3>Subtasks</h3>
@@ -297,6 +362,11 @@ export function TaskDetail({
           ))}
         </ul>
       </section>
+      {clock.isError && (
+        <p role="alert">
+          Could not load the current day. Reopen the task to try again.
+        </p>
+      )}
       {completion.isError && (
         <p role="alert" className="field-error">
           {completion.error.message}
@@ -319,6 +389,34 @@ export function TaskDetail({
         >
           {mobile ? <Icon name="trash" /> : 'Delete'}
         </Button>
+        {!task.completedAt && (
+          <Button
+            className="plan-action"
+            variant={
+              task.day && chosenDay === undefined ? 'outline' : 'primary'
+            }
+            disabled={planning || !clock.data}
+            onClick={() => {
+              if (task.day && chosenDay === undefined) void plan(null);
+              else if (day === null && !task.day) setChoosingDay(true);
+              else void plan(day);
+            }}
+          >
+            {task.day && chosenDay === undefined
+              ? 'Move to backlog'
+              : task.day && day === null
+                ? 'Save'
+                : clock.data
+                  ? planButtonLabel(
+                      day,
+                      localDate(
+                        new Date(clock.data.now),
+                        Intl.DateTimeFormat().resolvedOptions().timeZone,
+                      ),
+                    )
+                  : 'Choose a day'}
+          </Button>
+        )}
         {task.completedAt && (
           <Button
             variant="strong"
@@ -335,6 +433,39 @@ export function TaskDetail({
           </Button>
         )}
       </footer>
+      {choosingDay &&
+        (mobile ? (
+          <BottomSheet label="Choose a day" onClose={dismissDay}>
+            <h3>Choose a day</h3>
+            {clock.data ? (
+              <DayPicker
+                now={new Date(clock.data.now)}
+                selected={day}
+                onChoose={(value) => {
+                  setChosenDay(value);
+                  setChoosingDay(false);
+                }}
+              />
+            ) : (
+              <p role="status">Loading days…</p>
+            )}
+          </BottomSheet>
+        ) : (
+          <Popover anchor={dayAnchor} label="Choose a day" onClose={dismissDay}>
+            {clock.data ? (
+              <DayPicker
+                now={new Date(clock.data.now)}
+                selected={day}
+                onChoose={(value) => {
+                  setChosenDay(value);
+                  setChoosingDay(false);
+                }}
+              />
+            ) : (
+              <p role="status">Loading days…</p>
+            )}
+          </Popover>
+        ))}
       {choosingList &&
         (mobile ? (
           <BottomSheet

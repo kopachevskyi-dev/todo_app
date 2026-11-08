@@ -184,6 +184,13 @@ export const searchResponseSchema = z.object({
     .max(50),
 });
 
+export const planTaskRequestSchema = z
+  .object({ day: z.iso.date().nullable() })
+  .strict();
+export const dayLoadResponseSchema = z.object({
+  days: z.record(z.iso.date(), z.number().int().nonnegative()),
+});
+
 export const todayResponseSchema = z.object({
   day: z.iso.date(),
   open: z.array(taskRowSchema),

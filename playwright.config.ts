@@ -6,6 +6,10 @@ export default defineConfig({
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: 'list',
-  use: { trace: 'retain-on-failure' },
+  use: {
+    trace: 'retain-on-failure',
+    // Ticket clock scenarios use New York dates, independent of the host timezone.
+    timezoneId: 'America/New_York',
+  },
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
 });
