@@ -28,6 +28,7 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
         <path d="M12 8v4l3 2" />
       </>
     ),
+    trash: <path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12" />,
     plus: <path d="M12 5v14M5 12h14" />,
     search: (
       <>

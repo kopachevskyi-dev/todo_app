@@ -1,5 +1,7 @@
-import type { z } from 'zod';
+import { z } from 'zod';
 import {
+  patchTaskRequestSchema,
+  type PatchTaskRequest,
   errorResponseSchema,
   healthResponseSchema,
   listsResponseSchema,
@@ -23,13 +25,24 @@ async function request<T>(
       'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
     },
   });
-  const body: unknown = await response.json();
+  const body: unknown =
+    response.status === 204 ? undefined : await response.json();
   if (!response.ok)
     throw new Error(errorResponseSchema.parse(body).error.message);
   return schema.parse(body);
 }
 
 export const api = {
+  patchTask: (id: string, input: PatchTaskRequest) =>
+    request(`/tasks/${encodeURIComponent(id)}`, createTaskResponseSchema, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patchTaskRequestSchema.parse(input)),
+    }),
+  deleteTask: (id: string) =>
+    request(`/tasks/${encodeURIComponent(id)}`, z.undefined(), {
+      method: 'DELETE',
+    }),
   lists: () => request('/lists', listsResponseSchema),
   health: () => request('/health', healthResponseSchema),
   backlog: (listId?: string) =>

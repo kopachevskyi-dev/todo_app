@@ -2,7 +2,8 @@ import { and, asc, count, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
 import type { AppDatabase } from './database';
 import { lists, subtasks, tasks, taskEvents } from './schema';
 import { createId } from './ids';
-import type { CreateTaskRequest } from '../shared/contract';
+import { applyDetailsEdit, type DetailPart } from '../domain/activity';
+import type { CreateTaskRequest, PatchTaskRequest } from '../shared/contract';
 import { localDate } from '../domain/time';
 
 export function createRepositories(db: AppDatabase) {
@@ -81,6 +82,96 @@ export function createRepositories(db: AppDatabase) {
           .all(),
       get: (id: string) =>
         db.select(taskFields).from(tasks).where(eq(tasks.id, id)).get(),
+      subtasks: (id: string) =>
+        db
+          .select()
+          .from(subtasks)
+          .where(eq(subtasks.taskId, id))
+          .orderBy(asc(subtasks.position))
+          .all(),
+      events: (id: string) =>
+        db
+          .select()
+          .from(taskEvents)
+          .where(eq(taskEvents.taskId, id))
+          .orderBy(asc(taskEvents.at), asc(sql`task_event.rowid`))
+          .all(),
+      delete: (id: string) => db.delete(tasks).where(eq(tasks.id, id)).run(),
+      patch: (id: string, input: PatchTaskRequest, now: Date) =>
+        db.transaction((tx) => {
+          const previous = tx
+            .select()
+            .from(tasks)
+            .where(eq(tasks.id, id))
+            .get()!;
+          tx.update(tasks)
+            .set({ ...input, updatedAt: now.toISOString() })
+            .where(eq(tasks.id, id))
+            .run();
+          const parts: DetailPart[] = [];
+          if (
+            input.description?.trim() &&
+            input.description !== previous.description
+          )
+            parts.push('description');
+          if (input.listId && input.listId !== previous.listId)
+            parts.push('list');
+          let latest = tx
+            .select()
+            .from(taskEvents)
+            .where(
+              and(
+                eq(taskEvents.taskId, id),
+                eq(taskEvents.type, 'details_added'),
+              ),
+            )
+            .orderBy(desc(taskEvents.at), desc(sql`task_event.rowid`))
+            .get();
+          for (const part of parts) {
+            const result = applyDetailsEdit(
+              latest
+                ? {
+                    at: latest.at,
+                    parts: (latest.data?.parts ?? []) as DetailPart[],
+                  }
+                : null,
+              part,
+              now,
+            );
+            const listName = input.listId
+              ? tx.select().from(lists).where(eq(lists.id, input.listId)).get()
+                  ?.name
+              : latest?.data?.listName;
+            const data = {
+              parts: result.parts,
+              ...(listName ? { listName } : {}),
+            };
+            if (result.kind === 'update' && latest) {
+              tx.update(taskEvents)
+                .set({ data })
+                .where(eq(taskEvents.id, latest.id))
+                .run();
+              latest = { ...latest, data };
+            } else {
+              latest = tx
+                .insert(taskEvents)
+                .values({
+                  id: createId(now),
+                  taskId: id,
+                  type: 'details_added',
+                  at: result.at,
+                  data,
+                })
+                .returning()
+                .get();
+            }
+          }
+          return tx
+            .select(taskFields)
+            .from(tasks)
+            .where(eq(tasks.id, id))
+            .get()!;
+        }),
       counts: (today: string) => ({
         backlog: total(and(isNull(tasks.day), isNull(tasks.completedAt))),
         todayOpen: total(and(eq(tasks.day, today), isNull(tasks.completedAt))),

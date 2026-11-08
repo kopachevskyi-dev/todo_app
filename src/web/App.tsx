@@ -18,6 +18,7 @@ import {
   SectionLabel,
   TaskRow,
 } from './components';
+import { TaskDetail } from './TaskDetail';
 import { captureLayout } from './layout-animation';
 import type {
   Counts,
@@ -156,7 +157,15 @@ function Capture({
   );
 }
 
-function Detail({ id }: { id?: string }) {
+function Detail({
+  id,
+  onClose,
+  mobile,
+}: {
+  id?: string;
+  onClose: () => void;
+  mobile: boolean;
+}) {
   const task = useQuery({
     queryKey: ['task', id],
     queryFn: () => api.task(id!),
@@ -171,7 +180,7 @@ function Detail({ id }: { id?: string }) {
       </p>
     );
   return task.data ? (
-    <h2 className="detail-title">{task.data.task.title}</h2>
+    <TaskDetail key={id} detail={task.data} onClose={onClose} mobile={mobile} />
   ) : (
     <p role="status">Loading task…</p>
   );
@@ -353,7 +362,7 @@ export function App() {
               </Button>
             </div>
           )}
-          <Detail id={task} />
+          <Detail id={task} onClose={closeTask} mobile={mobile} />
         </aside>
       )}
       {!desktop && !mobile && task && (
@@ -368,7 +377,7 @@ export function App() {
               <Icon name="close" />
             </Button>
           </div>
-          <Detail id={task} />
+          <Detail id={task} onClose={closeTask} mobile={mobile} />
         </Modal>
       )}
       {mobile && task && (
@@ -376,11 +385,12 @@ export function App() {
           <Link
             to={path as '/backlog' | '/today' | '/history' | '/search'}
             search={(previous) => ({ ...previous, task: undefined })}
+            aria-label={`Back to ${title}`}
             className="back-link"
           >
             ‹ {title}
           </Link>
-          <Detail id={task} />
+          <Detail id={task} onClose={closeTask} mobile={mobile} />
         </main>
       )}
       {mobile && !task && (

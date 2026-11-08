@@ -87,10 +87,41 @@ export const countsResponseSchema = z.object({
   todayDone: z.number().int().nonnegative(),
   todayTotal: z.number().int().nonnegative(),
 });
+export const patchTaskRequestSchema = z
+  .object({
+    title: taskTitleSchema.optional(),
+    description: z.string().optional(),
+    listId: z.string().nullable().optional(),
+  })
+  .strict();
+export type PatchTaskRequest = z.infer<typeof patchTaskRequestSchema>;
+export const activityItemSchema = z.object({
+  type: z.enum([
+    'added_to_backlog',
+    'added_to_today',
+    'details_added',
+    'planned',
+    'completed',
+    'reopened',
+    'moved_to_backlog',
+    'missed',
+  ]),
+  at: z.iso.datetime(),
+  day: z.iso.date().nullable(),
+  text: z.string(),
+});
+export const subtaskSchema = z.object({
+  id: z.ulid(),
+  taskId: z.ulid(),
+  title: z.string(),
+  done: z.boolean(),
+  position: z.number().int(),
+  createdAt: z.iso.datetime(),
+});
 export const taskDetailResponseSchema = z.object({
   task: taskSchema,
-  subtasks: z.array(z.never()),
-  activity: z.array(z.never()),
+  subtasks: z.array(subtaskSchema),
+  activity: z.array(activityItemSchema),
 });
 export type Task = z.infer<typeof taskSchema>;
 export type TaskRow = z.infer<typeof taskRowSchema>;
