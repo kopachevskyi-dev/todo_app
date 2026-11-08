@@ -5,23 +5,34 @@ import {
   createRootRoute,
   createRoute,
   createRouter,
-  Outlet,
+  redirect,
   RouterProvider,
 } from '@tanstack/react-router';
-import styles from './today.module.css';
+import { App } from './App';
 import './style.css';
 
-const rootRoute = createRootRoute({ component: Outlet });
-const todayRoute = createRoute({
+const rootRoute = createRootRoute({
+  component: App,
+  validateSearch: (
+    search: Record<string, unknown>,
+  ): { task?: string; list?: string } => ({
+    task: typeof search.task === 'string' ? search.task : undefined,
+    list: typeof search.list === 'string' ? search.list : undefined,
+  }),
+});
+const indexRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/',
-  component: () => (
-    <main className={styles.page}>
-      <h1>Today</h1>
-    </main>
-  ),
+  beforeLoad: () => {
+    throw redirect({ to: '/today' });
+  },
 });
-const router = createRouter({ routeTree: rootRoute.addChildren([todayRoute]) });
+const routes = (['/backlog', '/today', '/history', '/search'] as const).map(
+  (path) => createRoute({ getParentRoute: () => rootRoute, path }),
+);
+const router = createRouter({
+  routeTree: rootRoute.addChildren([indexRoute, ...routes]),
+});
 const queryClient = new QueryClient();
 
 declare module '@tanstack/react-router' {
