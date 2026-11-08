@@ -23,6 +23,7 @@ import {
   EmptyPanel,
   Icon,
   Modal,
+  Popover,
   QuickAdd,
   SectionLabel,
   TaskRow,
@@ -278,6 +279,9 @@ export function App() {
   const mobile = useMedia('(max-width: 767px)');
   const desktop = useMedia('(min-width: 1216px)');
   const [capturing, setCapturing] = useState(false);
+  const [planning, setPlanning] = useState(false);
+  const [plannedSelection, setPlannedSelection] = useState<string[]>([]);
+  const planButton = useRef<HTMLButtonElement>(null);
   const isBacklog = path === '/backlog';
   const isToday = path === '/today';
   const completion = useCompletion();
@@ -317,6 +321,101 @@ export function App() {
     queryFn: () => api.today(list),
     enabled: isToday,
   });
+  const pickerBacklog = useQuery({
+    queryKey: ['backlog', 'picker'],
+    queryFn: () => api.backlog(),
+    enabled: planning,
+  });
+  const planToday = useMutation({
+    mutationFn: api.planToday,
+    onSuccess: () => {
+      setPlanning(false);
+      setPlannedSelection([]);
+      void client.invalidateQueries({ queryKey: ['today'] });
+      void client.invalidateQueries({ queryKey: ['backlog'] });
+      void client.invalidateQueries({ queryKey: ['counts'] });
+    },
+  });
+  const closePlanner = () => {
+    setPlanning(false);
+    setPlannedSelection([]);
+  };
+  const openPlanner = () => {
+    setPlannedSelection([]);
+    setPlanning(true);
+  };
+  const plannerContents = (
+    <>
+      {mobile && <h2 className="planner-title">From backlog</h2>}
+      <div className="planner-rows">
+        {pickerBacklog.isPending && <p role="status">Loading tasks…</p>}
+        {pickerBacklog.isError && (
+          <p role="alert">Could not load backlog tasks.</p>
+        )}
+        {pickerBacklog.data?.tasks.length === 0 && (
+          <p className="planner-empty">Nothing waiting in the backlog.</p>
+        )}
+        {pickerBacklog.data?.tasks.map((task) => {
+          const checked = plannedSelection.includes(task.id);
+          return (
+            <button
+              key={task.id}
+              type="button"
+              role="checkbox"
+              aria-checked={checked}
+              className={`planner-row ${checked ? 'row-selected' : ''}`}
+              onClick={() =>
+                setPlannedSelection((current) =>
+                  checked
+                    ? current.filter((id) => id !== task.id)
+                    : [...current, task.id],
+                )
+              }
+            >
+              <span className={`planner-check ${checked ? 'checked' : ''}`}>
+                {checked && <Icon name="check" size={16} />}
+              </span>
+              <span className="planner-row-text">
+                <span>{task.title}</span>
+                {(task.list || task.missedFrom) && (
+                  <span className="row-meta">
+                    {task.list && (
+                      <>
+                        <span
+                          className="list-dot"
+                          style={{ background: task.list.color }}
+                        />
+                        {task.list.name}
+                      </>
+                    )}
+                    {task.missedFrom && (
+                      <>
+                        {task.list && ' · '}
+                        from{' '}
+                        {new Intl.DateTimeFormat('en-US', {
+                          timeZone: 'UTC',
+                          weekday: 'short',
+                          month: 'short',
+                          day: 'numeric',
+                        }).format(new Date(`${task.missedFrom}T12:00:00Z`))}
+                      </>
+                    )}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <Button
+        className="planner-submit"
+        disabled={plannedSelection.length === 0 || planToday.isPending}
+        onClick={() => planToday.mutate(plannedSelection)}
+      >
+        Plan for today ({plannedSelection.length})
+      </Button>
+    </>
+  );
   const rows = isToday ? today.data?.open : backlog.data?.tasks;
   const rowContainer = useRef<HTMLUListElement>(null);
   const animateLayout = useRef<(() => void) | undefined>(undefined);
@@ -491,7 +590,11 @@ export function App() {
                   </div>
                 </div>
                 {mobile && (
-                  <Button variant="outline" disabled>
+                  <Button
+                    ref={planButton}
+                    variant="outline"
+                    onClick={openPlanner}
+                  >
                     <Icon name="backlog" size={18} />
                     From backlog
                   </Button>
@@ -510,7 +613,11 @@ export function App() {
               {!mobile && (
                 <div className="today-capture">
                   <Capture target="today" />
-                  <Button variant="outline" disabled>
+                  <Button
+                    ref={planButton}
+                    variant="outline"
+                    onClick={openPlanner}
+                  >
                     <Icon name="backlog" size={18} />
                     From backlog
                   </Button>
@@ -642,6 +749,22 @@ export function App() {
           )}
         </main>
       )}
+      {isToday &&
+        planning &&
+        !task &&
+        (mobile ? (
+          <BottomSheet label="From backlog" onClose={closePlanner}>
+            {plannerContents}
+          </BottomSheet>
+        ) : (
+          <Popover
+            anchor={planButton}
+            label="From backlog"
+            onClose={closePlanner}
+          >
+            {plannerContents}
+          </Popover>
+        ))}
       {desktop && (
         <aside
           className={`detail-panel ${task ? 'has-task' : ''}`}

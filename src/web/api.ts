@@ -8,6 +8,8 @@ import {
   clockSchema,
   dayLoadResponseSchema,
   planTaskRequestSchema,
+  planTodayRequestSchema,
+  planTodayResponseSchema,
   todayResponseSchema,
   patchTaskRequestSchema,
   type PatchTaskRequest,
@@ -83,6 +85,12 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(planTaskRequestSchema.parse({ day })),
+    }),
+  planToday: (taskIds: string[]) =>
+    request('/tasks/plan-today', planTodayResponseSchema, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(planTodayRequestSchema.parse({ taskIds })),
     }),
   today: (listId?: string) =>
     request(

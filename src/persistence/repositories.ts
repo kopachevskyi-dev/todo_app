@@ -8,6 +8,7 @@ import {
   eq,
   isNotNull,
   isNull,
+  inArray,
   lt,
   sql,
 } from 'drizzle-orm';
@@ -184,6 +185,50 @@ export function createRepositories(db: AppDatabase) {
             .where(eq(tasks.id, id))
             .get()!;
         }),
+      planToday: (ids: string[], day: string, now: Date) =>
+        db.transaction(
+          (tx) => {
+            const selected = tx
+              .select({
+                id: tasks.id,
+                day: tasks.day,
+                completedAt: tasks.completedAt,
+              })
+              .from(tasks)
+              .where(inArray(tasks.id, ids))
+              .all();
+            if (
+              selected.length !== ids.length ||
+              selected.some(
+                (task) => task.day !== null || task.completedAt !== null,
+              )
+            )
+              return null;
+
+            const at = now.toISOString();
+            for (const id of ids) {
+              tx.update(tasks)
+                .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
+                .where(eq(tasks.id, id))
+                .run();
+              tx.insert(taskEvents)
+                .values({
+                  id: createId(now),
+                  taskId: id,
+                  type: 'planned',
+                  at,
+                  day,
+                })
+                .run();
+            }
+            return tx
+              .select(taskFields)
+              .from(tasks)
+              .where(inArray(tasks.id, ids))
+              .all();
+          },
+          { behavior: 'immediate' },
+        ),
       moveToBacklog: (id: string, now: Date) =>
         db.transaction((tx) => {
           const at = now.toISOString();

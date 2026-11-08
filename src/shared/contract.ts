@@ -200,6 +200,19 @@ export const searchResponseSchema = z.object({
 export const planTaskRequestSchema = z
   .object({ day: z.iso.date().nullable() })
   .strict();
+export const planTodayRequestSchema = z
+  .object({
+    taskIds: z
+      .array(z.ulid())
+      .min(1)
+      .max(100)
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        'Task ids must be unique.',
+      ),
+  })
+  .strict();
+export const planTodayResponseSchema = z.object({ tasks: z.array(taskSchema) });
 export const dayLoadResponseSchema = z.object({
   days: z.record(z.iso.date(), z.number().int().nonnegative()),
 });
