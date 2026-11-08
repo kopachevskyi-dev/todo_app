@@ -111,7 +111,9 @@ export function TaskRow({
   selected,
   href,
   onOpen,
+  location,
 }: {
+  location?: string;
   task: TaskRowData;
   selected: boolean;
   href: string;
@@ -120,7 +122,7 @@ export function TaskRow({
   return (
     <li
       data-layout-id={task.id}
-      className={`task-row ${selected ? 'selected' : ''}`}
+      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''}`}
     >
       <a
         href={href}
@@ -154,17 +156,23 @@ export function TaskRow({
         />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
-          {task.list && (
+          {(task.list || location) && (
             <span className="row-meta">
-              <span
-                className="list-dot"
-                style={{ background: task.list.color }}
-              />
-              {task.list.name}
+              {task.list && (
+                <>
+                  <span
+                    className="list-dot"
+                    style={{ background: task.list.color }}
+                  />
+                  {task.list.name}
+                  {location && ' · '}
+                </>
+              )}
+              {location}
             </span>
           )}
         </span>
-        <Icon name="chevron" size={18} />
+        {!task.completedAt && <Icon name="chevron" size={18} />}
       </a>
     </li>
   );

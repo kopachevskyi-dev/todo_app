@@ -1,5 +1,6 @@
 import type { z } from 'zod';
 import {
+  searchResponseSchema,
   errorResponseSchema,
   healthResponseSchema,
   listsResponseSchema,
@@ -30,6 +31,8 @@ async function request<T>(
 }
 
 export const api = {
+  search: (query: string) =>
+    request(`/search?q=${encodeURIComponent(query)}`, searchResponseSchema),
   lists: () => request('/lists', listsResponseSchema),
   health: () => request('/health', healthResponseSchema),
   backlog: (listId?: string) =>

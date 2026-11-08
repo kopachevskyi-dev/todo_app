@@ -96,3 +96,18 @@ export type Task = z.infer<typeof taskSchema>;
 export type TaskRow = z.infer<typeof taskRowSchema>;
 export type CreateTaskRequest = z.infer<typeof createTaskRequestSchema>;
 export type Counts = z.infer<typeof countsResponseSchema>;
+
+export const searchResponseSchema = z.object({
+  results: z
+    .array(
+      taskRowSchema.extend({
+        location: z.discriminatedUnion('kind', [
+          z.object({ kind: z.literal('backlog'), day: z.null() }),
+          z.object({ kind: z.literal('today'), day: z.iso.date() }),
+          z.object({ kind: z.literal('planned'), day: z.iso.date() }),
+          z.object({ kind: z.literal('done'), day: z.iso.date() }),
+        ]),
+      }),
+    )
+    .max(50),
+});

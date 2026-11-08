@@ -14,7 +14,7 @@ it('returns at most 50 of 60 matches, newest updatedAt first', async () => {
     const n = String(i).padStart(2, '0');
     const at = `2026-11-01T10:${n}:00.000Z`;
     return {
-      id: `01JBX7Q3M2V8R4K9T6N0P1S${n}`.slice(0, 26),
+      id: `01JBX7Q3M2V8R4K9T6N0P1S0${n}`,
       title: `Task a${n}`,
       placedAt: at,
       createdAt: at,
