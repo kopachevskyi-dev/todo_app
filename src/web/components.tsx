@@ -2,10 +2,13 @@ import {
   useEffect,
   useId,
   useRef,
+  useState,
   type ButtonHTMLAttributes,
   type ReactNode,
   type RefObject,
 } from 'react';
+import { flushSync } from 'react-dom';
+import { completionTime } from './useCompletion';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
 export function Icon({ name, size = 20 }: { name: string; size?: number }) {
@@ -89,20 +92,51 @@ export function EmptyPanel({ children }: { children: ReactNode }) {
 export function Checkbox({
   checked = false,
   label,
+  onChange,
+  disabled = false,
 }: {
   checked?: boolean;
   label: string;
+  onChange?: () => Promise<unknown>;
+  disabled?: boolean;
 }) {
+  const [optimistic, setOptimistic] = useState<boolean>();
+  const displayed = optimistic ?? checked;
+  const toggle = async () => {
+    if (disabled || optimistic !== undefined || !onChange) return;
+    // Commit the check on this node before starting the request or reordering.
+    flushSync(() => setOptimistic(!checked));
+    try {
+      await onChange();
+    } catch {
+      // The mutation owner displays the error; restore the server state below.
+    } finally {
+      setOptimistic(undefined);
+    }
+  };
   return (
     <span
       className="check-hit"
       role="checkbox"
-      aria-checked={checked}
-      aria-disabled="true"
+      aria-checked={displayed}
+      aria-disabled={!onChange || disabled || optimistic !== undefined}
+      tabIndex={onChange ? 0 : undefined}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        void toggle();
+      }}
+      onKeyDown={(event) => {
+        if (event.key === ' ' || event.key === 'Enter') {
+          event.preventDefault();
+          event.stopPropagation();
+          void toggle();
+        }
+      }}
       aria-label={label}
     >
-      <span className={`checkbox ${checked ? 'checked' : ''}`}>
-        {checked && <Icon name="check" size={14} />}
+      <span className={`checkbox ${displayed ? 'checked' : ''}`}>
+        {displayed && <Icon name="check" size={14} />}
       </span>
     </span>
   );
@@ -113,7 +147,13 @@ export function TaskRow({
   href,
   onOpen,
   location,
+  onToggle,
+  pending,
+  section,
 }: {
+  section?: string;
+  onToggle?: () => Promise<unknown>;
+  pending?: boolean;
   location?: string;
   task: TaskRowData;
   selected: boolean;
@@ -125,6 +165,11 @@ export function TaskRow({
       data-layout-id={task.id}
       className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''}`}
     >
+      {section && (
+        <div className="done-section">
+          <SectionLabel>{section}</SectionLabel>
+        </div>
+      )}
       <a
         href={href}
         onClick={(event) => {
@@ -154,6 +199,8 @@ export function TaskRow({
         <Checkbox
           label={`Completion of ${task.title}`}
           checked={Boolean(task.completedAt)}
+          onChange={onToggle}
+          disabled={pending}
         />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
@@ -173,6 +220,11 @@ export function TaskRow({
             </span>
           )}
         </span>
+        {task.completedAt && !location && (
+          <time className="completion-time" dateTime={task.completedAt}>
+            {completionTime(task.completedAt)}
+          </time>
+        )}
         {!task.completedAt && <Icon name="chevron" size={18} />}
       </a>
     </li>

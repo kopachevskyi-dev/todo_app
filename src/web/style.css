@@ -939,3 +939,118 @@ h3 {
   color: var(--text-muted);
   text-decoration: line-through;
 }
+
+.today-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  column-gap: 20px;
+}
+.today-header .today-date {
+  grid-column: 1;
+}
+.today-tools {
+  grid-column: 2;
+  grid-row: 1 / 3;
+  align-self: center;
+}
+.today-progress {
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 14px;
+  color: var(--text-2);
+}
+.progress-track {
+  height: 8px;
+  border-radius: var(--r-bar);
+  background: var(--nav-active);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: var(--text);
+  transition: width var(--motion-slide);
+}
+.today-capture {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+.today-capture .quick-add {
+  flex: 1;
+  min-width: 0;
+}
+.today-capture > .button {
+  margin-top: 8px;
+}
+.done-section {
+  padding: 28px 0 0;
+}
+.done-section .section-label {
+  padding: 0 16px 8px;
+}
+.completion-time {
+  font: var(--font-meta);
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+.status-pill {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-pill-status);
+  background: var(--text);
+  color: white;
+  font: var(--font-status);
+}
+.reopen-button {
+  flex: 1;
+}
+.checkbox.checked svg {
+  stroke-dasharray: 24;
+  animation: check-draw var(--motion-check);
+}
+.check-hit:active .checkbox {
+  transform: scale(0.92);
+  transition: transform 80ms;
+}
+@keyframes check-draw {
+  from {
+    stroke-dashoffset: 24;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+@media (max-width: 767px) {
+  .today-header {
+    display: block;
+  }
+  .today-tools {
+    margin-top: 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+  .today-progress {
+    min-width: 0;
+    flex: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .check-hit:active .checkbox {
+    transform: none;
+  }
+}
+
+.today-list .task-row.done .row-title {
+  text-decoration: none;
+}
+.checkbox.checked svg {
+  stroke-width: 3.2;
+}

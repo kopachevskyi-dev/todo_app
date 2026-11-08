@@ -56,6 +56,47 @@ export const examples = {
     },
   },
   clock: { now: '2026-11-04T19:20:00.000Z' },
+  today: {
+    day: '2026-11-04',
+    open: [
+      {
+        id: '01JBY1000000000000000000AB',
+        title: 'Call the dentist',
+        description: '',
+        listId: null,
+        list: null,
+        day: '2026-11-04',
+        completedAt: null,
+        missedFrom: null,
+        subtaskCount: 0,
+        subtaskDoneCount: 0,
+        createdAt: '2026-11-04T14:00:00.000Z',
+        updatedAt: '2026-11-04T14:00:00.000Z',
+      },
+    ],
+    done: [
+      {
+        id: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
+        title: "Renew driver's license",
+        description: '',
+        listId: '01JBX0000000000000000PERSN',
+        list: {
+          id: '01JBX0000000000000000PERSN',
+          name: 'Personal',
+          color: '#E3686A',
+          position: 0,
+        },
+        day: '2026-11-04',
+        completedAt: '2026-11-04T19:20:00.000Z',
+        missedFrom: null,
+        subtaskCount: 0,
+        subtaskDoneCount: 0,
+        createdAt: '2026-11-02T14:12:00.000Z',
+        updatedAt: '2026-11-04T19:20:00.000Z',
+      },
+    ],
+    progress: { done: 1, total: 2 },
+  },
 } as const;
 
 export const taskTitleSchema = z.string().trim().min(1).max(200);
@@ -142,3 +183,14 @@ export const searchResponseSchema = z.object({
     )
     .max(50),
 });
+
+export const todayResponseSchema = z.object({
+  day: z.iso.date(),
+  open: z.array(taskRowSchema),
+  done: z.array(taskRowSchema),
+  progress: z.object({
+    done: z.number().int().nonnegative(),
+    total: z.number().int().nonnegative(),
+  }),
+});
+export type TodayResponse = z.infer<typeof todayResponseSchema>;
