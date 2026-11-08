@@ -14,7 +14,11 @@ import type { AppDatabase } from './database';
 import { lists, subtasks, tasks, taskEvents } from './schema';
 import { createId } from './ids';
 import { applyDetailsEdit, type DetailPart } from '../domain/activity';
-import type { CreateTaskRequest, PatchTaskRequest } from '../shared/contract';
+import type {
+  CreateTaskRequest,
+  PatchTaskRequest,
+  PatchSubtaskRequest,
+} from '../shared/contract';
 import { matchesQuery } from '../domain/search';
 import { todayView } from '../domain/today';
 import { localDate } from '../domain/time';
@@ -31,11 +35,58 @@ export function createRepositories(db: AppDatabase) {
     missedFrom: tasks.missedFrom,
     createdAt: tasks.createdAt,
     updatedAt: tasks.updatedAt,
-    subtaskCount: sql<number>`(SELECT count(*) FROM ${subtasks} WHERE ${subtasks.taskId} = ${tasks.id})`,
-    subtaskDoneCount: sql<number>`(SELECT count(*) FROM ${subtasks} WHERE ${subtasks.taskId} = ${tasks.id} AND ${subtasks.done} = 1)`,
+    subtaskCount: sql<number>`(SELECT count(*) FROM subtask WHERE subtask.task_id = task.id)`,
+    subtaskDoneCount: sql<number>`(SELECT count(*) FROM subtask WHERE subtask.task_id = task.id AND subtask.done = 1)`,
   };
   const total = (where: ReturnType<typeof and>) =>
     db.select({ value: count() }).from(tasks).where(where).get()!.value;
+  const recordDetailsEdit = (
+    tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0],
+    taskId: string,
+    part: DetailPart,
+    now: Date,
+    listName?: string,
+  ) => {
+    const latest = tx
+      .select()
+      .from(taskEvents)
+      .where(
+        and(
+          eq(taskEvents.taskId, taskId),
+          eq(taskEvents.type, 'details_added'),
+        ),
+      )
+      .orderBy(desc(taskEvents.at), desc(sql`task_event.rowid`))
+      .get();
+    const result = applyDetailsEdit(
+      latest
+        ? {
+            at: latest.at,
+            parts: (latest.data?.parts ?? []) as DetailPart[],
+          }
+        : null,
+      part,
+      now,
+    );
+    const name = listName ?? latest?.data?.listName;
+    const data = { parts: result.parts, ...(name ? { listName: name } : {}) };
+    if (result.kind === 'update' && latest) {
+      tx.update(taskEvents)
+        .set({ data })
+        .where(eq(taskEvents.id, latest.id))
+        .run();
+    } else {
+      tx.insert(taskEvents)
+        .values({
+          id: createId(now),
+          taskId,
+          type: 'details_added',
+          at: result.at,
+          data,
+        })
+        .run();
+    }
+  };
   return {
     tasks: {
       rollover: (now: Date, timeZone: string) =>
@@ -275,55 +326,12 @@ export function createRepositories(db: AppDatabase) {
             parts.push('description');
           if (input.listId && input.listId !== previous.listId)
             parts.push('list');
-          let latest = tx
-            .select()
-            .from(taskEvents)
-            .where(
-              and(
-                eq(taskEvents.taskId, id),
-                eq(taskEvents.type, 'details_added'),
-              ),
-            )
-            .orderBy(desc(taskEvents.at), desc(sql`task_event.rowid`))
-            .get();
           for (const part of parts) {
-            const result = applyDetailsEdit(
-              latest
-                ? {
-                    at: latest.at,
-                    parts: (latest.data?.parts ?? []) as DetailPart[],
-                  }
-                : null,
-              part,
-              now,
-            );
             const listName = input.listId
               ? tx.select().from(lists).where(eq(lists.id, input.listId)).get()
                   ?.name
-              : latest?.data?.listName;
-            const data = {
-              parts: result.parts,
-              ...(listName ? { listName } : {}),
-            };
-            if (result.kind === 'update' && latest) {
-              tx.update(taskEvents)
-                .set({ data })
-                .where(eq(taskEvents.id, latest.id))
-                .run();
-              latest = { ...latest, data };
-            } else {
-              latest = tx
-                .insert(taskEvents)
-                .values({
-                  id: createId(now),
-                  taskId: id,
-                  type: 'details_added',
-                  at: result.at,
-                  data,
-                })
-                .returning()
-                .get();
-            }
+              : undefined;
+            recordDetailsEdit(tx, id, part, now, listName);
           }
           return tx
             .select(taskFields)
@@ -339,6 +347,63 @@ export function createRepositories(db: AppDatabase) {
         ),
         todayTotal: total(eq(tasks.day, today)),
       }),
+    },
+    subtasks: {
+      get: (id: string) =>
+        db.select().from(subtasks).where(eq(subtasks.id, id)).get(),
+      create: (taskId: string, title: string, now: Date) =>
+        db.transaction((tx) => {
+          const last = tx
+            .select({ position: subtasks.position })
+            .from(subtasks)
+            .where(eq(subtasks.taskId, taskId))
+            .orderBy(desc(subtasks.position))
+            .get();
+          const subtask = tx
+            .insert(subtasks)
+            .values({
+              id: createId(now),
+              taskId,
+              title,
+              done: false,
+              position: (last?.position ?? -1) + 1,
+              createdAt: now.toISOString(),
+            })
+            .returning()
+            .get();
+          tx.update(tasks)
+            .set({ updatedAt: now.toISOString() })
+            .where(eq(tasks.id, taskId))
+            .run();
+          recordDetailsEdit(tx, taskId, 'subtasks', now);
+          return subtask;
+        }),
+      patch: (id: string, input: PatchSubtaskRequest, now: Date) =>
+        db.transaction((tx) => {
+          const subtask = tx
+            .update(subtasks)
+            .set(input)
+            .where(eq(subtasks.id, id))
+            .returning()
+            .get()!;
+          tx.update(tasks)
+            .set({ updatedAt: now.toISOString() })
+            .where(eq(tasks.id, subtask.taskId))
+            .run();
+          return subtask;
+        }),
+      delete: (id: string, now: Date) =>
+        db.transaction((tx) => {
+          const subtask = tx
+            .delete(subtasks)
+            .where(eq(subtasks.id, id))
+            .returning()
+            .get()!;
+          tx.update(tasks)
+            .set({ updatedAt: now.toISOString() })
+            .where(eq(tasks.id, subtask.taskId))
+            .run();
+        }),
     },
     lists: {
       all: () =>
