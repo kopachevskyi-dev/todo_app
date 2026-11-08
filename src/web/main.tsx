@@ -15,7 +15,15 @@ const rootRoute = createRootRoute({
   component: App,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { task?: string; list?: string; q?: string } => ({
+  ): {
+    task?: string;
+    list?: string;
+    q?: string;
+    week?: string;
+    day?: string;
+  } => ({
+    week: typeof search.week === 'string' ? search.week : undefined,
+    day: typeof search.day === 'string' ? search.day : undefined,
     q: typeof search.q === 'string' ? search.q : undefined,
     task: typeof search.task === 'string' ? search.task : undefined,
     list: typeof search.list === 'string' ? search.list : undefined,

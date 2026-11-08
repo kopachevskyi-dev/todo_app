@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  historyResponseSchema,
   createSubtaskRequestSchema,
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
@@ -42,6 +43,17 @@ async function request<T>(
 }
 
 export const api = {
+  history: (weekStart: string, listId?: string) =>
+    request(
+      `/views/history?${new URLSearchParams({ weekStart, ...(listId ? { listId } : {}) })}`,
+      historyResponseSchema,
+    ),
+  moveToBacklog: (id: string) =>
+    request(
+      `/tasks/${encodeURIComponent(id)}/move-to-backlog`,
+      createTaskResponseSchema,
+      { method: 'POST' },
+    ),
   createSubtask: (taskId: string, title: string) =>
     request(
       `/tasks/${encodeURIComponent(taskId)}/subtasks`,

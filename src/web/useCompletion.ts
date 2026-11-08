@@ -9,6 +9,7 @@ export function useCompletion() {
       await Promise.all(
         [
           ['today'],
+          ['history'],
           ['backlog'],
           ['counts'],
           ['search'],
