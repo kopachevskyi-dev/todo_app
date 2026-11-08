@@ -15,7 +15,8 @@ const rootRoute = createRootRoute({
   component: App,
   validateSearch: (
     search: Record<string, unknown>,
-  ): { task?: string; list?: string } => ({
+  ): { task?: string; list?: string; q?: string } => ({
+    q: typeof search.q === 'string' ? search.q : undefined,
     task: typeof search.task === 'string' ? search.task : undefined,
     list: typeof search.list === 'string' ? search.list : undefined,
   }),

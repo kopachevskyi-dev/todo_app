@@ -769,3 +769,26 @@ h3 {
     scroll-behavior: auto !important;
   }
 }
+
+.screen-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.search-back {
+  border: 0;
+  background: transparent;
+  color: var(--text-2);
+  cursor: pointer;
+  font: inherit;
+  padding: 0;
+  min-height: 44px;
+}
+.screen-header .search-field {
+  margin-top: 16px;
+}
+.task-row.done .row-title {
+  color: var(--text-muted);
+  text-decoration: line-through;
+}

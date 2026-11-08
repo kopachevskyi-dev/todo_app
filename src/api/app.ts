@@ -1,7 +1,9 @@
+import { parseSearchQuery, searchLocation } from '../domain/search';
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isTimeZone, localDate } from '../domain/time';
 import {
+  searchResponseSchema,
   clockSchema,
   createTaskRequestSchema,
   createTaskResponseSchema,
@@ -80,6 +82,24 @@ export function createApp(options: {
       }),
     ),
   );
+  app.get('/api/search', (c) => {
+    const query = parseSearchQuery(c.req.query('q') ?? '');
+    if (!query)
+      return c.json(
+        { error: { code: 'invalid_query', message: 'Enter a search query.' } },
+        400,
+      );
+    const zone = c.req.header('X-Timezone')!;
+    const today = localDate(clock.now(), zone);
+    return c.json(
+      searchResponseSchema.parse({
+        results: repositories.tasks.search(query).map((task) => ({
+          ...task,
+          location: searchLocation(task, today, zone),
+        })),
+      }),
+    );
+  });
   app.get('/api/counts', (c) =>
     c.json(
       countsResponseSchema.parse(
