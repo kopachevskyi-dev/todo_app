@@ -7,6 +7,10 @@ import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isTimeZone, localDate } from '../domain/time';
 import {
+  createListRequestSchema,
+  patchListRequestSchema,
+  listResponseSchema,
+  listColors,
   historyResponseSchema,
   createSubtaskRequestSchema,
   patchSubtaskRequestSchema,
@@ -62,6 +66,82 @@ export function createApp(options: {
   app.get('/api/lists', (c) =>
     c.json(listsResponseSchema.parse({ lists: repositories.lists.all() })),
   );
+  for (const method of ['post', 'patch'] as const) {
+    app[method](
+      method === 'post' ? '/api/lists' : '/api/lists/:id',
+      async (c) => {
+        const id = c.req.param('id');
+        if (method === 'patch' && (!id || !repositories.lists.get(id)))
+          return c.json(
+            { error: { code: 'not_found', message: 'List not found.' } },
+            404,
+          );
+        const body: unknown = await c.req.json().catch(() => null);
+        if (
+          body &&
+          typeof body === 'object' &&
+          'color' in body &&
+          !listColors.includes(body.color as (typeof listColors)[number])
+        )
+          return c.json(
+            {
+              error: {
+                code: 'invalid_color',
+                message: 'Choose one of the five list colors.',
+              },
+            },
+            400,
+          );
+        const parsed = (
+          method === 'post' ? createListRequestSchema : patchListRequestSchema
+        ).safeParse(body);
+        if (!parsed.success)
+          return c.json(
+            {
+              error: {
+                code: 'invalid_request',
+                message: 'List name must be between 1 and 40 characters.',
+              },
+            },
+            400,
+          );
+        const duplicate = parsed.data.name
+          ? repositories.lists.named(parsed.data.name)
+          : undefined;
+        if (duplicate && duplicate.id !== id)
+          return c.json(
+            {
+              error: {
+                code: 'list_exists',
+                message: 'A list with that name already exists.',
+              },
+            },
+            409,
+          );
+        const list =
+          method === 'post'
+            ? repositories.lists.create(
+                createListRequestSchema.parse(parsed.data),
+                clock.now(),
+              )
+            : repositories.lists.patch(id!, parsed.data);
+        return c.json(
+          listResponseSchema.parse({ list }),
+          method === 'post' ? 201 : 200,
+        );
+      },
+    );
+  }
+  app.delete('/api/lists/:id', (c) => {
+    const id = c.req.param('id');
+    if (!repositories.lists.get(id))
+      return c.json(
+        { error: { code: 'not_found', message: 'List not found.' } },
+        404,
+      );
+    repositories.lists.delete(id);
+    return c.body(null, 204);
+  });
   app.post('/api/tasks', async (c) => {
     const body: unknown = await c.req.json().catch(() => null);
     const parsed = createTaskRequestSchema.safeParse(body);
@@ -83,6 +163,11 @@ export function createApp(options: {
         400,
       );
     }
+    if (parsed.data.listId && !repositories.lists.get(parsed.data.listId))
+      return c.json(
+        { error: { code: 'invalid_list', message: 'List not found.' } },
+        400,
+      );
     const task = repositories.tasks.create(
       parsed.data,
       clock.now(),
