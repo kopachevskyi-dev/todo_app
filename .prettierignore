@@ -1,0 +1,10 @@
+pnpm-lock.yaml
+docs/design/
+dist/
+node_modules/
+.corepack/
+.pnpm-store/
+.cache/
+.local-bin/
+playwright-report/
+test-results/

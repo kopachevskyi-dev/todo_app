@@ -25,4 +25,3 @@ Create a GitHub issue.
 ## When a skill says "fetch the relevant ticket"
 
 Read it as in **Read an issue** above.
-
