@@ -1,0 +1,24 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(pnpm verify)",
+      "Bash(pnpm verify:fast)",
+      "Bash(pnpm test)",
+      "Bash(pnpm test:unit)",
+      "Bash(pnpm test:unit *)",
+      "Bash(pnpm test:integration)",
+      "Bash(pnpm test:integration *)",
+      "Bash(pnpm test:contract)",
+      "Bash(pnpm test:contract *)",
+      "Bash(pnpm test:e2e)",
+      "Bash(pnpm test:e2e *)",
+      "Bash(pnpm typecheck)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm smoke)",
+      "Bash(*/run-check.sh verify pnpm verify)",
+      "Bash(*/run-check.sh -C * verify pnpm verify)",
+      "Bash(*/run-check.sh verify:fast pnpm verify:fast)",
+      "Bash(*/run-check.sh -C * verify:fast pnpm verify:fast)"
+    ]
+  }
+}

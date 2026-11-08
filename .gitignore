@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env*
+!.env.example
+*.db
+*.db-*
+*.sqlite
+*.sqlite-*
+*.log
+playwright-report/
+test-results/
+.corepack/
+.pnpm-store/
+.cache/
+.local-bin/
+
