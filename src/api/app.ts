@@ -100,6 +100,12 @@ export function createApp(options: {
       taskDetailResponseSchema.parse({ task, subtasks: [], activity: [] }),
     );
   });
+  app.patch('/api/tasks/:id', (c) =>
+    c.json({ error: { code: 'not_implemented', message: 'TODO' } }, 501),
+  );
+  app.delete('/api/tasks/:id', (c) =>
+    c.json({ error: { code: 'not_implemented', message: 'TODO' } }, 501),
+  );
   if (options.testClock) {
     app.put('/api/test/clock', async (c) => {
       const body: unknown = await c.req.json().catch(() => null);
