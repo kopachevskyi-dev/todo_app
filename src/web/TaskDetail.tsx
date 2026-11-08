@@ -117,6 +117,7 @@ export function TaskDetail({
   const timer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const pendingDescription = useRef<string | undefined>(undefined);
   const savedTitle = useRef(task.title);
+  const cancellingTitle = useRef(false);
   const queue = useRef(Promise.resolve());
 
   const save = (input: PatchTaskRequest) => {
@@ -198,6 +199,10 @@ export function TaskDetail({
     [],
   );
   const saveTitle = () => {
+    if (cancellingTitle.current) {
+      cancellingTitle.current = false;
+      return;
+    }
     const value = title.trim();
     if (!value) {
       setTitle(savedTitle.current);
@@ -281,22 +286,7 @@ export function TaskDetail({
     }
   };
   return (
-    <div
-      className="task-detail"
-      onKeyDown={(event) => {
-        if (
-          event.key === 'Escape' &&
-          !event.defaultPrevented &&
-          !choosingDay &&
-          !choosingList &&
-          !confirming
-        ) {
-          event.preventDefault();
-          event.stopPropagation();
-          onClose();
-        }
-      }}
-    >
+    <div className="task-detail">
       <textarea
         rows={1}
         className="detail-title"
@@ -306,6 +296,13 @@ export function TaskDetail({
         onChange={(event) => setTitle(event.target.value)}
         onBlur={saveTitle}
         onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault();
+            event.stopPropagation();
+            cancellingTitle.current = true;
+            setTitle(savedTitle.current);
+            event.currentTarget.blur();
+          }
           if (event.key === 'Enter') {
             event.preventDefault();
             event.currentTarget.blur();

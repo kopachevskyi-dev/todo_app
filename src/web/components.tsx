@@ -431,7 +431,9 @@ export function Popover({
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current!;
-    const previous = document.activeElement as HTMLElement | null;
+    // Child effects may already have focused content inside the popover.
+    const previous =
+      anchor.current ?? (document.activeElement as HTMLElement | null);
     const rect = anchor.current?.getBoundingClientRect();
     if (rect) {
       element.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - element.offsetWidth - 16))}px`;

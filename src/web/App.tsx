@@ -447,6 +447,25 @@ export function App() {
       search: (previous) => ({ ...previous, task: undefined }),
     });
   };
+  useEffect(() => {
+    if (!task) return;
+    const escape = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        document.querySelector('.popover, dialog[open]:not(.detail-drawer)')
+      )
+        return;
+      event.preventDefault();
+      void navigate({
+        to: path as '/backlog' | '/today' | '/history' | '/search',
+        search: (previous) => ({ ...previous, task: undefined }),
+      });
+    };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [task, navigate, path]);
   const openTask = (id: string) => {
     void navigate({
       to: path as '/backlog' | '/today' | '/history' | '/search',
