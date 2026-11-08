@@ -162,6 +162,18 @@ export function createApp(options: {
       }),
     );
   });
+  app.post('/api/tasks/:id/plan', (c) =>
+    c.json(
+      { error: { code: 'not_implemented', message: 'Not implemented.' } },
+      501,
+    ),
+  );
+  app.get('/api/day-load', (c) =>
+    c.json(
+      { error: { code: 'not_implemented', message: 'Not implemented.' } },
+      501,
+    ),
+  );
   app.delete('/api/tasks/:id', (c) => {
     if (!repositories.tasks.get(c.req.param('id')))
       return c.json(
