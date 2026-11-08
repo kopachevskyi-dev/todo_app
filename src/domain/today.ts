@@ -15,6 +15,12 @@ export function todayView<T extends TodayTask>(
   tasks: T[],
   today: string,
 ): TodayView<T> {
-  void [tasks, today];
-  throw new Error('todayView is not implemented');
+  const planned = tasks.filter((task) => task.day === today);
+  const open = planned
+    .filter((task) => task.completedAt === null)
+    .sort((a, b) => b.placedAt.localeCompare(a.placedAt));
+  const done = planned
+    .filter((task) => task.completedAt !== null)
+    .sort((a, b) => a.completedAt!.localeCompare(b.completedAt!));
+  return { open, done, progress: { done: done.length, total: planned.length } };
 }

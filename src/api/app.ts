@@ -4,6 +4,7 @@ import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isTimeZone, localDate } from '../domain/time';
 import {
+  todayResponseSchema,
   searchResponseSchema,
   clockSchema,
   patchTaskRequestSchema,
@@ -84,6 +85,49 @@ export function createApp(options: {
       }),
     ),
   );
+  app.get('/api/views/today', (c) =>
+    c.json(
+      todayResponseSchema.parse(
+        repositories.tasks.today(
+          localDate(clock.now(), c.req.header('X-Timezone')!),
+          c.req.query('listId'),
+        ),
+      ),
+    ),
+  );
+  for (const action of ['complete', 'reopen'] as const) {
+    app.post(`/api/tasks/:id/${action}`, (c) => {
+      const task = repositories.tasks.get(c.req.param('id'));
+      if (!task)
+        return c.json(
+          { error: { code: 'not_found', message: 'Task not found.' } },
+          404,
+        );
+      const completed = action === 'complete';
+      if (Boolean(task.completedAt) === completed)
+        return c.json(
+          {
+            error: {
+              code: completed ? 'already_done' : 'not_done',
+              message: completed
+                ? 'Task is already done.'
+                : 'Task is not done.',
+            },
+          },
+          409,
+        );
+      return c.json(
+        createTaskResponseSchema.parse({
+          task: repositories.tasks.setCompletion(
+            task.id,
+            completed,
+            clock.now(),
+            c.req.header('X-Timezone')!,
+          ),
+        }),
+      );
+    });
+  }
   app.get('/api/search', (c) => {
     const query = parseSearchQuery(c.req.query('q') ?? '');
     if (!query)

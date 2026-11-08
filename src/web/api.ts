@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  todayResponseSchema,
   patchTaskRequestSchema,
   type PatchTaskRequest,
   searchResponseSchema,
@@ -34,6 +35,17 @@ async function request<T>(
 }
 
 export const api = {
+  today: (listId?: string) =>
+    request(
+      `/views/today${listId ? `?listId=${encodeURIComponent(listId)}` : ''}`,
+      todayResponseSchema,
+    ),
+  setCompletion: ({ id, completed }: { id: string; completed: boolean }) =>
+    request(
+      `/tasks/${encodeURIComponent(id)}/${completed ? 'complete' : 'reopen'}`,
+      createTaskResponseSchema,
+      { method: 'POST' },
+    ),
   patchTask: (id: string, input: PatchTaskRequest) =>
     request(`/tasks/${encodeURIComponent(id)}`, createTaskResponseSchema, {
       method: 'PATCH',

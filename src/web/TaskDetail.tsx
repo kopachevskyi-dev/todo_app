@@ -9,6 +9,7 @@ import type {
 } from '../shared/contract';
 import { formatActivityTimestamp } from '../domain/activity';
 import { api } from './api';
+import { completionTime, useCompletion } from './useCompletion';
 import {
   BottomSheet,
   Button,
@@ -29,6 +30,7 @@ export function TaskDetail({
   mobile: boolean;
 }) {
   const { task } = detail;
+  const completion = useCompletion();
   const client = useQueryClient();
   const lists = useQuery({ queryKey: ['lists'], queryFn: api.lists });
   const [title, setTitle] = useState(task.title);
@@ -96,6 +98,8 @@ export function TaskDetail({
       await Promise.all([
         client.invalidateQueries({ queryKey: ['task', task.id] }),
         client.invalidateQueries({ queryKey: ['backlog'] }),
+        client.invalidateQueries({ queryKey: ['today'] }),
+        client.invalidateQueries({ queryKey: ['search'] }),
       ]);
     });
   };
@@ -194,6 +198,8 @@ export function TaskDetail({
       );
     } finally {
       setDeleting(false);
+      void client.invalidateQueries({ queryKey: ['today'] });
+      void client.invalidateQueries({ queryKey: ['search'] });
       void client.invalidateQueries({ queryKey: ['backlog'] });
       void client.invalidateQueries({ queryKey: ['counts'] });
     }
@@ -215,6 +221,12 @@ export function TaskDetail({
           }
         }}
       />
+      {task.completedAt && (
+        <div className="status-pill">
+          <Icon name="check" size={14} />
+          Completed at {completionTime(task.completedAt)}
+        </div>
+      )}
       <textarea
         className="detail-description"
         aria-label="Description"
@@ -285,6 +297,11 @@ export function TaskDetail({
           ))}
         </ul>
       </section>
+      {completion.isError && (
+        <p role="alert" className="field-error">
+          {completion.error.message}
+        </p>
+      )}
       {error && (
         <p role="alert" className="field-error">
           {error}
@@ -302,6 +319,21 @@ export function TaskDetail({
         >
           {mobile ? <Icon name="trash" /> : 'Delete'}
         </Button>
+        {task.completedAt && (
+          <Button
+            variant="strong"
+            className="reopen-button"
+            disabled={completion.isPending || deleting}
+            onClick={() => {
+              flushDescription();
+              void queue.current.then(() =>
+                completion.mutate({ id: task.id, completed: false }),
+              );
+            }}
+          >
+            Reopen
+          </Button>
+        )}
       </footer>
       {choosingList &&
         (mobile ? (

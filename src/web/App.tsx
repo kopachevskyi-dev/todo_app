@@ -14,6 +14,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { searchLocationText } from '../domain/search';
 import { api } from './api';
+import { useCompletion } from './useCompletion';
 import {
   BottomSheet,
   Button,
@@ -179,6 +180,7 @@ function Capture({
       onAdded?.();
     },
     onSettled: () => {
+      void client.invalidateQueries({ queryKey: ['today'] });
       void client.invalidateQueries({ queryKey: ['backlog'] });
       void client.invalidateQueries({ queryKey: ['counts'] });
     },
@@ -246,6 +248,8 @@ export function App() {
   const desktop = useMedia('(min-width: 1216px)');
   const [capturing, setCapturing] = useState(false);
   const isBacklog = path === '/backlog';
+  const isToday = path === '/today';
+  const completion = useCompletion();
   const isSearch = path === '/search';
   const previousScreen = useRef<{
     to: '/backlog' | '/today' | '/history';
@@ -277,14 +281,19 @@ export function App() {
     queryFn: () => api.backlog(list),
     enabled: isBacklog,
   });
-  const rows = backlog.data?.tasks;
+  const today = useQuery({
+    queryKey: ['today', list],
+    queryFn: () => api.today(list),
+    enabled: isToday,
+  });
+  const rows = isToday ? today.data?.open : backlog.data?.tasks;
   const rowContainer = useRef<HTMLUListElement>(null);
   const animateLayout = useRef<(() => void) | undefined>(undefined);
   useLayoutEffect(() => {
     animateLayout.current?.();
     if (rowContainer.current)
       animateLayout.current = captureLayout(rowContainer.current);
-  }, [rows]);
+  }, [rows, today.data?.done]);
   const closeTask = () => {
     void navigate({
       to: path as '/backlog' | '/today' | '/history' | '/search',
@@ -362,7 +371,7 @@ export function App() {
       )}
       {!(mobile && task) && (
         <main className="main-column">
-          <header className="screen-header">
+          <header className={`screen-header ${isToday ? 'today-header' : ''}`}>
             {mobile && isSearch && (
               <button className="back-link search-back" onClick={leaveSearch}>
                 ‹ Back
@@ -371,6 +380,9 @@ export function App() {
             <div className="screen-heading">
               <h1>
                 {title}
+                {isToday && mobile && (
+                  <CountPill>{today.data?.progress.total ?? 0}</CountPill>
+                )}
                 {isBacklog && (
                   <CountPill>
                     {list ? (rows?.length ?? 0) : (counts.data?.backlog ?? 0)}
@@ -410,7 +422,111 @@ export function App() {
                 </span>
               </p>
             )}
+            {isToday && today.data && (
+              <p className="today-date">
+                {new Intl.DateTimeFormat('en-US', {
+                  timeZone: 'UTC',
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                }).format(new Date(`${today.data.day}T12:00:00Z`))}
+              </p>
+            )}
+            {isToday && today.data && (
+              <div className="today-tools">
+                <div className="today-progress">
+                  <span>
+                    {today.data.progress.done} of {today.data.progress.total}{' '}
+                    done
+                  </span>
+                  <div
+                    className="progress-track"
+                    role="progressbar"
+                    aria-label="Tasks completed today"
+                    aria-valuemin={0}
+                    aria-valuemax={today.data.progress.total}
+                    aria-valuenow={today.data.progress.done}
+                  >
+                    <div
+                      className="progress-fill"
+                      style={{
+                        width: `${today.data.progress.total ? (today.data.progress.done / today.data.progress.total) * 100 : 0}%`,
+                      }}
+                    />
+                  </div>
+                </div>
+                {mobile && (
+                  <Button variant="outline" disabled>
+                    <Icon name="backlog" size={18} />
+                    From backlog
+                  </Button>
+                )}
+              </div>
+            )}
           </header>
+          {completion.isError && (
+            <p role="alert" className="field-error">
+              {completion.error.message}
+            </p>
+          )}
+          {isToday && (
+            <>
+              {!mobile && (
+                <div className="today-capture">
+                  <Capture target="today" />
+                  <Button variant="outline" disabled>
+                    <Icon name="backlog" size={18} />
+                    From backlog
+                  </Button>
+                </div>
+              )}
+              {today.isPending && <p role="status">Loading tasks…</p>}
+              {today.isError && (
+                <p role="alert" className="field-error">
+                  Could not load tasks.{' '}
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      void today.refetch();
+                    }}
+                  >
+                    Try again
+                  </Button>
+                </p>
+              )}
+              {today.data?.progress.total === 0 && (
+                <EmptyPanel>
+                  Nothing planned for today. Add a task or pull one from the
+                  backlog.
+                </EmptyPanel>
+              )}
+              <ul ref={rowContainer} className="task-list today-list">
+                {today.data &&
+                  [...today.data.open, ...today.data.done].map((row, index) => (
+                    <TaskRow
+                      key={row.id}
+                      task={row}
+                      selected={row.id === task}
+                      href={`/today?${new URLSearchParams({ ...(list ? { list } : {}), task: row.id })}`}
+                      onOpen={() => openTask(row.id)}
+                      onToggle={() =>
+                        completion.mutate({
+                          id: row.id,
+                          completed: !row.completedAt,
+                        })
+                      }
+                      pending={completion.isPending}
+                      section={
+                        index === today.data.open.length &&
+                        today.data.done.length > 0
+                          ? `DONE · ${today.data.done.length}`
+                          : undefined
+                      }
+                    />
+                  ))}
+              </ul>
+            </>
+          )}
           {isSearch && q?.trim() && (
             <>
               {search.isPending && <p role="status">Searching…</p>}
@@ -476,6 +592,10 @@ export function App() {
                       key={row.id}
                       task={row}
                       selected={row.id === task}
+                      onToggle={() =>
+                        completion.mutate({ id: row.id, completed: true })
+                      }
+                      pending={completion.isPending}
                       href={`/backlog?${params}`}
                       onOpen={() => openTask(row.id)}
                     />
@@ -538,7 +658,7 @@ export function App() {
           {(isBacklog || path === '/today') && (
             <Button
               className="fab"
-              aria-label="Add task"
+              aria-label={isToday ? 'Add task to today' : 'Add task'}
               onClick={() => setCapturing(true)}
             >
               <Icon name="plus" size={24} />
