@@ -1,3 +1,4 @@
+import { historyView } from '../domain/history';
 import {
   and,
   asc,
@@ -187,6 +188,61 @@ export function createRepositories(db: AppDatabase) {
             .where(eq(tasks.id, id))
             .get()!;
         }),
+      moveToBacklog: (id: string, now: Date) =>
+        db.transaction((tx) => {
+          const at = now.toISOString();
+          tx.update(tasks)
+            .set({
+              completedAt: null,
+              day: null,
+              missedFrom: null,
+              placedAt: at,
+              updatedAt: at,
+            })
+            .where(eq(tasks.id, id))
+            .run();
+          tx.insert(taskEvents)
+            .values({
+              id: createId(now),
+              taskId: id,
+              type: 'moved_to_backlog',
+              at,
+            })
+            .run();
+          return tx
+            .select(taskFields)
+            .from(tasks)
+            .where(eq(tasks.id, id))
+            .get()!;
+        }),
+      history: (
+        weekStart: string,
+        now: Date,
+        zone: string,
+        listId?: string,
+      ) => {
+        const rows = db
+          .select({
+            ...taskFields,
+            list: {
+              id: lists.id,
+              name: lists.name,
+              color: lists.color,
+              position: lists.position,
+            },
+          })
+          .from(tasks)
+          .leftJoin(lists, eq(tasks.listId, lists.id))
+          .where(listId ? eq(tasks.listId, listId) : undefined)
+          .orderBy(desc(tasks.placedAt), desc(sql`task.rowid`))
+          .all();
+        const events = db
+          .select()
+          .from(taskEvents)
+          .orderBy(asc(taskEvents.at), asc(sql`task_event.rowid`))
+          .all();
+        return historyView(rows, events, weekStart, now, zone);
+      },
       dayLoad: (from: string, to: string) =>
         db
           .select({ day: tasks.day, count: count() })

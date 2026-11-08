@@ -28,6 +28,7 @@ import {
 } from './components';
 import { Lists } from './Lists';
 import { TaskDetail } from './TaskDetail';
+import { History } from './History';
 import { captureLayout } from './layout-animation';
 import type {
   Counts,
@@ -222,7 +223,9 @@ function Detail({
   id,
   onClose,
   mobile,
+  history = false,
 }: {
+  history?: boolean;
   id?: string;
   onClose: () => void;
   mobile: boolean;
@@ -241,7 +244,13 @@ function Detail({
       </p>
     );
   return task.data ? (
-    <TaskDetail key={id} detail={task.data} onClose={onClose} mobile={mobile} />
+    <TaskDetail
+      key={id}
+      detail={task.data}
+      onClose={onClose}
+      mobile={mobile}
+      history={history}
+    />
   ) : (
     <p role="status">Loading task…</p>
   );
@@ -270,7 +279,7 @@ export function App() {
     };
   }, [client]);
   const path = useLocation({ select: (location) => location.pathname });
-  const { task, list, q } = useSearch({ strict: false });
+  const { task, list, q, week, day } = useSearch({ strict: false });
   const navigate = useNavigate();
   const mobile = useMedia('(max-width: 767px)');
   const desktop = useMedia('(min-width: 1216px)');
@@ -281,15 +290,15 @@ export function App() {
   const isSearch = path === '/search';
   const previousScreen = useRef<{
     to: '/backlog' | '/today' | '/history';
-    search: { list?: string; task?: string };
+    search: { list?: string; task?: string; week?: string; day?: string };
   }>({ to: '/today', search: {} });
   useEffect(() => {
     if (path !== '/search')
       previousScreen.current = {
         to: path as '/backlog' | '/today' | '/history',
-        search: { list, task },
+        search: { list, task, week, day },
       };
-  }, [path, list, task]);
+  }, [path, list, task, week, day]);
   const changeQuery = (value: string) => {
     void navigate({ to: '/search', search: { q: value }, replace: isSearch });
   };
@@ -308,7 +317,11 @@ export function App() {
   const filterList = (id?: string) => {
     void navigate({
       to: path as '/backlog' | '/today' | '/history' | '/search',
-      search: (previous) => ({ ...previous, list: id }),
+      search: (previous) => ({
+        ...(path === '/history' ? previous : {}),
+        list: id,
+        task: undefined,
+      }),
     });
   };
   const backlog = useQuery({
@@ -508,6 +521,7 @@ export function App() {
               {completion.error.message}
             </p>
           )}
+          {path === '/history' && <History onOpen={openTask} />}
           {isToday && (
             <>
               {!mobile && (
@@ -658,7 +672,12 @@ export function App() {
               </Button>
             </div>
           )}
-          <Detail id={task} onClose={closeTask} mobile={mobile} />
+          <Detail
+            id={task}
+            onClose={closeTask}
+            mobile={mobile}
+            history={path === '/history'}
+          />
         </aside>
       )}
       {!desktop && !mobile && task && (
@@ -673,7 +692,12 @@ export function App() {
               <Icon name="close" />
             </Button>
           </div>
-          <Detail id={task} onClose={closeTask} mobile={mobile} />
+          <Detail
+            id={task}
+            onClose={closeTask}
+            mobile={mobile}
+            history={path === '/history'}
+          />
         </Modal>
       )}
       {mobile && task && (
@@ -686,7 +710,12 @@ export function App() {
           >
             ‹ {title}
           </Link>
-          <Detail id={task} onClose={closeTask} mobile={mobile} />
+          <Detail
+            id={task}
+            onClose={closeTask}
+            mobile={mobile}
+            history={path === '/history'}
+          />
         </main>
       )}
       {mobile && !task && (

@@ -224,3 +224,31 @@ export const todayResponseSchema = z.object({
   }),
 });
 export type TodayResponse = z.infer<typeof todayResponseSchema>;
+
+const historyTaskSchema = taskRowSchema.partial().extend({
+  id: z.ulid(),
+  title: taskTitleSchema,
+  listId: z.ulid().nullable(),
+});
+export const historyResponseSchema = z.object({
+  weekStart: z.iso.date(),
+  today: z.iso.date(),
+  days: z.array(
+    z.object({
+      day: z.iso.date(),
+      done: z.number().int().nonnegative(),
+      notDone: z.number().int().nonnegative(),
+      planned: z.number().int().nonnegative(),
+      groups: z.object({
+        done: z.array(
+          historyTaskSchema.extend({ completedAt: z.iso.datetime() }),
+        ),
+        notDone: z.array(
+          historyTaskSchema.extend({ movedTo: z.literal('backlog') }),
+        ),
+        planned: z.array(historyTaskSchema),
+      }),
+    }),
+  ),
+});
+export type HistoryResponse = z.infer<typeof historyResponseSchema>;
