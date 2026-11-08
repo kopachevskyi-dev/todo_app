@@ -14,7 +14,10 @@ import type { AppDatabase } from './database';
 import { lists, subtasks, tasks, taskEvents } from './schema';
 import { createId } from './ids';
 import { applyDetailsEdit, type DetailPart } from '../domain/activity';
+import { listColors } from '../shared/contract';
 import type {
+  CreateListRequest,
+  PatchListRequest,
   CreateTaskRequest,
   PatchTaskRequest,
   PatchSubtaskRequest,
@@ -137,6 +140,7 @@ export function createRepositories(db: AppDatabase) {
             .values({
               id,
               title: input.title,
+              listId: input.listId,
               day,
               placedAt: at,
               createdAt: at,
@@ -406,6 +410,48 @@ export function createRepositories(db: AppDatabase) {
         }),
     },
     lists: {
+      get: (id: string) =>
+        db.select().from(lists).where(eq(lists.id, id)).get(),
+      named: (name: string) =>
+        db
+          .select()
+          .from(lists)
+          .where(sql`${lists.name} = ${name} COLLATE NOCASE`)
+          .get(),
+      create: (input: CreateListRequest, now: Date) =>
+        db.transaction((tx) => {
+          const existing = tx
+            .select()
+            .from(lists)
+            .orderBy(asc(lists.position))
+            .all();
+          return tx
+            .insert(lists)
+            .values({
+              id: createId(now),
+              name: input.name,
+              color:
+                input.color ??
+                listColors.find(
+                  (color) => !existing.some((list) => list.color === color),
+                ) ??
+                '#8E7CC3',
+              position: (existing.at(-1)?.position ?? -1) + 1,
+              createdAt: now.toISOString(),
+            })
+            .returning()
+            .get();
+        }),
+      patch: (id: string, input: PatchListRequest) =>
+        Object.keys(input).length
+          ? db
+              .update(lists)
+              .set(input)
+              .where(eq(lists.id, id))
+              .returning()
+              .get()!
+          : db.select().from(lists).where(eq(lists.id, id)).get()!,
+      delete: (id: string) => db.delete(lists).where(eq(lists.id, id)).run(),
       all: () =>
         db
           .select({

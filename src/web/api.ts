@@ -1,5 +1,10 @@
 import { z } from 'zod';
 import {
+  createListRequestSchema,
+  patchListRequestSchema,
+  listResponseSchema,
+  type CreateListRequest,
+  type PatchListRequest,
   createSubtaskRequestSchema,
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
@@ -42,6 +47,22 @@ async function request<T>(
 }
 
 export const api = {
+  createList: (input: CreateListRequest) =>
+    request('/lists', listResponseSchema, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(createListRequestSchema.parse(input)),
+    }),
+  patchList: (id: string, input: PatchListRequest) =>
+    request(`/lists/${encodeURIComponent(id)}`, listResponseSchema, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patchListRequestSchema.parse(input)),
+    }),
+  deleteList: (id: string) =>
+    request(`/lists/${encodeURIComponent(id)}`, z.undefined(), {
+      method: 'DELETE',
+    }),
   createSubtask: (taskId: string, title: string) =>
     request(
       `/tasks/${encodeURIComponent(taskId)}/subtasks`,

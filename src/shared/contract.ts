@@ -13,6 +13,15 @@ export const listSchema = z.object({
   color: z.enum(listColors),
   position: z.number().int().nonnegative(),
 });
+export const createListRequestSchema = listSchema
+  .pick({ name: true, color: true })
+  .partial({ color: true })
+  .strict();
+export const patchListRequestSchema = createListRequestSchema.partial();
+export const listResponseSchema = z.object({ list: listSchema });
+export type List = z.infer<typeof listSchema>;
+export type CreateListRequest = z.infer<typeof createListRequestSchema>;
+export type PatchListRequest = z.infer<typeof patchListRequestSchema>;
 export const listsResponseSchema = z.object({ lists: z.array(listSchema) });
 export const healthResponseSchema = z.object({ ok: z.literal(true) });
 export const errorResponseSchema = z.object({
@@ -103,6 +112,7 @@ export const taskTitleSchema = z.string().trim().min(1).max(200);
 export const createTaskRequestSchema = z.object({
   title: taskTitleSchema,
   target: z.enum(['backlog', 'today']),
+  listId: z.ulid().optional(),
 });
 export const taskSchema = z.object({
   id: z.ulid(),
