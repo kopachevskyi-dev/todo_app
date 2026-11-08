@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>History — daily results</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;font-family:'Lexend',system-ui,sans-serif;background:#FCFCFA;color:#1F2421}
+a{color:inherit;text-decoration:none}
+button,input{font-family:inherit}
+a:focus-visible,button:focus-visible,input:focus-visible{outline:2px solid #2F6FDE;outline-offset:2px}
+</style>
+</helmet>
+<div style="position:relative;width:390px;height:844px;overflow:hidden;display:flex;flex-direction:column;background:#FCFCFA">
+
+<div style="flex:1;min-height:0;overflow-y:auto">
+<header style="display:flex;align-items:flex-end;justify-content:space-between;gap:12px;padding:24px 16px 16px">
+<div style="display:flex;flex-direction:column;gap:6px">
+<h1 style="margin:0;font-size:32px;font-weight:600;letter-spacing:-.02em">History</h1>
+<p style="margin:0;font-size:14px;color:#5B635E">Nov 2–8</p>
+</div>
+<div style="display:flex;gap:8px">
+<button type="button" aria-label="Previous week" style="width:44px;height:44px;border:1px solid #E1E5DC;border-radius:12px;background:#fff;color:#1F2421;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg></button>
+<button type="button" aria-label="Next week" style="width:44px;height:44px;border:1px solid #E1E5DC;border-radius:12px;background:#fff;color:#1F2421;display:flex;align-items:center;justify-content:center"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg></button>
+</div>
+</header>
+
+<div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:4px;padding:0 12px">
+<sc-for list="{{days}}" as="d" hint-placeholder-count="7">
+<button type="button" aria-label="{{d.label}}" style="display:flex;flex-direction:column;align-items:center;gap:6px;box-sizing:border-box;min-height:84px;padding:10px 0;border-radius:14px;border:{{d.border}};background:{{d.bg}};box-shadow:{{d.shadow}};color:#1F2421">
+<span style="font-size:12px;color:#5B635E">{{d.wd}}</span>
+<span style="width:30px;height:30px;border-radius:15px;background:{{d.numBg}};color:{{d.numColor}};font-size:17px;font-weight:600;display:flex;align-items:center;justify-content:center">{{d.num}}</span>
+<span style="width:28px;height:5px;border-radius:3px;background:#E7EAE1;overflow:hidden"><span style="display:block;width:{{d.pct}};height:5px;border-radius:3px;background:#1F2421"></span></span>
+</button>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;gap:6px;padding:24px 16px 12px">
+<h2 style="margin:0;font-size:22px;font-weight:600">Wednesday, November 4</h2>
+<p style="margin:0;font-size:14px;color:#5B635E">4 of 5 done · 1 moved to Thursday</p>
+</div>
+
+<div style="display:flex;flex-direction:column">
+<div style="padding:0 16px 8px;font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B635E">DONE · 4</div>
+<sc-for list="{{done}}" as="r" hint-placeholder-count="4">
+<a href="MobileTask.dc.html" style="display:flex;align-items:center;gap:14px;min-height:64px;box-sizing:border-box;padding:8px 16px;border-bottom:1px solid #EEF0EA;background:{{r.bg}}">
+<span aria-hidden="true" style="flex:none;width:22px;height:22px;border-radius:7px;background:#1F2421;display:flex;align-items:center;justify-content:center"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+<span style="font-size:16px;color:#3A423D">{{r.title}}</span>
+<span style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5B635E"><span style="width:10px;height:10px;border-radius:3px;background:{{r.color}}"></span>{{r.meta}}</span>
+</span>
+<span style="font-size:13px;color:#5B635E">{{r.time}}</span>
+</a>
+</sc-for>
+</div>
+
+<div style="display:flex;flex-direction:column;padding:20px 0 24px">
+<div style="padding:0 16px 8px;font-size:12px;font-weight:500;letter-spacing:.08em;color:#5B635E">NOT DONE · 1</div>
+<div style="display:flex;align-items:center;gap:14px;min-height:64px;box-sizing:border-box;padding:8px 16px;border-bottom:1px solid #EEF0EA">
+<span aria-hidden="true" style="flex:none;width:22px;height:22px;box-sizing:border-box;border:1.5px dashed #AEB5AB;border-radius:7px;background:#fff"></span>
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:4px">
+<span style="font-size:16px;color:#3A423D">Write the landing page outline</span>
+<span style="display:flex;align-items:center;gap:8px;font-size:13px;color:#5B635E"><span style="width:10px;height:10px;border-radius:3px;background:#5FB4C6"></span>Work · moved to Thu, Nov 5</span>
+</span>
+</div>
+</div>
+</div>
+
+<nav aria-label="Sections" style="flex:none;height:68px;box-sizing:border-box;display:flex;background:#FCFCFA;border-top:1px solid #E8EBE3">
+<a href="MobileCapture.dc.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;color:#3A423D">
+<span style="width:56px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4l8 4-8 4-8-4 8-4z"/><path d="M4 12l8 4 8-4M4 16l8 4 8-4"/></svg></span>Backlog</a>
+<a href="MobileToday.dc.html" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;color:#3A423D">
+<span style="width:56px;height:30px;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5" width="16" height="15" rx="3"/><path d="M4 10h16M9 3v4M15 3v4"/></svg></span>Today</a>
+<a href="MobileHistory.dc.html" aria-current="page" style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:12px;font-weight:600">
+<span style="width:56px;height:30px;border-radius:15px;background:#E7EAE1;display:flex;align-items:center;justify-content:center"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/></svg></span>History</a>
+</nav>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+renderVals() {
+const plain = '1px solid transparent';
+const sel = '2px solid #2F6FDE';
+const none = { numBg: 'transparent', numColor: '#1F2421' };
+const today = { numBg: '#1F2421', numColor: '#FFFFFF' };
+return {
+days: [
+{ wd: 'M', num: '2', pct: '100%', label: 'Monday, November 2: 3 of 3 done', border: plain, bg: 'transparent', shadow: 'none', ...none },
+{ wd: 'T', num: '3', pct: '80%', label: 'Tuesday, November 3: 4 of 5 done', border: plain, bg: 'transparent', shadow: 'none', ...none },
+{ wd: 'W', num: '4', pct: '80%', label: 'Wednesday, November 4: 4 of 5 done, selected', border: sel, bg: '#fff', shadow: '0 6px 16px rgba(47,111,222,.14)', ...none },
+{ wd: 'T', num: '5', pct: '75%', label: 'Thursday, November 5: 3 of 4 done', border: plain, bg: 'transparent', shadow: 'none', ...none },
+{ wd: 'F', num: '6', pct: '100%', label: 'Friday, November 6: 2 of 2 done', border: plain, bg: 'transparent', shadow: 'none', ...none },
+{ wd: 'S', num: '7', pct: '0%', label: 'Saturday, November 7: nothing planned', border: plain, bg: 'transparent', shadow: 'none', ...none },
+{ wd: 'S', num: '8', pct: '33%', label: 'Sunday, November 8, today: 1 of 3 done', border: plain, bg: 'transparent', shadow: 'none', ...today }
+],
+done: [
+{ title: 'Reply to Marta about the contract', color: '#5FB4C6', meta: 'Work', time: '10:05 AM', bg: 'transparent' },
+{ title: "Renew driver's license", color: '#E3686A', meta: 'Personal · from backlog, 2 days', time: '2:20 PM', bg: '#EEF0EA' },
+{ title: 'Buy a water filter', color: '#F0C24B', meta: 'Home', time: '6:10 PM', bg: 'transparent' },
+{ title: 'Run 5 km', color: '#E3686A', meta: 'Personal', time: '7:30 PM', bg: 'transparent' }
+]
+};
+}
+}
+</script>
+</body>
+</html>
