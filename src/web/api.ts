@@ -3,6 +3,7 @@ import {
   clockSchema,
   dayLoadResponseSchema,
   planTaskRequestSchema,
+  todayResponseSchema,
   patchTaskRequestSchema,
   type PatchTaskRequest,
   searchResponseSchema,
@@ -46,6 +47,17 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(planTaskRequestSchema.parse({ day })),
     }),
+  today: (listId?: string) =>
+    request(
+      `/views/today${listId ? `?listId=${encodeURIComponent(listId)}` : ''}`,
+      todayResponseSchema,
+    ),
+  setCompletion: ({ id, completed }: { id: string; completed: boolean }) =>
+    request(
+      `/tasks/${encodeURIComponent(id)}/${completed ? 'complete' : 'reopen'}`,
+      createTaskResponseSchema,
+      { method: 'POST' },
+    ),
   patchTask: (id: string, input: PatchTaskRequest) =>
     request(`/tasks/${encodeURIComponent(id)}`, createTaskResponseSchema, {
       method: 'PATCH',

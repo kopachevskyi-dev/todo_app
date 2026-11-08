@@ -15,6 +15,7 @@ import { createId } from './ids';
 import { applyDetailsEdit, type DetailPart } from '../domain/activity';
 import type { CreateTaskRequest, PatchTaskRequest } from '../shared/contract';
 import { matchesQuery } from '../domain/search';
+import { todayView } from '../domain/today';
 import { localDate } from '../domain/time';
 
 export function createRepositories(db: AppDatabase) {
@@ -120,6 +121,67 @@ export function createRepositories(db: AppDatabase) {
           )
           .orderBy(desc(tasks.placedAt), desc(sql`task.rowid`))
           .all(),
+      today: (day: string, listId?: string) => {
+        const rows = db
+          .select({
+            ...taskFields,
+            placedAt: tasks.placedAt,
+            list: {
+              id: lists.id,
+              name: lists.name,
+              color: lists.color,
+              position: lists.position,
+            },
+          })
+          .from(tasks)
+          .leftJoin(lists, eq(tasks.listId, lists.id))
+          .where(
+            and(
+              eq(tasks.day, day),
+              listId ? eq(tasks.listId, listId) : undefined,
+            ),
+          )
+          .orderBy(desc(tasks.placedAt), desc(sql`task.rowid`))
+          .all();
+        return { day, ...todayView(rows, day) };
+      },
+      setCompletion: (
+        id: string,
+        completed: boolean,
+        now: Date,
+        timeZone: string,
+      ) =>
+        db.transaction((tx) => {
+          const at = now.toISOString();
+          const day = localDate(now, timeZone);
+          const previous = tx
+            .select()
+            .from(tasks)
+            .where(eq(tasks.id, id))
+            .get()!;
+          tx.update(tasks)
+            .set({
+              completedAt: completed ? at : null,
+              day: completed ? (previous.day ?? day) : day,
+              updatedAt: at,
+            })
+            .where(eq(tasks.id, id))
+            .run();
+          tx.insert(taskEvents)
+            .values({
+              id: createId(now),
+              taskId: id,
+              type: completed ? 'completed' : 'reopened',
+              at,
+              day,
+            })
+            .run();
+          return tx
+            .select(taskFields)
+            .from(tasks)
+            .where(eq(tasks.id, id))
+            .get()!;
+        }),
       search: (query: string) =>
         db
           .select({
