@@ -2,6 +2,7 @@ import { z } from 'zod';
 import {
   patchTaskRequestSchema,
   type PatchTaskRequest,
+  searchResponseSchema,
   errorResponseSchema,
   healthResponseSchema,
   listsResponseSchema,
@@ -43,6 +44,8 @@ export const api = {
     request(`/tasks/${encodeURIComponent(id)}`, z.undefined(), {
       method: 'DELETE',
     }),
+  search: (query: string) =>
+    request(`/search?q=${encodeURIComponent(query)}`, searchResponseSchema),
   lists: () => request('/lists', listsResponseSchema),
   health: () => request('/health', healthResponseSchema),
   backlog: (listId?: string) =>

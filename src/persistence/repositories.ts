@@ -4,6 +4,7 @@ import { lists, subtasks, tasks, taskEvents } from './schema';
 import { createId } from './ids';
 import { applyDetailsEdit, type DetailPart } from '../domain/activity';
 import type { CreateTaskRequest, PatchTaskRequest } from '../shared/contract';
+import { matchesQuery } from '../domain/search';
 import { localDate } from '../domain/time';
 
 export function createRepositories(db: AppDatabase) {
@@ -80,6 +81,23 @@ export function createRepositories(db: AppDatabase) {
           )
           .orderBy(desc(tasks.placedAt), desc(sql`task.rowid`))
           .all(),
+      search: (query: string) =>
+        db
+          .select({
+            ...taskFields,
+            list: {
+              id: lists.id,
+              name: lists.name,
+              color: lists.color,
+              position: lists.position,
+            },
+          })
+          .from(tasks)
+          .leftJoin(lists, eq(tasks.listId, lists.id))
+          .orderBy(desc(tasks.updatedAt), desc(tasks.id))
+          .all()
+          .filter((task) => matchesQuery(task, query))
+          .slice(0, 50),
       get: (id: string) =>
         db.select(taskFields).from(tasks).where(eq(tasks.id, id)).get(),
       subtasks: (id: string) =>
