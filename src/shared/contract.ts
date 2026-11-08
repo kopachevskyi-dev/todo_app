@@ -201,3 +201,6 @@ export const todayResponseSchema = z.object({
   }),
 });
 export type TodayResponse = z.infer<typeof todayResponseSchema>;
+
+/** Placeholder until the History ticket (#23) is implemented. */
+export const historyResponseSchema = z.never();
