@@ -24,9 +24,9 @@ import {
   Icon,
   Modal,
   QuickAdd,
-  SectionLabel,
   TaskRow,
 } from './components';
+import { Lists } from './Lists';
 import { TaskDetail } from './TaskDetail';
 import { History } from './History';
 import { captureLayout } from './layout-animation';
@@ -100,10 +100,12 @@ function SearchField({
 function Capture({
   target,
   mobile = false,
+  list,
   onAdded,
 }: {
   target: 'backlog' | 'today';
   mobile?: boolean;
+  list?: import('../shared/contract').List;
   onAdded?: () => void;
 }) {
   const [title, setTitle] = useState('');
@@ -119,7 +121,7 @@ function Capture({
       ]);
       const previousBacklog = client.getQueryData<{ tasks: TaskRowData[] }>([
         'backlog',
-        undefined,
+        list?.id,
       ]);
       const previousCounts = client.getQueryData<Counts>(['counts']);
       const id = `optimistic-${globalThis.crypto.randomUUID()}`;
@@ -128,8 +130,8 @@ function Capture({
           id,
           title: request.title,
           description: '',
-          listId: null,
-          list: null,
+          listId: list?.id ?? null,
+          list: list ?? null,
           day: null,
           completedAt: null,
           missedFrom: null,
@@ -138,7 +140,7 @@ function Capture({
           createdAt: '1970-01-01T00:00:00.000Z',
           updatedAt: '1970-01-01T00:00:00.000Z',
         };
-        client.setQueryData(['backlog', undefined], {
+        client.setQueryData(['backlog', list?.id], {
           tasks: [optimistic, ...(previousBacklog?.tasks ?? [])],
         });
       }
@@ -156,8 +158,8 @@ function Capture({
     },
     onError: (failure, _request, context) => {
       if (context?.previousBacklog)
-        client.setQueryData(['backlog', undefined], context.previousBacklog);
-      else client.setQueryData(['backlog', undefined], { tasks: [] });
+        client.setQueryData(['backlog', list?.id], context.previousBacklog);
+      else client.setQueryData(['backlog', list?.id], { tasks: [] });
       if (context?.previousCounts)
         client.setQueryData(['counts'], context.previousCounts);
       setError(
@@ -169,11 +171,11 @@ function Capture({
     },
     onSuccess: ({ task }, request, context) => {
       client.setQueryData<{ tasks: TaskRowData[] }>(
-        ['backlog', undefined],
+        ['backlog', list?.id],
         (previous) =>
           previous && {
             tasks: previous.tasks.map((row) =>
-              row.id === context.id ? { ...task, list: null } : row,
+              row.id === context.id ? { ...task, list: list ?? null } : row,
             ),
           },
       );
@@ -194,7 +196,11 @@ function Capture({
       return;
     }
     setError(undefined);
-    mutation.mutate({ title: title.trim(), target });
+    mutation.mutate({
+      title: title.trim(),
+      target,
+      ...(list ? { listId: list.id } : {}),
+    });
   };
   return (
     <QuickAdd
@@ -307,6 +313,17 @@ export function App() {
   const title = tabs.find((tab) => tab.to === path)?.label ?? 'Search';
   const lists = useQuery({ queryKey: ['lists'], queryFn: api.lists });
   const counts = useQuery({ queryKey: ['counts'], queryFn: api.counts });
+  const activeList = lists.data?.lists.find((item) => item.id === list);
+  const filterList = (id?: string) => {
+    void navigate({
+      to: path as '/backlog' | '/today' | '/history' | '/search',
+      search: (previous) => ({
+        ...(path === '/history' ? previous : {}),
+        list: id,
+        task: undefined,
+      }),
+    });
+  };
   const backlog = useQuery({
     queryKey: ['backlog', list],
     queryFn: () => api.backlog(list),
@@ -378,30 +395,13 @@ export function App() {
             </nav>
           </div>
           <nav aria-label="Sections">{nav}</nav>
-          <div className="lists">
-            <SectionLabel>Lists</SectionLabel>
-            {lists.data?.lists.map((item) => (
-              <Link
-                key={item.id}
-                to={path as '/backlog' | '/today' | '/history' | '/search'}
-                search={(previous) => ({
-                  ...(path === '/history' ? previous : {}),
-                  list: list === item.id ? undefined : item.id,
-                  task: undefined,
-                })}
-                className="list-link"
-                aria-current={list === item.id ? 'true' : undefined}
-              >
-                <span className="list-dot" style={{ background: item.color }} />
-                {item.name}
-              </Link>
-            ))}
-            {lists.isError && <p role="alert">Could not load lists.</p>}
-            <div className="new-list">
-              <Icon name="plus" size={14} />
-              New list
-            </div>
-          </div>
+          <Lists
+            lists={lists.data?.lists ?? []}
+            active={list}
+            mobile={false}
+            onFilter={filterList}
+          />
+          {lists.isError && <p role="alert">Could not load lists.</p>}
         </div>
       )}
       {!(mobile && task) && (
@@ -498,7 +498,24 @@ export function App() {
                 )}
               </div>
             )}
+            {activeList && (isBacklog || isToday) && !mobile && (
+              <span className="active-list-chip">
+                <span
+                  className="list-dot"
+                  style={{ background: activeList.color }}
+                />
+                {activeList.name}
+              </span>
+            )}
           </header>
+          {mobile && (isBacklog || isToday) && (
+            <Lists
+              lists={lists.data?.lists ?? []}
+              active={list}
+              mobile
+              onFilter={filterList}
+            />
+          )}
           {completion.isError && (
             <p role="alert" className="field-error">
               {completion.error.message}
@@ -509,7 +526,7 @@ export function App() {
             <>
               {!mobile && (
                 <div className="today-capture">
-                  <Capture target="today" />
+                  <Capture target="today" list={activeList} />
                   <Button variant="outline" disabled>
                     <Icon name="backlog" size={18} />
                     From backlog
@@ -598,7 +615,7 @@ export function App() {
           )}
           {isBacklog && (
             <>
-              {!mobile && <Capture target="backlog" />}
+              {!mobile && <Capture target="backlog" list={activeList} />}
               {backlog.isPending && <p role="status">Loading tasks…</p>}
               {backlog.isError && (
                 <p role="alert" className="field-error">
@@ -722,6 +739,7 @@ export function App() {
           <h3 className="sheet-label">New task</h3>
           <Capture
             target={isBacklog ? 'backlog' : 'today'}
+            list={activeList}
             mobile
             onAdded={() => setCapturing(false)}
           />
