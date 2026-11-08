@@ -7,6 +7,7 @@ import {
   eq,
   isNotNull,
   isNull,
+  lt,
   sql,
 } from 'drizzle-orm';
 import type { AppDatabase } from './database';
@@ -17,6 +18,7 @@ import type { CreateTaskRequest, PatchTaskRequest } from '../shared/contract';
 import { matchesQuery } from '../domain/search';
 import { todayView } from '../domain/today';
 import { localDate } from '../domain/time';
+import { rolloverTasks } from '../domain/rollover';
 
 export function createRepositories(db: AppDatabase) {
   const taskFields = {
@@ -36,6 +38,44 @@ export function createRepositories(db: AppDatabase) {
     db.select({ value: count() }).from(tasks).where(where).get()!.value;
   return {
     tasks: {
+      rollover: (now: Date, timeZone: string) =>
+        db.transaction(
+          (tx) => {
+            const candidates = tx
+              .select({
+                id: tasks.id,
+                day: tasks.day,
+                completedAt: tasks.completedAt,
+              })
+              .from(tasks)
+              .where(
+                and(
+                  lt(tasks.day, localDate(now, timeZone)),
+                  isNull(tasks.completedAt),
+                ),
+              )
+              .all();
+            for (const change of rolloverTasks(now, timeZone, candidates)) {
+              tx.update(tasks)
+                .set({
+                  day: change.day,
+                  missedFrom: change.missedFrom,
+                  placedAt: change.placedAt,
+                  updatedAt: now.toISOString(),
+                })
+                .where(eq(tasks.id, change.id))
+                .run();
+              tx.insert(taskEvents)
+                .values({
+                  id: createId(now),
+                  taskId: change.id,
+                  ...change.event,
+                })
+                .run();
+            }
+          },
+          { behavior: 'immediate' },
+        ),
       create: (input: CreateTaskRequest, now: Date, timeZone: string) =>
         db.transaction((tx) => {
           const id = createId(now);

@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { flushSync } from 'react-dom';
 import { completionTime } from './useCompletion';
+import { rowMetaText } from '../domain/row-meta';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
 export function Icon({ name, size = 20 }: { name: string; size?: number }) {
@@ -160,6 +161,16 @@ export function TaskRow({
   href: string;
   onOpen: () => void;
 }) {
+  const meta = [
+    rowMetaText({
+      listName: task.list?.name ?? null,
+      missedFrom: task.missedFrom,
+      subtaskCount: task.subtaskCount,
+    }),
+    location,
+  ]
+    .filter(Boolean)
+    .join(' · ');
   return (
     <li
       data-layout-id={task.id}
@@ -204,19 +215,15 @@ export function TaskRow({
         />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
-          {(task.list || location) && (
+          {meta && (
             <span className="row-meta">
               {task.list && (
-                <>
-                  <span
-                    className="list-dot"
-                    style={{ background: task.list.color }}
-                  />
-                  {task.list.name}
-                  {location && ' · '}
-                </>
+                <span
+                  className="list-dot"
+                  style={{ background: task.list.color }}
+                />
               )}
-              {location}
+              {meta}
             </span>
           )}
         </span>
