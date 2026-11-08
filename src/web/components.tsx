@@ -1,3 +1,4 @@
+import { taskMeta } from '../domain/task-meta';
 import {
   useEffect,
   useId,
@@ -204,19 +205,18 @@ export function TaskRow({
         />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
-          {(task.list || location) && (
+          {(taskMeta(task.list?.name ?? null, task.subtaskCount) ||
+            location) && (
             <span className="row-meta">
               {task.list && (
-                <>
-                  <span
-                    className="list-dot"
-                    style={{ background: task.list.color }}
-                  />
-                  {task.list.name}
-                  {location && ' · '}
-                </>
+                <span
+                  className="list-dot"
+                  style={{ background: task.list.color }}
+                />
               )}
-              {location}
+              {[taskMeta(task.list?.name ?? null, task.subtaskCount), location]
+                .filter(Boolean)
+                .join(' · ')}
             </span>
           )}
         </span>
