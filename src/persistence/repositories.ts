@@ -1,4 +1,14 @@
-import { and, asc, count, desc, eq, isNotNull, isNull, sql } from 'drizzle-orm';
+import {
+  and,
+  asc,
+  between,
+  count,
+  desc,
+  eq,
+  isNotNull,
+  isNull,
+  sql,
+} from 'drizzle-orm';
 import type { AppDatabase } from './database';
 import { lists, subtasks, tasks, taskEvents } from './schema';
 import { createId } from './ids';
@@ -59,6 +69,35 @@ export function createRepositories(db: AppDatabase) {
             .where(eq(tasks.id, id))
             .get()!;
         }),
+      plan: (id: string, day: string | null, now: Date) =>
+        db.transaction((tx) => {
+          const at = now.toISOString();
+          tx.update(tasks)
+            .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
+            .where(eq(tasks.id, id))
+            .run();
+          tx.insert(taskEvents)
+            .values({
+              id: createId(now),
+              taskId: id,
+              type: day ? 'planned' : 'moved_to_backlog',
+              at,
+              day,
+            })
+            .run();
+          return tx
+            .select(taskFields)
+            .from(tasks)
+            .where(eq(tasks.id, id))
+            .get()!;
+        }),
+      dayLoad: (from: string, to: string) =>
+        db
+          .select({ day: tasks.day, count: count() })
+          .from(tasks)
+          .where(between(tasks.day, from, to))
+          .groupBy(tasks.day)
+          .all(),
       backlog: (listId?: string) =>
         db
           .select({

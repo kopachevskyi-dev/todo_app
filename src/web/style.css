@@ -939,3 +939,126 @@ h3 {
   color: var(--text-muted);
   text-decoration: line-through;
 }
+
+.day-option {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--text);
+  font: var(--font-body);
+  text-align: left;
+  cursor: pointer;
+}
+.day-option:hover,
+.day-option.selected-day {
+  background: var(--row-selected);
+}
+.day-load {
+  margin-left: auto;
+  white-space: nowrap;
+  color: var(--text-muted);
+  font: var(--font-meta);
+}
+.day-option svg:last-child {
+  color: var(--focus);
+}
+.day-divider {
+  height: 1px;
+  margin: 8px 0;
+  background: var(--divider-menu);
+}
+.backlog-option {
+  color: var(--text-muted);
+  justify-content: space-between;
+}
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: var(--font-label);
+}
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+.calendar-weekday {
+  text-align: center;
+  padding: 8px 0;
+  font: var(--font-meta);
+  color: var(--text-muted);
+}
+.calendar-day {
+  min-height: 40px;
+  border: 2px solid transparent;
+  border-radius: var(--r-control);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  color: var(--text);
+  font: var(--font-label);
+  cursor: pointer;
+}
+.calendar-day small {
+  font-size: 10px;
+  color: var(--text-muted);
+}
+.calendar-day:hover {
+  background: var(--row-selected);
+}
+.calendar-day[aria-current='date'] span {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  font-weight: 600;
+}
+.calendar-day.selected-day {
+  border-color: var(--focus);
+}
+.calendar-day:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.detail-footer .plan-action {
+  margin-left: auto;
+}
+.popover:has(.day-picker) {
+  animation: day-menu-in 140ms ease-out;
+  transform-origin: top left;
+  max-height: calc(100dvh - 32px);
+  overflow-y: auto;
+}
+@keyframes day-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+@media (max-width: 767px) {
+  .day-option {
+    min-height: 52px;
+    border-radius: var(--r-cell-m);
+  }
+  .calendar-day {
+    min-height: 44px;
+  }
+  .detail-footer .plan-action {
+    flex: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .popover:has(.day-picker) {
+    animation: none;
+  }
+}

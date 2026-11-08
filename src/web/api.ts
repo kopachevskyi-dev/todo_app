@@ -1,5 +1,8 @@
 import { z } from 'zod';
 import {
+  clockSchema,
+  dayLoadResponseSchema,
+  planTaskRequestSchema,
   patchTaskRequestSchema,
   type PatchTaskRequest,
   searchResponseSchema,
@@ -34,6 +37,15 @@ async function request<T>(
 }
 
 export const api = {
+  clock: () => request('/clock', clockSchema),
+  dayLoad: (from: string, to: string) =>
+    request(`/day-load?from=${from}&to=${to}`, dayLoadResponseSchema),
+  planTask: (id: string, day: string | null) =>
+    request(`/tasks/${encodeURIComponent(id)}/plan`, createTaskResponseSchema, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(planTaskRequestSchema.parse({ day })),
+    }),
   patchTask: (id: string, input: PatchTaskRequest) =>
     request(`/tasks/${encodeURIComponent(id)}`, createTaskResponseSchema, {
       method: 'PATCH',
