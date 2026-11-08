@@ -49,6 +49,7 @@ export function createApp(options: {
         },
         400,
       );
+    repositories.tasks.rollover(clock.now(), c.req.header('X-Timezone')!);
     await next();
   });
   app.get('/api/health', (c) =>

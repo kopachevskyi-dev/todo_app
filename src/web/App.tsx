@@ -12,6 +12,7 @@ import {
   useSearch,
 } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { systemClock } from '../api/clock';
 import { searchLocationText } from '../domain/search';
 import { api } from './api';
 import { useCompletion } from './useCompletion';
@@ -241,6 +242,27 @@ function Detail({
 }
 
 export function App() {
+  const client = useQueryClient();
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const arm = () => {
+      clearTimeout(timer);
+      const now = systemClock.now();
+      const midnight = new Date(now);
+      midnight.setHours(24, 0, 0, 0);
+      timer = setTimeout(refresh, midnight.getTime() - now.getTime());
+    };
+    const refresh = () => {
+      void client.invalidateQueries();
+      arm();
+    };
+    arm();
+    window.addEventListener('focus', refresh);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('focus', refresh);
+    };
+  }, [client]);
   const path = useLocation({ select: (location) => location.pathname });
   const { task, list, q } = useSearch({ strict: false });
   const navigate = useNavigate();
