@@ -431,13 +431,17 @@ export function Popover({
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current!;
-    const previous = document.activeElement as HTMLElement | null;
+    // Child effects may already have focused content inside the popover.
+    const previous =
+      anchor.current ?? (document.activeElement as HTMLElement | null);
     const rect = anchor.current?.getBoundingClientRect();
     if (rect) {
       element.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - element.offsetWidth - 16))}px`;
       element.style.top = `${rect.bottom + 8}px`;
     }
-    element.focus();
+    (
+      element.querySelector<HTMLElement>('button:not(:disabled)') ?? element
+    ).focus();
     const outside = (event: PointerEvent) => {
       if (
         !element.contains(event.target as Node) &&
@@ -463,6 +467,13 @@ export function Popover({
       aria-label={label}
       tabIndex={-1}
       className="popover"
+      onKeyDown={(event) => {
+        if (event.key === 'Escape') {
+          event.preventDefault();
+          event.stopPropagation();
+          onClose();
+        }
+      }}
     >
       {children}
     </div>

@@ -9,6 +9,7 @@ import {
   Link,
   useLocation,
   useNavigate,
+  useRouter,
   useSearch,
 } from '@tanstack/react-router';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
@@ -279,7 +280,9 @@ export function App() {
       window.removeEventListener('focus', refresh);
     };
   }, [client]);
-  const path = useLocation({ select: (location) => location.pathname });
+  const location = useLocation();
+  const path = location.pathname;
+  const router = useRouter();
   const { task, list, q, week, day } = useSearch({ strict: false });
   const navigate = useNavigate();
   const mobile = useMedia('(max-width: 767px)');
@@ -442,11 +445,32 @@ export function App() {
       animateLayout.current = captureLayout(rowContainer.current);
   }, [rows, today.data?.done]);
   const closeTask = () => {
+    // Async task actions may finish after the user has navigated elsewhere.
+    if (!task || router.history.location.href !== location.href) return;
     void navigate({
       to: path as '/backlog' | '/today' | '/history' | '/search',
       search: (previous) => ({ ...previous, task: undefined }),
     });
   };
+  useEffect(() => {
+    if (!task) return;
+    const escape = (event: KeyboardEvent) => {
+      if (
+        event.key !== 'Escape' ||
+        event.defaultPrevented ||
+        event.isComposing ||
+        document.querySelector('.popover, dialog[open]:not(.detail-drawer)')
+      )
+        return;
+      event.preventDefault();
+      void navigate({
+        to: path as '/backlog' | '/today' | '/history' | '/search',
+        search: (previous) => ({ ...previous, task: undefined }),
+      });
+    };
+    document.addEventListener('keydown', escape);
+    return () => document.removeEventListener('keydown', escape);
+  }, [task, navigate, path]);
   const openTask = (id: string) => {
     void navigate({
       to: path as '/backlog' | '/today' | '/history' | '/search',
