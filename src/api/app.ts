@@ -335,6 +335,12 @@ export function createApp(options: {
   app.get('/api/clock', (c) =>
     c.json(clockSchema.parse({ now: clock.now().toISOString() })),
   );
+  app.post('/api/tasks/plan-today', (c) =>
+    c.json(
+      { error: { code: 'not_implemented', message: 'Not implemented.' } },
+      501,
+    ),
+  );
   app.post('/api/tasks/:id/plan', async (c) => {
     const id = c.req.param('id');
     const task = repositories.tasks.get(id);
