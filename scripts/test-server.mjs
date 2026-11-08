@@ -11,12 +11,13 @@ export async function startTestServer({
   testClock = false,
 } = {}) {
   const directory = await mkdtemp(join(tmpdir(), 'todo-server-'));
+  const databasePath = join(directory, 'todo.db');
   const child = spawn(process.execPath, [entry], {
     env: {
       ...process.env,
       PORT: '0',
       HOST: '127.0.0.1',
-      DATABASE_PATH: join(directory, 'todo.db'),
+      DATABASE_PATH: databasePath,
       ENABLE_TEST_CLOCK: String(testClock),
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -73,7 +74,7 @@ export async function startTestServer({
         }
       });
     });
-    return { url, stop };
+    return { url, stop, databasePath };
   } catch (error) {
     await stop();
     throw error;
