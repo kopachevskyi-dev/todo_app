@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import {
+  historyResponseSchema,
   clockSchema,
   dayLoadResponseSchema,
   planTaskRequestSchema,
@@ -38,6 +39,17 @@ async function request<T>(
 }
 
 export const api = {
+  history: (weekStart: string, listId?: string) =>
+    request(
+      `/views/history?${new URLSearchParams({ weekStart, ...(listId ? { listId } : {}) })}`,
+      historyResponseSchema,
+    ),
+  moveToBacklog: (id: string) =>
+    request(
+      `/tasks/${encodeURIComponent(id)}/move-to-backlog`,
+      createTaskResponseSchema,
+      { method: 'POST' },
+    ),
   clock: () => request('/clock', clockSchema),
   dayLoad: (from: string, to: string) =>
     request(`/day-load?from=${from}&to=${to}`, dayLoadResponseSchema),

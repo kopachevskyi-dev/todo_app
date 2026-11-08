@@ -27,7 +27,9 @@ export function TaskDetail({
   detail,
   onClose,
   mobile,
+  history = false,
 }: {
+  history?: boolean;
   detail: Detail;
   onClose: () => void;
   mobile: boolean;
@@ -83,11 +85,18 @@ export function TaskDetail({
       setChosenDay(undefined);
       setError(undefined);
       await Promise.all(
-        ['task', 'backlog', 'today', 'counts', 'search', 'day-load'].map(
-          (key) =>
-            client.invalidateQueries({
-              queryKey: key === 'task' ? [key, task.id] : [key],
-            }),
+        [
+          'task',
+          'backlog',
+          'today',
+          'counts',
+          'search',
+          'day-load',
+          'history',
+        ].map((key) =>
+          client.invalidateQueries({
+            queryKey: key === 'task' ? [key, task.id] : [key],
+          }),
         ),
       );
     } catch (failure) {
@@ -164,6 +173,7 @@ export function TaskDetail({
         client.invalidateQueries({ queryKey: ['backlog'] }),
         client.invalidateQueries({ queryKey: ['today'] }),
         client.invalidateQueries({ queryKey: ['search'] }),
+        client.invalidateQueries({ queryKey: ['history'] }),
       ]);
     });
   };
@@ -264,6 +274,7 @@ export function TaskDetail({
       setDeleting(false);
       void client.invalidateQueries({ queryKey: ['today'] });
       void client.invalidateQueries({ queryKey: ['search'] });
+      void client.invalidateQueries({ queryKey: ['history'] });
       void client.invalidateQueries({ queryKey: ['backlog'] });
       void client.invalidateQueries({ queryKey: ['counts'] });
     }
@@ -288,7 +299,9 @@ export function TaskDetail({
       {task.completedAt && (
         <div className="status-pill">
           <Icon name="check" size={14} />
-          Completed at {completionTime(task.completedAt)}
+          {history
+            ? `Completed ${formatActivityTimestamp(task.completedAt, Intl.DateTimeFormat().resolvedOptions().timeZone)}`
+            : `Completed at ${completionTime(task.completedAt)}`}
         </div>
       )}
       <textarea
@@ -421,15 +434,47 @@ export function TaskDetail({
           <Button
             variant="strong"
             className="reopen-button"
-            disabled={completion.isPending || deleting}
+            disabled={completion.isPending || deleting || planning}
             onClick={() => {
               flushDescription();
-              void queue.current.then(() =>
-                completion.mutate({ id: task.id, completed: false }),
-              );
+              if (history) {
+                setPlanning(true);
+                void queue.current.then(async () => {
+                  try {
+                    await api.moveToBacklog(task.id);
+                    await Promise.all(
+                      [
+                        'history',
+                        'backlog',
+                        'today',
+                        'counts',
+                        'task',
+                        'search',
+                        'day-load',
+                      ].map((key) =>
+                        client.invalidateQueries({ queryKey: [key] }),
+                      ),
+                    );
+                    setError(undefined);
+                    onClose();
+                  } catch (failure) {
+                    setError(
+                      failure instanceof Error
+                        ? failure.message
+                        : 'Could not move the task. Try again.',
+                    );
+                  } finally {
+                    setPlanning(false);
+                  }
+                });
+              } else {
+                void queue.current.then(() =>
+                  completion.mutate({ id: task.id, completed: false }),
+                );
+              }
             }}
           >
-            Reopen
+            {history ? 'Move to backlog' : 'Reopen'}
           </Button>
         )}
       </footer>

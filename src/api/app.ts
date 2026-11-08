@@ -1,3 +1,4 @@
+import { historyWeekStart } from '../domain/history';
 import { z } from 'zod';
 import { addDays } from '../domain/day-picker';
 import { activityText } from '../domain/activity';
@@ -6,6 +7,7 @@ import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
 import { isTimeZone, localDate } from '../domain/time';
 import {
+  historyResponseSchema,
   planTaskRequestSchema,
   dayLoadResponseSchema,
   todayResponseSchema,
@@ -100,6 +102,47 @@ export function createApp(options: {
       ),
     ),
   );
+  app.get('/api/views/history', (c) => {
+    const week = z.iso.date().safeParse(c.req.query('weekStart'));
+    if (!week.success || historyWeekStart(week.data) !== week.data)
+      return c.json(
+        {
+          error: {
+            code: 'invalid_week',
+            message: 'Choose a Monday for the week start.',
+          },
+        },
+        400,
+      );
+    return c.json(
+      historyResponseSchema.parse(
+        repositories.tasks.history(
+          week.data,
+          clock.now(),
+          c.req.header('X-Timezone')!,
+          c.req.query('listId'),
+        ),
+      ),
+    );
+  });
+  app.post('/api/tasks/:id/move-to-backlog', (c) => {
+    const task = repositories.tasks.get(c.req.param('id'));
+    if (!task)
+      return c.json(
+        { error: { code: 'not_found', message: 'Task not found.' } },
+        404,
+      );
+    if (!task.completedAt)
+      return c.json(
+        { error: { code: 'not_done', message: 'Task is not done.' } },
+        409,
+      );
+    return c.json(
+      createTaskResponseSchema.parse({
+        task: repositories.tasks.moveToBacklog(task.id, clock.now()),
+      }),
+    );
+  });
   for (const action of ['complete', 'reopen'] as const) {
     app.post(`/api/tasks/:id/${action}`, (c) => {
       const task = repositories.tasks.get(c.req.param('id'));
