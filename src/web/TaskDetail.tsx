@@ -20,6 +20,7 @@ import {
   BottomSheet,
   Button,
   ConfirmDialog,
+  Checkbox,
   Icon,
   Popover,
 } from './components';
@@ -53,6 +54,8 @@ export function TaskDetail({
   };
   const [choosingList, setChoosingList] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const moreAnchor = useRef<HTMLButtonElement>(null);
 
   const anchor = useRef<HTMLButtonElement>(null);
   const {
@@ -120,22 +123,70 @@ export function TaskDetail({
   );
   return (
     <div className="task-detail">
-      <textarea
-        ref={titleInput}
-        rows={1}
-        className="detail-title"
-        aria-label="Title"
-        maxLength={200}
-        value={title}
-        onChange={(event) => setTitle(event.target.value)}
-        onBlur={saveTitle}
-        onKeyDown={(event) => {
-          if (event.key === 'Enter') {
-            event.preventDefault();
-            event.currentTarget.blur();
-          }
-        }}
-      />
+      <div className="detail-title-row">
+        <Checkbox
+          label={`${task.completedAt ? 'Reopen' : 'Complete'} "${task.title}"`}
+          checked={Boolean(task.completedAt)}
+          disabled={completion.isPending || deleting || planning}
+          onChange={async () => {
+            flushDescription();
+            await queue.current;
+            await completion.mutateAsync({
+              id: task.id,
+              completed: !task.completedAt,
+            });
+          }}
+        />
+        <textarea
+          ref={titleInput}
+          rows={1}
+          className="detail-title"
+          aria-label="Title"
+          maxLength={200}
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
+          onBlur={saveTitle}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              event.currentTarget.blur();
+            }
+          }}
+        />
+        <Button
+          ref={moreAnchor}
+          variant="ghost"
+          aria-label="More task actions"
+          aria-haspopup="menu"
+          aria-expanded={moreOpen}
+          onClick={() => setMoreOpen(!moreOpen)}
+        >
+          ⋯
+        </Button>
+      </div>
+      {moreOpen && (
+        <Popover
+          anchor={moreAnchor}
+          label="Task actions"
+          onClose={() => setMoreOpen(false)}
+        >
+          <div role="menu" aria-label="Task actions">
+            <Button
+              autoFocus
+              role="menuitem"
+              variant="ghost"
+              disabled={deleting}
+              onClick={() => {
+                setMoreOpen(false);
+                flushDescription();
+                setConfirming(true);
+              }}
+            >
+              Delete
+            </Button>
+          </div>
+        </Popover>
+      )}
       {task.completedAt && (
         <div className="status-pill">
           <Icon name="check" size={14} />
@@ -207,10 +258,8 @@ export function TaskDetail({
       )}
       <TaskDetailFooter
         task={task}
-        mobile={mobile}
         deleting={deleting}
         flushDescription={flushDescription}
-        setConfirming={setConfirming}
         chosenDay={chosenDay}
         planning={planning}
         clock={clock}

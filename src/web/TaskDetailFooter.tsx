@@ -4,16 +4,14 @@ import type { RefObject } from 'react';
 import type { TaskDetailData } from './task-detail-types';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
-import { Button, Icon } from './components';
+import { Button } from './components';
 import { planButtonLabel } from '../domain/day-picker';
 import { localDate } from '../domain/time';
 import { useCompletion } from './useCompletion';
 export function TaskDetailFooter({
   task,
-  mobile,
   deleting,
   flushDescription,
-  setConfirming,
   chosenDay,
   planning,
   clock,
@@ -28,10 +26,8 @@ export function TaskDetailFooter({
   completion,
 }: {
   task: TaskDetailData['task'];
-  mobile: boolean;
   deleting: boolean;
   flushDescription: () => void;
-  setConfirming: (value: boolean) => void;
   chosenDay: string | null | undefined;
   planning: boolean;
   clock: { data?: { now: string } };
@@ -48,17 +44,6 @@ export function TaskDetailFooter({
   const client = useQueryClient();
   return (
     <footer className="detail-footer">
-      <Button
-        variant={mobile ? 'icon' : 'outline'}
-        aria-label={mobile ? 'Delete task' : undefined}
-        disabled={deleting}
-        onClick={() => {
-          flushDescription();
-          setConfirming(true);
-        }}
-      >
-        {mobile ? <Icon name="trash" /> : 'Delete'}
-      </Button>
       {!task.completedAt && (
         <Button
           className="plan-action"

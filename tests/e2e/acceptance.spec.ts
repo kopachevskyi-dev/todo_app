@@ -60,7 +60,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     }
     const fromBacklog = new URL(page.url()).pathname === '/backlog';
     if (fromBacklog) await navLink(page, /Today/).click();
-    // The heading pill is the total; the progress header gives open tasks.
+    // The progress header gives total, completed and open tasks.
     const progress = page.getByRole('progressbar', {
       name: 'Tasks completed today',
     });
@@ -68,9 +68,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       const total = Number(await progress.getAttribute('aria-valuemax'));
       const done = Number(await progress.getAttribute('aria-valuenow'));
       expect(total - done).toBe(Number(count));
-      await expect(page.getByRole('heading', { level: 1 })).toHaveText(
-        `Today${total}`,
-      );
+      await expect(page.getByRole('heading', { level: 1 })).toHaveText('Today');
     }).toPass();
     if (fromBacklog) await navLink(page, /Backlog/).click();
   };
@@ -98,6 +96,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await expect(rows(page).first()).toContainText(LICENSE);
     await expectBacklogCount('8');
     await rows(page).first().click();
+    await detail.getByRole('button', { name: /^Activity/ }).click();
     await expect(detail).toContainText('added to backlog');
     for (const id of monday) await complete(server.url, id);
 
@@ -133,6 +132,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       .getByRole('dialog')
       .getByRole('button', { name: 'Personal' })
       .click();
+    await detail.getByRole('button', { name: /^Activity/ }).click();
     await expect(detail).toContainText('description, subtasks and list added');
 
     // 2b. 8:05 PM: plan for tomorrow.
@@ -158,7 +158,15 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await expectTodayCount('4');
     await expect(page.getByRole('main')).toContainText('1 of 5 done');
     await page.getByRole('checkbox', { name: LICENSE }).check();
-    await expect(page.getByRole('main')).toContainText('DONE · 2');
+    await expect(
+      page.getByRole('main').getByRole('heading', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).filter({ hasText: LICENSE }).getByRole('checkbox'),
+    ).toBeChecked();
+    await expect(
+      rows(page).filter({ hasText: 'Pay rent' }).getByRole('checkbox'),
+    ).toBeChecked();
     await expect(page.getByRole('main')).toContainText('2 of 5 done');
     await expectTodayCount('3');
     await rows(page).filter({ hasText: LICENSE }).click();

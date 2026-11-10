@@ -207,7 +207,7 @@ Icons used: backlog (layered stack), today (calendar), history (clock), search, 
 
 ### 3.7 Touch and hit targets
 
-Minimum interactive size 44×44 everywhere. Mobile rows are 64 high, so a full row is a tap target. The 22px checkbox has a **44×44 hit area [decision]** (extend with padding; keep the visual at 22).
+Minimum interactive size 44×44 everywhere. Mobile rows are 64 high, so a full row is a tap target. The 22px checkbox has a **44×44 hit area [decision]**. Completion is a native button with checkbox semantics, beside the task link; their hit areas do not overlap.
 
 ---
 
@@ -217,10 +217,12 @@ For every component: anatomy, sizes, states. States marked **[decision]** are no
 
 ### 4.1 Task row
 
+Completion and opening use sibling controls: a checkbox button labeled `Complete "{title}"` or `Reopen "{title}"`, followed by the task link. Tab reaches each separately; Space toggles completion and Enter on the link opens the card. Subtask progress reads `done/total`. A missed History row has a non-interactive icon + "Missed" marker outside its link, with no checkbox role.
+
 Anatomy (left to right): checkbox, text block (title, meta line), optional trailing time (done rows) or chevron (open rows).
 
 - Height: min 60 desktop, 64 mobile. Padding 8/16. Gap 14. Bottom divider `divider-row`.
-- Title: 16, `text`. Meta: 13, `text-muted`, list dot (10×10, radius 3) + text. Meta text format: `{List} · {extra}`, extras: "3 subtasks", "from backlog, 2 days", "moved to Thu, Nov 5".
+- Title: 16, `text`. Meta: 13, `text-muted`, list dot (10×10, radius 3) + text. Meta text format: `{List} · {extra}`, extras: "1/2" (completed/total subtasks), "from backlog, 2 days", "moved to Thu, Nov 5".
 
 | State | Look |
 |---|---|
@@ -314,11 +316,11 @@ Choosing an item sets the Day field and updates the primary button label. It doe
 
 Order of blocks, top to bottom: header (label "Task" 14/500 `text-muted`, close button on desktop; back link on mobile), title, status pill (only if done), description, fields (List, Day), Subtasks, Activity, footer actions.
 
-- Title: editable text, in place. Description: editable multi-line, 15/1.55 `text-2`. Placeholder "Add a description" **[decision]**.
+- Title: editable text, in place. A labeled completion checkbox sits next to it (`Complete "{title}"` / `Reopen "{title}"`); completion and reopening keep the card open and refresh the row and day progress. Checking every subtask leaves the parent open. A secondary "⋯" button ("More task actions") opens a Delete menu item with the existing confirmation. Description: editable multi-line, 15/1.55 `text-2`. Placeholder "Add a description" **[decision]**.
 - Subtasks: heading H3 17/600; rows min-height 44, 15px, checkbox 20; last row "Add subtask" with plus icon in `text-muted`. Done subtask: filled check, text `text-muted`.
-- Activity: heading H3; each line 13 `text-muted` with an 8px dot (`check-border`; the "completed" event uses `text`). Format: `{Mon D}, {h:mm AM/PM} — {event}`.
+- Activity: an `Activity (N)` button in the H3 heading exposes `aria-expanded`; collapsed by default when opening an open task, expanded when opening a completed task; each line 13 `text-muted` with an 8px dot (`check-border`; the "completed" event uses `text`). Format: `{Mon D}, {h:mm AM/PM} — {event}`.
 - Status pill: height 32, padding 0 12, radius 10, fill `text`, white text 13/500, 14px white check. Text: "Completed at 2:20 PM" on Today, "Completed Nov 4, 2:20 PM" in History.
-- Footer: desktop = pinned to panel bottom (`margin-top: auto`), Delete (outline, 48 high, padding 0 20) + one flexible action. Mobile = sticky bar, padding 12/16/20, top border `divider-menu`, trash icon button 48×48 + flexible action.
+- Footer: desktop = pinned to panel bottom (`margin-top: auto`), one flexible planning action (or the existing completed-task action). Mobile = sticky bar, padding 12/16/20, top border `divider-menu`, flexible action. Delete lives in the title’s secondary More menu on both layouts.
 
 Footer action by context:
 
@@ -373,6 +375,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 ### 4.12 Section label, count pill, progress
 
+- Today: one date and day-progress summary (`2 of 5 done`), open rows first, then a "Completed" heading only when completed rows exist. Quick-add and task surfaces stay available.
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
 - Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = completed tasks currently planned for today / all tasks currently planned for today. Min width 180 on desktop. On mobile the bar sits left of the "Add from Backlog" button.
@@ -432,7 +435,7 @@ All three list screens use the same main-column structure: header, quick-add (Ba
 | Screen | Header | Content |
 |---|---|---|
 | Backlog | H1 "Backlog", count pill, sub line "Everything you need to do someday. No date until you plan it." | Quick-add, task rows |
-| Today | H1 "Today", date line "Wednesday, November 4"; progress block on the right | Quick-add + "Add from Backlog" button on one line, open rows, then "DONE · n" group |
+| Today | H1 "Today", date line "Wednesday, November 4"; progress block on the right | Quick-add + "Add from Backlog" button on one line, open rows, then a "Completed" heading and completed rows |
 | History | H1 "History", sub line, prev/next week buttons | Week strip, day heading + summary, "DONE · n", "NOT DONE · n" |
 
 ---
@@ -471,7 +474,7 @@ Design size 390×844. Works from 360 wide up. No fake status bar and no fake key
 | Detail panel | Full-screen task screen |
 | Day popover | "Choose a day" bottom sheet |
 | Week strip with ratio text | Compact week strip; ratio in the day summary |
-| "Delete" outline button with label | 48×48 trash icon button with `aria-label` |
+| "⋯" More menu with Delete | Same More menu and confirmation |
 | Panel Close button | Back link |
 | Hover states | Pressed states |
 
@@ -486,7 +489,7 @@ One task, "Renew driver's license", across the four moments. This is also the te
 | 1 | Mon, Nov 2, 9:12 AM | Types the title in the quick-add field and presses Enter (desktop) or taps + then Add (mobile) | Task is created in the Backlog at the top, no list, no day, no description. Backlog count 7 → 8. Activity: "added to backlog" |
 | 2 | Tue, Nov 3, 8:03 PM | Opens the task from the Backlog. Writes a description, adds 3 subtasks, sets the list to Personal | Activity: "description, subtasks and list added" |
 | 2b | Tue, Nov 3, 8:05 PM | Opens the Day field, sees "Tomorrow, Wed 4 — 4 tasks", picks it, presses "Plan for Wed, Nov 4" | Task leaves the Backlog (count 8 → 7), appears in Today on Wed. Activity: "planned for Nov 4" |
-| 3 | Wed, Nov 4, 2:20 PM | Checks the task off in Today | Task moves to "DONE · 2" with time 2:20 PM. Header "2 of 5 done". Status pill "Completed at 2:20 PM". Activity: "completed" |
+| 3 | Wed, Nov 4, 2:20 PM | Checks the task off in Today | Task moves to "Completed" with time 2:20 PM. Header "2 of 5 done". Status pill "Completed at 2:20 PM". Activity: "completed" |
 | 4 | Sun, Nov 8 | Opens History, taps Wed 4 in the week strip, taps the task | Day shows "4 of 5 done · 1 moved to Thursday". Task shows full activity from creation to completion. "Move to backlog" is available |
 
 Navigation links that connect these screens in the mockups:
