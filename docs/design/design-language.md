@@ -33,9 +33,9 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 |---|---|
 | **Backlog** | Open tasks with no day. Count in nav = number of these. |
 | **Planned** | A task with a day. It leaves the Backlog the moment a day is set. |
-| **Today** | Open tasks planned for today. Nav badge = open tasks left today (not total). Header shows "N of M done". |
-| **Done** | Has a completion timestamp. Stays in its day. |
-| **History** | Read-only-feeling review of past days, by week. Each day shows done and not-done tasks, with times. |
+| **Today** | Tasks currently planned for today, grouped into open and done. Nav badge = open tasks left today (not total). Header shows "N of M done", counting only this list. |
+| **Done** | Completing a task sets its day to local today in the request's time zone; reopening keeps it on local today. In History, a day's done group contains tasks with a completed event carrying that stored day, minus later reopened events carrying the same day. Moving a task to the Backlog leaves its historical completion in that group. |
+| **History** | Review of days, by week. Today and past days use the same event-based done rule. Events belong to their stored day, regardless of the viewing time zone. |
 | **Not done** | A task planned for a day that ended unfinished. **[decision]** It rolls over to the next day automatically and the old day shows "Moved to Thu, Nov 5". |
 | **Activity log** | Each task keeps timestamped events: added to backlog, description and subtasks added, planned for {date}, completed. Shown newest last in the detail view. |
 
@@ -223,7 +223,7 @@ Row opens the task: desktop = shows it in the right panel, mobile = pushes the t
 | Missed | `1.5px dashed #AEB5AB`, fill `#FFFFFF`, not interactive in History |
 | Pressed **[decision]** | Scale 0.92, 80ms |
 
-Checking a task moves it to the "DONE" group of the same screen with the time of completion.
+Checking a task sets its day to local today and moves it to Today's "DONE" group with the time of completion. History also includes it in the done group for the stored completion day.
 
 ### 4.3 Quick-add field
 
@@ -353,7 +353,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
-- Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = done/planned. Min width 180 on desktop. On mobile the bar sits left of the "From backlog" button.
+- Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = completed tasks currently planned for today / all tasks currently planned for today. Min width 180 on desktop. On mobile the bar sits left of the "From backlog" button.
 
 ### 4.13 Week strip (History)
 

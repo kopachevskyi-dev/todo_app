@@ -90,10 +90,12 @@ it('counts done tasks and moves an open planned task back with a new placement a
   });
 });
 
-it('supplies the injected clock to the picker without exposing the test control routes', async () => {
-  const app = start();
-  expect(await (await app.request('/api/clock')).json()).toEqual({
-    now: '2026-11-04T19:20:00.000Z',
-  });
-  expect((await app.request('/api/test/clock')).status).toBe(404);
+it('exposes GET /api/clock only when the test clock is enabled', async () => {
+  const off = start();
+  expect((await off.request('/api/clock')).status).toBe(404);
+  const on = testApp({ testClock: true });
+  apps.push(on);
+  const response = await on.request('/api/clock');
+  expect(response.status).toBe(200);
+  expect(await response.json()).toEqual({ now: '2026-11-04T19:20:00.000Z' });
 });

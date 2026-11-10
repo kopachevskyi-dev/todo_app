@@ -168,6 +168,7 @@ export const activityItemSchema = z.object({
   day: z.iso.date().nullable(),
   text: z.string(),
 });
+/** Subtask responses include the stored position and UTC creation instant. */
 export const subtaskSchema = z.object({
   id: z.ulid(),
   taskId: z.ulid(),
@@ -217,6 +218,7 @@ export const searchResponseSchema = z.object({
 export const planTaskRequestSchema = z
   .object({ day: z.iso.date().nullable() })
   .strict();
+/** Duplicate taskIds are rejected with 400 invalid_request. */
 export const planTodayRequestSchema = z
   .object({
     taskIds: z
@@ -229,6 +231,7 @@ export const planTodayRequestSchema = z
       ),
   })
   .strict();
+/** Tasks follow the order of taskIds in the request. */
 export const planTodayResponseSchema = z.object({ tasks: z.array(taskSchema) });
 export const dayLoadResponseSchema = z.object({
   days: z.record(z.iso.date(), z.number().int().nonnegative()),
