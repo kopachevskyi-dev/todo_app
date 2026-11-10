@@ -259,7 +259,7 @@ export function App() {
               onFilter={filterList}
             />
           )}
-          {!isSearch && (
+          {(isBacklog || isToday || path === '/history') && (
             <div className="filter-scope">
               <span>{listFilter ? `Showing: ${scope}` : 'All lists'}</span>
               {listFilter && (

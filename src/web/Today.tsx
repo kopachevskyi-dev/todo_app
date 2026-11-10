@@ -68,17 +68,7 @@ export function Today({
         ) : today.data.progress.total === 0 ? (
           <EmptyPanel>
             <p>Nothing planned for today</p>
-            {backlogCount > 0 ? (
-              mobile && (
-                <Button
-                  ref={planButton}
-                  variant="outline"
-                  onClick={openPlanner}
-                >
-                  Add from Backlog
-                </Button>
-              )
-            ) : (
+            {backlogCount === 0 && (
               <Button
                 variant="outline"
                 onClick={() => {

@@ -127,12 +127,14 @@ export function ScreenHeader({
               />
             </div>
           </div>
-          {mobile && today.data.progress.total > 0 && (
-            <Button ref={planButton} variant="outline" onClick={openPlanner}>
-              <Icon name="backlog" size={18} />
-              Add from Backlog
-            </Button>
-          )}
+          {mobile &&
+            (today.data.progress.total > 0 ||
+              (counts.data?.backlog ?? 0) > 0) && (
+              <Button ref={planButton} variant="outline" onClick={openPlanner}>
+                <Icon name="backlog" size={18} />
+                Add from Backlog
+              </Button>
+            )}
         </div>
       )}
     </header>
