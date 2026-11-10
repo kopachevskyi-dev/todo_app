@@ -51,3 +51,38 @@ test('the open app rolls a task to the Backlog at midnight without a reload', as
     await server.stop();
   }
 });
+
+async function setServerClock(url: string, now: string) {
+  const response = await fetch(`${url}/api/test/clock`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-Timezone': 'America/New_York',
+    },
+    body: JSON.stringify({ now }),
+  });
+  expect(response.ok).toBe(true);
+}
+
+test('Today refreshes after midnight even when the server clock is 3 s behind the browser', async ({
+  page,
+}) => {
+  const server = await startTestServer(page);
+  try {
+    // Browser: Tue Nov 10, 11:59:50 PM in New York; server 3 s behind.
+    await page.clock.setSystemTime(new Date('2026-11-11T04:59:50.000Z'));
+    await setServerClock(server.url, '2026-11-11T04:59:47.000Z');
+    await page.goto(`${server.url}/today`);
+    const main = page.getByRole('main');
+    await expect(main).toContainText('Tuesday, November 10');
+
+    // The browser passes midnight while the server still reports Nov 10.
+    await page.clock.fastForward(12_000);
+    await setServerClock(server.url, '2026-11-11T05:00:00.000Z');
+    await page.clock.fastForward(5_000);
+
+    await expect(main).toContainText('Wednesday, November 11');
+  } finally {
+    await server.stop();
+  }
+});
