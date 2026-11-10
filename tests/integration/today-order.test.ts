@@ -59,7 +59,7 @@ it('clears the position of a task moved to the backlog and planned for today aga
   await setOrder(app, [a, b, c]);
   expect(await todayOpen(app)).toEqual(['A', 'B', 'C']);
 
-  await send(app, 'POST', `/api/tasks/${b}/move-to-backlog`);
+  await send(app, 'POST', `/api/tasks/${b}/plan`, { day: null });
   await send(app, 'POST', '/api/tasks/plan-today', { taskIds: [b] });
   expect(await todayOpen(app)).toEqual(['A', 'C', 'B']);
 });

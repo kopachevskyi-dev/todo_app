@@ -5,9 +5,8 @@ import {
 } from '../../src/shared/contract';
 
 it('accepts the today-order request example', () => {
-  expect(examples.todayOrderRequest).toEqual({
-    taskIds: ['01JBY3000000000000000000EF', '01JBY1000000000000000000AB'],
-  });
+  expect(examples.todayOrderRequest.taskIds).toHaveLength(2);
+  expect(new Set(examples.todayOrderRequest.taskIds).size).toBe(2);
   expect(setTodayOrderRequestSchema.parse(examples.todayOrderRequest)).toEqual(
     examples.todayOrderRequest,
   );

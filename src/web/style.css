@@ -1695,3 +1695,13 @@ button.check-hit:disabled {
     margin-inline: 16px;
   }
 }
+
+.today-order-controls {
+  display: flex;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+.today-order-controls > .button {
+  min-width: 44px;
+  min-height: 44px;
+}

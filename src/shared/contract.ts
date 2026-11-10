@@ -117,8 +117,12 @@ export const examples = {
   planTaskRequest: {
     day: '2026-11-11',
   },
-  // Placeholder until #49 is implemented.
-  todayOrderRequest: { taskIds: [] as string[] },
+  todayOrderRequest: {
+    taskIds: ['01JBY3000000000000000000EF', '01JBY1000000000000000000AB'],
+  },
+  todayOrderResponse: {
+    taskIds: ['01JBY3000000000000000000EF', '01JBY1000000000000000000AB'],
+  },
   dayInPastError: {
     error: {
       code: 'day_in_past',
@@ -778,10 +782,17 @@ export const planTodayRequestSchema = z
   .strict();
 /** Tasks follow the order of taskIds in the request. */
 export const planTodayResponseSchema = z.object({ tasks: z.array(taskSchema) });
-// Placeholder until #49 is implemented.
 export const setTodayOrderRequestSchema = z
-  .object({ taskIds: z.array(z.ulid()) })
+  .object({
+    taskIds: z
+      .array(z.ulid())
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        'Task ids must be unique.',
+      ),
+  })
   .strict();
+export const setTodayOrderResponseSchema = setTodayOrderRequestSchema;
 export const dayLoadResponseSchema = z.object({
   days: z.record(z.iso.date(), z.number().int().nonnegative()),
 });

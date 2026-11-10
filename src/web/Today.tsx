@@ -1,9 +1,15 @@
-import type { UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { api } from './api';
 import { Button, EmptyPanel, Icon, TaskRow } from './components';
 import { Capture } from './Capture';
 import { Fragment, type RefObject } from 'react';
-import type { List } from '../shared/contract';
+import { queryKeys } from './query-keys';
+import { useNotification } from './notification-context';
+import type { TodayResponse, List } from '../shared/contract';
 import { useCompletion } from './useCompletion';
 
 export function Today({
@@ -35,6 +41,33 @@ export function Today({
   openTask: (id: string) => void;
   completion: ReturnType<typeof useCompletion>;
 }) {
+  const client = useQueryClient();
+  const notify = useNotification();
+  const order = useMutation({
+    mutationKey: ['today-order'],
+    scope: { id: 'today-order' },
+    mutationFn: api.setTodayOrder,
+    onError: () => notify({ message: 'Could not save task order. Try again.' }),
+    onSettled: () => {
+      if (client.isMutating({ mutationKey: ['today-order'] }) === 1)
+        return client.invalidateQueries({ queryKey: queryKeys.today });
+    },
+  });
+  const move = (id: string, direction: -1 | 1) => {
+    const visible = today.data?.open ?? [];
+    const index = visible.findIndex((row) => row.id === id);
+    const neighbor = visible[index + direction];
+    const full = client.getQueryData<TodayResponse>(queryKeys.todayList());
+    if (!neighbor || !full) return;
+    const open = [...full.open];
+    const from = open.findIndex((row) => row.id === id);
+    const to = open.findIndex((row) => row.id === neighbor.id);
+    if (from < 0 || to < 0) return;
+    [open[from], open[to]] = [open[to]!, open[from]!];
+    void client.cancelQueries({ queryKey: queryKeys.today });
+    client.setQueryData(queryKeys.todayList(), { ...full, open });
+    order.mutate(open.map((row) => row.id));
+  };
   return (
     <>
       {!mobile && (
@@ -109,6 +142,28 @@ export function Today({
                   })
                 }
                 pending={completion.isPending}
+                orderControls={
+                  !row.completedAt && (
+                    <span className="today-order-controls">
+                      <Button
+                        variant="icon"
+                        aria-label="Move up"
+                        disabled={index === 0}
+                        onClick={() => move(row.id, -1)}
+                      >
+                        <span aria-hidden="true">↑</span>
+                      </Button>
+                      <Button
+                        variant="icon"
+                        aria-label="Move down"
+                        disabled={index === today.data.open.length - 1}
+                        onClick={() => move(row.id, 1)}
+                      >
+                        <span aria-hidden="true">↓</span>
+                      </Button>
+                    </span>
+                  )
+                }
               />
             </Fragment>
           ))}
