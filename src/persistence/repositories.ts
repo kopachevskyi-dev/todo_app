@@ -353,15 +353,10 @@ export function createRepositories(db: AppDatabase) {
         transaction((tx) => {
           const at = now.toISOString();
           const day = localDate(now, timeZone);
-          const previous = tx
-            .select()
-            .from(tasks)
-            .where(eq(tasks.id, id))
-            .get()!;
           tx.update(tasks)
             .set({
               completedAt: completed ? at : null,
-              day: completed ? (previous.day ?? day) : day,
+              day,
               updatedAt: at,
             })
             .where(eq(tasks.id, id))
