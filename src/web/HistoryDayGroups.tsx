@@ -33,6 +33,12 @@ export function HistoryDayGroups({
                   key={row.id}
                   className={`task-row history-row ${group === 'notDone' ? 'missed' : group} ${task === row.id ? 'selected' : ''}`}
                 >
+                  {group === 'notDone' && (
+                    <span className="missed-marker">
+                      <Icon name="close" size={18} />
+                      Missed
+                    </span>
+                  )}
                   <a
                     href={`/history?${new URLSearchParams({ week: weekStart, day: selected.day, ...(list ? { list } : {}), task: row.id })}`}
                     onClick={(event) => {
@@ -63,19 +69,18 @@ export function HistoryDayGroups({
                     }}
                     aria-current={task === row.id ? 'true' : undefined}
                   >
-                    <span
-                      className="check-hit"
-                      role="checkbox"
-                      aria-checked={group === 'done'}
-                      aria-disabled="true"
-                      aria-label={`Completion of ${row.title}`}
-                    >
+                    {group !== 'notDone' && (
                       <span
-                        className={`checkbox ${group === 'done' ? 'checked' : ''}`}
+                        className="check-hit"
+                        aria-label={group === 'done' ? 'Completed' : 'Planned'}
                       >
-                        {group === 'done' && <Icon name="check" size={14} />}
+                        <span
+                          className={`checkbox ${group === 'done' ? 'checked' : ''}`}
+                        >
+                          {group === 'done' && <Icon name="check" size={14} />}
+                        </span>
                       </span>
-                    </span>
+                    )}
                     <span className="row-text">
                       <span className="row-title">{row.title}</span>
                       {(row.list || group === 'notDone') && (

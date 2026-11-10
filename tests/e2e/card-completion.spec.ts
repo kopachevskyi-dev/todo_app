@@ -43,7 +43,11 @@ test('completing and reopening from the open card keeps it open and moves the ro
     const [id] = await seedToday(server.url, [TITLE]);
     await page.goto(`${server.url}/today?task=${id}`);
     const main = page.getByRole('main');
+    if (test.info().project.name === 'mobile')
+      await page.getByRole('link', { name: 'Back to Today' }).click();
     await expect(main).toContainText('0 of 1 done');
+    if (test.info().project.name === 'mobile')
+      await rows(page).filter({ hasText: TITLE }).getByRole('link').click();
 
     await card(page)
       .getByRole('checkbox', { name: `Complete "${TITLE}"` })
@@ -52,6 +56,8 @@ test('completing and reopening from the open card keeps it open and moves the ro
       card(page).getByRole('checkbox', { name: `Reopen "${TITLE}"` }),
     ).toBeChecked();
     await expect(page).toHaveURL(/task=/);
+    if (test.info().project.name === 'mobile')
+      await page.getByRole('link', { name: 'Back to Today' }).click();
     await expect(main).toContainText('1 of 1 done');
     const completed = main.getByRole('heading', { name: 'Completed' });
     await expect(completed).toBeVisible();
@@ -59,6 +65,8 @@ test('completing and reopening from the open card keeps it open and moves the ro
     const rowY = (await rows(page).filter({ hasText: TITLE }).boundingBox())!.y;
     expect(rowY).toBeGreaterThan(headingY);
 
+    if (test.info().project.name === 'mobile')
+      await rows(page).filter({ hasText: TITLE }).getByRole('link').click();
     await card(page)
       .getByRole('checkbox', { name: `Reopen "${TITLE}"` })
       .uncheck();
@@ -66,6 +74,8 @@ test('completing and reopening from the open card keeps it open and moves the ro
       card(page).getByRole('checkbox', { name: `Complete "${TITLE}"` }),
     ).not.toBeChecked();
     await expect(page).toHaveURL(/task=/);
+    if (test.info().project.name === 'mobile')
+      await page.getByRole('link', { name: 'Back to Today' }).click();
     await expect(main).toContainText('0 of 1 done');
     await expect(main.getByRole('heading', { name: 'Completed' })).toHaveCount(
       0,

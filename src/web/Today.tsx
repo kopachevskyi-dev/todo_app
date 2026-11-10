@@ -2,7 +2,7 @@ import type { UseQueryResult } from '@tanstack/react-query';
 import { api } from './api';
 import { Button, EmptyPanel, Icon, TaskRow } from './components';
 import { Capture } from './Capture';
-import type { RefObject } from 'react';
+import { Fragment, type RefObject } from 'react';
 import type { List } from '../shared/contract';
 import { useCompletion } from './useCompletion';
 
@@ -62,25 +62,28 @@ export function Today({
       <ul ref={rowContainer} className="task-list today-list">
         {today.data &&
           [...today.data.open, ...today.data.done].map((row, index) => (
-            <TaskRow
-              key={row.id}
-              task={row}
-              selected={row.id === task}
-              href={`/today?${new URLSearchParams({ ...(list ? { list } : {}), task: row.id })}`}
-              onOpen={() => openTask(row.id)}
-              onToggle={() =>
-                completion.mutateAsync({
-                  id: row.id,
-                  completed: !row.completedAt,
-                })
-              }
-              pending={completion.isPending}
-              section={
-                index === today.data.open.length && today.data.done.length > 0
-                  ? `DONE · ${today.data.done.length}`
-                  : undefined
-              }
-            />
+            <Fragment key={row.id}>
+              {index === today.data.open.length &&
+                today.data.done.length > 0 && (
+                  <li role="presentation" className="done-section">
+                    <h2 className="section-label">Completed</h2>
+                  </li>
+                )}
+              <TaskRow
+                key={row.id}
+                task={row}
+                selected={row.id === task}
+                href={`/today?${new URLSearchParams({ ...(list ? { list } : {}), task: row.id })}`}
+                onOpen={() => openTask(row.id)}
+                onToggle={() =>
+                  completion.mutateAsync({
+                    id: row.id,
+                    completed: !row.completedAt,
+                  })
+                }
+                pending={completion.isPending}
+              />
+            </Fragment>
           ))}
       </ul>
     </>
