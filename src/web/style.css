@@ -1654,3 +1654,19 @@ button.check-hit:disabled {
   font: var(--font-meta);
   color: var(--text-muted);
 }
+
+.filter-scope {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+@media (max-width: 767px) {
+  .filter-scope {
+    margin-inline: 16px;
+  }
+}

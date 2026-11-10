@@ -40,7 +40,7 @@ export function HistoryDayGroups({
                     </span>
                   )}
                   <a
-                    href={`/history?${new URLSearchParams({ week: weekStart, day: selected.day, ...(list ? { list } : {}), task: row.id })}`}
+                    href={`/history?${new URLSearchParams({ week: weekStart, day: selected.day, ...(list ? { lists: list } : {}), task: row.id })}`}
                     onClick={(event) => {
                       if (
                         !event.metaKey &&

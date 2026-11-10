@@ -59,7 +59,7 @@ export function useCreateTask({
     onSuccess: ({ task }, request, context) => {
       if (request.target === 'backlog')
         client.setQueryData<{ tasks: TaskRowData[] }>(
-          queryKeys.backlogList(request.listId),
+          queryKeys.backlogList(),
           (previous) =>
             previous && {
               tasks: [

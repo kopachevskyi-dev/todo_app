@@ -44,12 +44,16 @@ export function Backlog({
         </p>
       )}
       {backlog.data?.tasks?.length === 0 && (
-        <EmptyPanel>Nothing waiting. Add a task above.</EmptyPanel>
+        <EmptyPanel>
+          {list
+            ? 'No matching tasks in Backlog'
+            : 'Nothing waiting. Add a task above.'}
+        </EmptyPanel>
       )}
       <ul ref={rowContainer} className="task-list">
         {backlog.data?.tasks?.map((row) => {
           const params = new URLSearchParams({
-            ...(list ? { list } : {}),
+            ...(list ? { lists: list } : {}),
             task: row.id,
           });
           return (
