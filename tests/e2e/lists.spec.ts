@@ -113,7 +113,7 @@ test('desktop: clicking a list filters Backlog, quick-add joins that list, click
     await page.goto(`${server.url}/backlog`);
 
     await sidebarItem(page, 'Work').click();
-    await expect(page).toHaveURL(/[?&]list=/);
+    await expect(page).toHaveURL(/[?&]lists=/);
     await expect(sidebarItem(page, 'Work')).toHaveAttribute(
       'aria-pressed',
       'true',
@@ -128,14 +128,14 @@ test('desktop: clicking a list filters Backlog, quick-add joins that list, click
     await expect(rows(page).first()).toContainText('Work');
 
     await sidebarItem(page, 'Work').click();
-    await expect(page).not.toHaveURL(/[?&]list=/);
+    await expect(page).not.toHaveURL(/[?&]lists=/);
     await expect(rows(page)).toHaveCount(3);
   } finally {
     await server.stop();
   }
 });
 
-test('mobile: the Home chip filters Today and All clears it', async ({
+test('mobile: the Home chip filters Today and Show all clears it', async ({
   page,
 }) => {
   test.skip(
@@ -153,7 +153,7 @@ test('mobile: the Home chip filters Today and All clears it', async ({
     await expect(rows(page)).toHaveCount(1);
     await expect(rows(page).first()).toContainText('Water plants');
 
-    await page.getByRole('button', { name: 'All', exact: true }).click();
+    await page.getByRole('button', { name: 'Show all', exact: true }).click();
     await expect(rows(page)).toHaveCount(2);
   } finally {
     await server.stop();

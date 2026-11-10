@@ -50,7 +50,7 @@ export function App() {
   const location = useLocation();
   const path = location.pathname;
   const router = useRouter();
-  const { task, list, q, from } = useSearch({ strict: false });
+  const { task, lists: listFilter, q, from } = useSearch({ strict: false });
   const navigate = useNavigate();
   const mobile = useMedia('(max-width: 767px)');
   const desktop = useMedia('(min-width: 1216px)');
@@ -101,35 +101,51 @@ export function App() {
       todayTotal: data.todayTotal + pendingToday,
     }),
   });
-  const activeList = lists.data?.lists.find((item) => item.id === list);
+  const selectedIds = listFilter?.split(',').filter(Boolean) ?? [];
+  const activeLists =
+    lists.data?.lists.filter((item) => selectedIds.includes(item.id)) ?? [];
+  const activeList = activeLists.length === 1 ? activeLists[0] : undefined;
+  const scope = activeLists.map((item) => item.name).join(', ') || listFilter;
+  const matchesList = (row: { listId: string | null }) =>
+    !listFilter || Boolean(row.listId && selectedIds.includes(row.listId));
   const filterList = (id?: string) => {
+    const next = id
+      ? selectedIds.includes(id)
+        ? selectedIds.filter((item) => item !== id)
+        : [...selectedIds, id]
+      : [];
     void navigate({
       to: path as '/backlog' | '/today' | '/history' | '/search' | '/upcoming',
       search: (previous) => ({
-        ...(path === '/history' ? previous : {}),
-        list: id,
+        ...previous,
+        lists: next.length ? next.join(',') : undefined,
         task: undefined,
       }),
     });
   };
   const backlog = useQuery({
-    queryKey: queryKeys.backlogList(list),
-    queryFn: () => api.backlog(list),
+    queryKey: queryKeys.backlogList(),
+    queryFn: () => api.backlog(),
     enabled: isBacklog,
     select: (data) => ({
       tasks: [
         ...pendingBacklog
-          .filter(({ request }) => !list || request.listId === list)
+          .slice()
           .reverse()
           .map(({ row }) => row),
         ...data.tasks,
-      ],
+      ].filter(matchesList),
     }),
   });
   const today = useQuery({
-    queryKey: queryKeys.todayList(list),
-    queryFn: () => api.today(list),
+    queryKey: queryKeys.todayList(),
+    queryFn: () => api.today(),
     enabled: isToday,
+    select: (data) => ({
+      ...data,
+      open: data.open.filter(matchesList),
+      done: data.done.filter(matchesList),
+    }),
   });
   const upcoming = useQuery({
     queryKey: queryKeys.upcoming,
@@ -165,7 +181,7 @@ export function App() {
         <Link
           key={tab.to}
           to={tab.to}
-          search={{ list }}
+          search={{}}
           aria-current={path === tab.to ? 'page' : undefined}
           className="nav-link"
         >
@@ -202,7 +218,7 @@ export function App() {
           <nav aria-label="Sections">{nav}</nav>
           <Lists
             lists={lists.data?.lists ?? []}
-            active={list}
+            active={selectedIds}
             mobile={false}
             onFilter={filterList}
           />
@@ -225,24 +241,38 @@ export function App() {
               ) ?? 0
             }
             isBacklog={isBacklog}
-            list={list}
+            list={listFilter}
             rows={rows}
             counts={counts}
             changeQuery={changeQuery}
             path={path}
             q={q}
             search={search}
-            activeList={activeList}
             planButton={planButton}
             openPlanner={openPlanner}
           />
           {mobile && (isBacklog || isToday) && (
             <Lists
               lists={lists.data?.lists ?? []}
-              active={list}
+              active={selectedIds}
               mobile
               onFilter={filterList}
             />
+          )}
+          {(isBacklog || isToday || path === '/history') && (
+            <div className="filter-scope">
+              <span>{listFilter ? `Showing: ${scope}` : 'All lists'}</span>
+              {listFilter && (
+                <Button variant="ghost" onClick={() => filterList()}>
+                  Show all
+                </Button>
+              )}
+              {listFilter && isToday && today.data && (
+                <span>
+                  {today.data.open.length + today.data.done.length} shown
+                </span>
+              )}
+            </div>
           )}
           {completion.isError && (
             <p role="alert" className="field-error">
@@ -262,12 +292,15 @@ export function App() {
             <Today
               mobile={mobile}
               today={today}
+              scope={scope}
+              backlogCount={counts.data?.backlog ?? 0}
+              onCapture={() => setCapturing(true)}
               activeList={activeList}
               planButton={planButton}
               openPlanner={openPlanner}
               rowContainer={rowContainer}
               task={task}
-              list={list}
+              list={listFilter}
               openTask={openTask}
               completion={completion}
             />
@@ -282,7 +315,7 @@ export function App() {
               activeList={activeList}
               rowContainer={rowContainer}
               task={task}
-              list={list}
+              list={listFilter}
               openTask={openTask}
               completion={completion}
             />

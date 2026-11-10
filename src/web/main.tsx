@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import {
+  defaultStringifySearch,
   createRootRoute,
   createRoute,
   createRouter,
@@ -18,7 +19,7 @@ const rootRoute = createRootRoute({
     search: Record<string, unknown>,
   ): {
     task?: string;
-    list?: string;
+    lists?: string;
     q?: string;
     week?: string;
     day?: string;
@@ -33,7 +34,7 @@ const rootRoute = createRootRoute({
     day: typeof search.day === 'string' ? search.day : undefined,
     q: typeof search.q === 'string' ? search.q : undefined,
     task: typeof search.task === 'string' ? search.task : undefined,
-    list: typeof search.list === 'string' ? search.list : undefined,
+    lists: typeof search.lists === 'string' ? search.lists : undefined,
   }),
 });
 const indexRoute = createRoute({
@@ -48,6 +49,10 @@ const routes = (
 ).map((path) => createRoute({ getParentRoute: () => rootRoute, path }));
 const router = createRouter({
   routeTree: rootRoute.addChildren([indexRoute, ...routes]),
+  stringifySearch: (search) =>
+    defaultStringifySearch(search).replace(/([?&]lists=[^&]*)/g, (value) =>
+      value.replace(/%2C/gi, ','),
+    ),
 });
 const queryClient = new QueryClient();
 

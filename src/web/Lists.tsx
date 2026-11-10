@@ -20,7 +20,7 @@ export function Lists({
   mobile,
 }: {
   lists: List[];
-  active?: string;
+  active: string[];
   onFilter: (id?: string) => void;
   mobile: boolean;
 }) {
@@ -190,15 +190,6 @@ export function Lists({
     <>
       <nav aria-label="Lists" className={mobile ? 'list-chips' : 'lists'}>
         {!mobile && <SectionLabel>Lists</SectionLabel>}
-        {mobile && (
-          <button
-            className="list-link"
-            aria-pressed={!active}
-            onClick={() => onFilter()}
-          >
-            All
-          </button>
-        )}
         {lists.map((list) =>
           editing === list.id ? (
             <div key={list.id}>{input}</div>
@@ -206,10 +197,8 @@ export function Lists({
             <div className="list-control" key={list.id}>
               <button
                 className="list-link"
-                aria-pressed={active === list.id}
-                onClick={() =>
-                  onFilter(active === list.id ? undefined : list.id)
-                }
+                aria-pressed={active.includes(list.id)}
+                onClick={() => onFilter(list.id)}
               >
                 <span className="list-dot" style={{ background: list.color }} />
                 {list.name}
@@ -271,7 +260,7 @@ export function Lists({
             void perform(
               () => api.deleteList(deleting.id),
               () => {
-                if (active === deleting.id) onFilter();
+                if (active.includes(deleting.id)) onFilter(deleting.id);
                 setDeleting(undefined);
               },
             );

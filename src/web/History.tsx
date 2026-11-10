@@ -25,7 +25,7 @@ function weekLabel(start: string) {
 }
 
 export function History({ onOpen }: { onOpen: (id: string) => void }) {
-  const { week, day, list, task } = useSearch({ strict: false });
+  const { week, day, lists: list, task } = useSearch({ strict: false });
   const navigate = useNavigate();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
   const clock = useQuery({ queryKey: queryKeys.clock, queryFn: api.clock });
@@ -40,9 +40,28 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
         ? historyWeekStart(today)
         : undefined;
   const history = useQuery({
-    queryKey: queryKeys.historyWeek(weekStart, list, today),
-    queryFn: () => api.history(weekStart!, list),
+    queryKey: queryKeys.historyWeek(weekStart, undefined, today),
+    queryFn: () => api.history(weekStart!),
     enabled: Boolean(weekStart),
+    select: (data) => ({
+      ...data,
+      days: data.days.map((item) => {
+        const matches = (row: { listId: string | null }) =>
+          !list || Boolean(row.listId && list.split(',').includes(row.listId));
+        const groups = {
+          done: item.groups.done.filter(matches),
+          notDone: item.groups.notDone.filter(matches),
+          planned: item.groups.planned.filter(matches),
+        };
+        return {
+          ...item,
+          groups,
+          done: groups.done.length,
+          notDone: groups.notDone.length,
+          planned: groups.planned.length,
+        };
+      }),
+    }),
   });
   const days = history.data?.days;
   const selected =
@@ -139,19 +158,23 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
       <select
         className="history-mobile-filter"
         aria-label="Filter by list"
-        value={list ?? ''}
+        multiple
+        value={list?.split(',') ?? []}
         onChange={(event) => {
           void navigate({
             to: '/history',
             search: (previous) => ({
               ...previous,
-              list: event.target.value || undefined,
+              lists:
+                Array.from(
+                  event.target.selectedOptions,
+                  (option) => option.value,
+                ).join(',') || undefined,
               task: undefined,
             }),
           });
         }}
       >
-        <option value="">All lists</option>
         {lists.data?.lists.map((item) => (
           <option key={item.id} value={item.id}>
             {item.name}
@@ -241,7 +264,9 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
           <h2>{fullDay(selected.day)}</h2>
           <p>
             {empty
-              ? 'Nothing planned this day.'
+              ? list
+                ? 'No matching tasks planned this day.'
+                : 'Nothing planned this day.'
               : historySummary(selected, kind)}
           </p>
         </div>
