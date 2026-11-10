@@ -117,3 +117,8 @@ export function historyView(
     }),
   };
 }
+
+/** Ids of tasks with a `completed` event carrying `day`, minus later `reopened` events for that day. */
+export function doneGroupIds(day: string, events: HistoryEvent[]): string[] {
+  throw new Error(`not implemented: ${day} ${events.length}`);
+}

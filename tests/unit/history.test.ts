@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  doneGroupIds,
   doneTaskIds,
   historySummary,
   missedTaskIds,
@@ -70,5 +71,20 @@ describe('historySummary', () => {
     expect(historySummary({ done: 0, notDone: 0, planned: 3 }, 'future')).toBe(
       '3 planned',
     );
+  });
+});
+
+describe('doneGroupIds', () => {
+  it('keeps a task completed on 2026-11-10 and moved to the backlog the same day in the done group of 2026-11-10', () => {
+    const events = [
+      event('report', 'completed', '2026-11-10T14:00:00.000Z', '2026-11-10'),
+      event(
+        'report',
+        'moved_to_backlog',
+        '2026-11-10T15:00:00.000Z',
+        '2026-11-10',
+      ),
+    ];
+    expect(doneGroupIds('2026-11-10', events)).toEqual(['report']);
   });
 });
