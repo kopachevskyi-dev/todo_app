@@ -1604,3 +1604,53 @@ h3 {
   display: grid;
   gap: 28px;
 }
+
+/* Completion and navigation are separate, non-overlapping row targets. */
+.task-row {
+  display: flex;
+  align-items: center;
+}
+.task-row > a {
+  flex: 1;
+  min-width: 0;
+}
+.task-row > .check-hit {
+  margin-left: 6px;
+}
+button.check-hit {
+  flex-basis: 44px;
+  min-width: 44px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+button.check-hit:disabled {
+  cursor: default;
+}
+.detail-title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.detail-title-row .detail-title {
+  flex: 1;
+}
+.detail-title-row > .button {
+  min-width: 44px;
+  min-height: 44px;
+}
+.activity h3 .button {
+  padding: 0;
+  font: inherit;
+  min-height: 44px;
+}
+.missed-marker {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 16px;
+  font: var(--font-meta);
+  color: var(--text-muted);
+}

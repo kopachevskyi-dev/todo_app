@@ -55,9 +55,6 @@ export function ScreenHeader({
       <div className="screen-heading">
         <h1>
           {title}
-          {isToday && mobile && (
-            <CountPill>{today.data?.progress.total ?? 0}</CountPill>
-          )}
           {isBacklog && (
             <CountPill>
               {list ? (rows?.length ?? 0) : (counts.data?.backlog ?? 0)}

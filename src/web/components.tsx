@@ -1,5 +1,4 @@
 import { useEscape } from './useEscape';
-import { taskMeta } from '../domain/task-meta';
 import {
   useEffect,
   useId,
@@ -122,30 +121,23 @@ export function Checkbox({
     }
   };
   return (
-    <span
+    <button
+      type="button"
       className="check-hit"
       role="checkbox"
       aria-checked={displayed}
-      aria-disabled={!onChange || disabled || optimistic !== undefined}
-      tabIndex={onChange ? 0 : undefined}
+      disabled={!onChange || disabled || optimistic !== undefined}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
         void toggle();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === ' ' || event.key === 'Enter') {
-          event.preventDefault();
-          event.stopPropagation();
-          void toggle();
-        }
       }}
       aria-label={label}
     >
       <span className={`checkbox ${displayed ? 'checked' : ''}`}>
         {displayed && <Icon name="check" size={14} />}
       </span>
-    </span>
+    </button>
   );
 }
 export function TaskRow({
@@ -156,9 +148,7 @@ export function TaskRow({
   location,
   onToggle,
   pending,
-  section,
 }: {
-  section?: string;
   onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
@@ -169,13 +159,14 @@ export function TaskRow({
 }) {
   const creating = task.id.startsWith('optimistic-');
   const meta = [
-    task.missedFrom
-      ? rowMetaText({
-          listName: task.list?.name ?? null,
-          missedFrom: task.missedFrom,
-          subtaskCount: task.subtaskCount,
-        })
-      : taskMeta(task.list?.name ?? null, task.subtaskCount),
+    rowMetaText({
+      listName: task.list?.name ?? null,
+      missedFrom: task.missedFrom,
+      subtaskCount: 0,
+    }),
+    task.subtaskCount > 0
+      ? `${task.subtaskDoneCount}/${task.subtaskCount}`
+      : undefined,
     location,
   ]
     .filter(Boolean)
@@ -183,15 +174,17 @@ export function TaskRow({
   return (
     <li
       data-layout-id={task.id}
+      data-layout-group={task.completedAt ? 'done' : 'open'}
       className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''}`}
       inert={creating}
       aria-busy={creating || undefined}
     >
-      {section && (
-        <div className="done-section">
-          <SectionLabel>{section}</SectionLabel>
-        </div>
-      )}
+      <Checkbox
+        label={`${task.completedAt ? 'Reopen' : 'Complete'} "${task.title}"`}
+        checked={Boolean(task.completedAt)}
+        onChange={creating ? undefined : onToggle}
+        disabled={pending || creating}
+      />
       <a
         href={creating ? undefined : href}
         tabIndex={creating ? -1 : undefined}
@@ -223,12 +216,6 @@ export function TaskRow({
         }}
         aria-current={selected ? 'true' : undefined}
       >
-        <Checkbox
-          label={`Completion of ${task.title}`}
-          checked={Boolean(task.completedAt)}
-          onChange={creating ? undefined : onToggle}
-          disabled={pending || creating}
-        />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
           {meta && (
