@@ -10,13 +10,7 @@ import { Backlog } from './Backlog';
 import { BacklogPicker } from './BacklogPicker';
 import { SearchField } from './SearchField';
 import { Capture } from './Capture';
-import {
-  useEffect,
-  useLayoutEffect,
-  useRef,
-  useState,
-  useSyncExternalStore,
-} from 'react';
+import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Link,
   useLocation,
@@ -54,7 +48,7 @@ export function App() {
   const location = useLocation();
   const path = location.pathname;
   const router = useRouter();
-  const { task, list, q, week, day } = useSearch({ strict: false });
+  const { task, list, q, from } = useSearch({ strict: false });
   const navigate = useNavigate();
   const mobile = useMedia('(max-width: 767px)');
   const desktop = useMedia('(min-width: 1216px)');
@@ -66,22 +60,15 @@ export function App() {
   const isToday = path === '/today';
   const completion = useCompletion();
   const isSearch = path === '/search';
-  const previousScreen = useRef<{
-    to: '/backlog' | '/today' | '/history';
-    search: { list?: string; task?: string; week?: string; day?: string };
-  }>({ to: '/today', search: {} });
-  useEffect(() => {
-    if (path !== '/search')
-      previousScreen.current = {
-        to: path as '/backlog' | '/today' | '/history',
-        search: { list, task, week, day },
-      };
-  }, [path, list, task, week, day]);
   const changeQuery = (value: string) => {
-    void navigate({ to: '/search', search: { q: value }, replace: isSearch });
+    void navigate({
+      to: '/search',
+      search: { q: value, from: isSearch ? from : location.href },
+      replace: isSearch,
+    });
   };
   const leaveSearch = () => {
-    void navigate(previousScreen.current);
+    if (isSearch) void navigate({ href: from ?? '/today' });
   };
   const search = useQuery({
     queryKey: queryKeys.searchQuery(q?.trim()),
@@ -166,14 +153,14 @@ export function App() {
         <div className="sidebar">
           <div className="sidebar-top">
             <div className="app-name">Tasks</div>
-            <nav aria-label="Search tasks">
+            <div role="search" aria-label="Search tasks">
               <SearchField
                 screen={path}
                 query={isSearch ? (q ?? '') : ''}
                 onQuery={changeQuery}
                 onEscape={leaveSearch}
               />
-            </nav>
+            </div>
           </div>
           <nav aria-label="Sections">{nav}</nav>
           <Lists

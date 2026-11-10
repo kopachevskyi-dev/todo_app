@@ -37,7 +37,27 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 | **Done** | Completing a task sets its day to local today in the request's time zone; reopening keeps it on local today. In History, a day's done group contains tasks with a completed event carrying that stored day, minus later reopened events carrying the same day. Moving a task to the Backlog leaves its historical completion in that group. |
 | **History** | Review of days, by week. Today and past days use the same event-based done rule. Events belong to their stored day, regardless of the viewing time zone. |
 | **Not done** | A task planned for a day that ended unfinished. **[decision]** It rolls over to the next day automatically and the old day shows "Moved to Thu, Nov 5". |
-| **Activity log** | Each task keeps timestamped events: added to backlog, description and subtasks added, planned for {date}, completed. Shown newest last in the detail view. |
+| **Activity log** | Each task keeps timestamped events using the wording below. Shown newest last in the detail view. |
+
+Activity event wording (exact text, lowercase):
+
+| Event | Text |
+|---|---|
+| Created in Backlog | `added to backlog` |
+| Created in Today | `added to today` |
+| Planned or rescheduled | `planned for {date}` |
+| Completed | `completed` |
+| Reopened | `reopened` |
+| Moved to Backlog | `moved to backlog` |
+| Missed a planned day | `missed {date}, moved to backlog` |
+| Description added | `description added` |
+| Subtasks added | `subtasks added` |
+| List set (only detail in the event, with a stored name) | `list set to {list name}` |
+| List detail without a stored name | `list added` |
+| Two details merged | `{first} and {second} added` |
+| Three details merged | `{first}, {second} and {third} added` |
+
+`{date}` is the event's stored day formatted as abbreviated month and day, without a weekday or year (for example, `Nov 9`). `{list name}` is the name stored with the event, for example `Personal`. Detail names are exactly `description`, `subtasks`, and `list`, in the order first edited. Edits within 15 minutes of the first detail event merge, keeping its timestamp and each detail name once. For example, `description and subtasks added`, `description and list added`, `subtasks and list added`, or `description, subtasks and list added`; other edit orders use the same two- or three-detail template. Merged list additions use `list` rather than its name.
 
 Quick-add rules:
 - In Backlog the field creates a task with no day. Placeholder: "Add to backlog".
@@ -462,7 +482,7 @@ One task, "Renew driver's license", across the four moments. This is also the te
 | # | Moment | User action | Result in the app |
 |---|---|---|---|
 | 1 | Mon, Nov 2, 9:12 AM | Types the title in the quick-add field and presses Enter (desktop) or taps + then Add (mobile) | Task is created in the Backlog at the top, no list, no day, no description. Backlog count 7 → 8. Activity: "added to backlog" |
-| 2 | Tue, Nov 3, 8:03 PM | Opens the task from the Backlog. Writes a description, adds 3 subtasks, sets the list to Personal | Activity: "description and subtasks added" |
+| 2 | Tue, Nov 3, 8:03 PM | Opens the task from the Backlog. Writes a description, adds 3 subtasks, sets the list to Personal | Activity: "description, subtasks and list added" |
 | 2b | Tue, Nov 3, 8:05 PM | Opens the Day field, sees "Tomorrow, Wed 4 — 4 tasks", picks it, presses "Plan for Wed, Nov 4" | Task leaves the Backlog (count 8 → 7), appears in Today on Wed. Activity: "planned for Nov 4" |
 | 3 | Wed, Nov 4, 2:20 PM | Checks the task off in Today | Task moves to "DONE · 2" with time 2:20 PM. Header "2 of 5 done". Status pill "Completed at 2:20 PM". Activity: "completed" |
 | 4 | Sun, Nov 8 | Opens History, taps Wed 4 in the week strip, taps the task | Day shows "4 of 5 done · 1 moved to Thursday". Task shows full activity from creation to completion. "Move to backlog" is available |
