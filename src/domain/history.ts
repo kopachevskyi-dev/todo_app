@@ -16,23 +16,6 @@ export type HistorySummaryCounts = {
   planned: number;
 };
 
-/** Ids of tasks done on a past local `day`, in completion order. */
-export function doneTaskIds(
-  day: string,
-  events: HistoryEvent[],
-  timeZone: string,
-): string[] {
-  const completed = new Map<string, string>();
-  for (const event of [...events].sort((a, b) => a.at.localeCompare(b.at))) {
-    if (localDate(new Date(event.at), timeZone) !== day) continue;
-    if (event.type === 'completed') completed.set(event.taskId, event.at);
-    if (event.type === 'reopened') completed.delete(event.taskId);
-  }
-  return [...completed]
-    .sort((a, b) => a[1].localeCompare(b[1]))
-    .map(([id]) => id);
-}
-
 /** Ids of tasks with a `missed` event for `day`. */
 export function missedTaskIds(day: string, events: HistoryEvent[]): string[] {
   return [
