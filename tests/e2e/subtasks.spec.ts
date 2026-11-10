@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer } from '../helpers/e2e-clock';
 
 const TITLE = "Renew driver's license";
 
@@ -17,10 +17,13 @@ const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 test('desktop: Enter adds each of 3 subtasks and keeps the input open; the backlog row shows "3 subtasks"', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, TITLE);
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
     const panel = page.getByRole('complementary');
@@ -52,7 +55,11 @@ test('desktop: Enter adds each of 3 subtasks and keeps the input open; the backl
 test('mobile: checking the first, renaming the second and deleting the third subtask persist after reload', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
     const id = await seed(server.url, TITLE);
     for (const title of [
@@ -67,7 +74,6 @@ test('mobile: checking the first, renaming the second and deleting the third sub
       });
       expect(response.status).toBe(201);
     }
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
 

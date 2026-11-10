@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer, setClock } from '../helpers/e2e-clock';
 
 test.use({ timezoneId: 'America/New_York' });
 
@@ -17,8 +17,8 @@ async function api(url: string, method: string, path: string, body?: unknown) {
   expect(response.ok).toBe(true);
 }
 /** Wed Nov 4: 2 tasks today, 3 in the backlog. */
-async function seed(url: string) {
-  await api(url, 'PUT', '/api/test/clock', { now: '2026-11-04T19:20:00.000Z' });
+async function seed(page: Page, url: string) {
+  await setClock(page, url, '2026-11-04T19:20:00.000Z');
   for (const title of ['Today one', 'Today two'])
     await api(url, 'POST', '/api/tasks', { title, target: 'today' });
   for (const title of ['Backlog A', 'Backlog B', 'Backlog C'])
@@ -28,10 +28,13 @@ async function seed(url: string) {
 test('desktop: From backlog → select 2 → "Plan for today (2)" moves them into Today and updates the counts', async ({
   page,
 }) => {
-  const server = await startTestServer({ testClock: true });
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
-    await seed(server.url);
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await seed(page, server.url);
     await page.goto(server.url);
     const main = page.getByRole('main');
     const nav = page.getByRole('navigation');
@@ -57,10 +60,13 @@ test('desktop: From backlog → select 2 → "Plan for today (2)" moves them int
 test('mobile: From backlog opens a sheet; nothing selected disables the button; Escape and scrim close it without change', async ({
   page,
 }) => {
-  const server = await startTestServer({ testClock: true });
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
-    await seed(server.url);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await seed(page, server.url);
     await page.goto(server.url);
     const main = page.getByRole('main');
     const open = () =>

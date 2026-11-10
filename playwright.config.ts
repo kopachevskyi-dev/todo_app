@@ -11,5 +11,21 @@ export default defineConfig({
     // Ticket clock scenarios use New York dates, independent of the host timezone.
     timezoneId: 'America/New_York',
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'desktop',
+      use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
+    {
+      name: 'mobile',
+      use: {
+        ...devices['iPhone 13'],
+        defaultBrowserType: 'chromium',
+        viewport: { width: 390, height: 844 },
+      },
+    },
+  ],
 });

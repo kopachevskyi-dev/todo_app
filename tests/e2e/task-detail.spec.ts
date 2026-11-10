@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer } from '../helpers/e2e-clock';
 
 const TITLE = "Renew driver's license";
 
@@ -16,10 +16,13 @@ const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 test('desktop: Enter saves a renamed title across reload; clearing it and blurring restores the previous title', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, TITLE);
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
     const panel = page.getByRole('complementary');
@@ -45,10 +48,13 @@ test('desktop: Enter saves a renamed title across reload; clearing it and blurri
 test('mobile: description and list persist; the row shows Personal and the activity shows the merged event', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, TITLE);
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
 
@@ -79,11 +85,14 @@ test('mobile: description and list persist; the row shows Personal and the activ
 test('desktop: Cancel keeps the task; confirming Delete removes the row, closes the panel and drops the Backlog count', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, TITLE);
     await seed(server.url, 'Other');
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
     const nav = page.getByRole('navigation');
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('2');

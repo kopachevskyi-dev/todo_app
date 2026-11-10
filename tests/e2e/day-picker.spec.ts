@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer, setClock } from '../helpers/e2e-clock';
 
 const TITLE = "Renew driver's license";
 const JSON_HEADERS = {
@@ -23,21 +23,22 @@ async function seed(url: string, title: string, day?: string) {
   });
   if (day) await api(url, 'POST', `/api/tasks/${task.id}/plan`, { day });
 }
-const setClock = (url: string) =>
-  api(url, 'PUT', '/api/test/clock', { now: '2026-11-04T01:05:00.000Z' });
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 
 test('desktop: pick Tomorrow shows "Plan for Wed, Nov 4"; Escape keeps "No day"; planning removes the task from the Backlog', async ({
   page,
 }) => {
-  const server = await startTestServer({ testClock: true });
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
-    await setClock(server.url);
+    await setClock(page, server.url, '2026-11-04T01:05:00.000Z');
     for (const n of [1, 2, 3, 4])
       await seed(server.url, `Planned ${n}`, '2026-11-04');
     await seed(server.url, TITLE);
     await seed(server.url, 'Other');
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
     const nav = page.getByRole('navigation');
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('2');
@@ -77,11 +78,14 @@ test('desktop: pick Tomorrow shows "Plan for Wed, Nov 4"; Escape keeps "No day";
 test('mobile: pick Nov 20 in the calendar, plan it, reopen and move it back to the Backlog', async ({
   page,
 }) => {
-  const server = await startTestServer({ testClock: true });
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
-    await setClock(server.url);
+    await setClock(page, server.url, '2026-11-04T01:05:00.000Z');
     await seed(server.url, TITLE);
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
 
