@@ -5,6 +5,7 @@ const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 
 test('opened List field has aria-expanded and a 2px solid blue border', async ({
   page,
+  isMobile: mobile,
 }) => {
   const server = await startTestServer(page);
   try {
@@ -17,7 +18,13 @@ test('opened List field has aria-expanded and a 2px solid blue border', async ({
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
 
-    const listField = page.getByRole('button', { name: /^List/ });
+    const detail = mobile
+      ? page.getByRole('main')
+      : page.getByRole('complementary', { name: 'Task details' });
+    await expect(
+      detail.getByRole('textbox', { name: 'Title', exact: true }),
+    ).toBeVisible();
+    const listField = detail.getByRole('button', { name: /^List/ });
     await listField.click();
 
     await expect(listField).toHaveAttribute('aria-expanded', 'true');
