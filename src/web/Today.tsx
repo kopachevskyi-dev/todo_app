@@ -19,6 +19,9 @@ export function Today({
   activeList,
   scope,
   backlogCount,
+  unfinishedCount,
+  reviewButton,
+  openReview,
   onCapture,
   planButton,
   openPlanner,
@@ -33,6 +36,9 @@ export function Today({
   activeList?: List;
   scope?: string;
   backlogCount: number;
+  unfinishedCount: number;
+  reviewButton: RefObject<HTMLButtonElement | null>;
+  openReview: () => void;
   onCapture: () => void;
   planButton: RefObject<HTMLButtonElement | null>;
   openPlanner: () => void;
@@ -82,6 +88,11 @@ export function Today({
             </Button>
           )}
         </div>
+      )}
+      {unfinishedCount > 0 && (
+        <Button ref={reviewButton} variant="ghost" onClick={openReview}>
+          Review {unfinishedCount} unfinished
+        </Button>
       )}
       {today.isPending && <p role="status">Loading tasks…</p>}
       {today.isError && (
