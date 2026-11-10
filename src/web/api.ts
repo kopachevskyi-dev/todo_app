@@ -31,6 +31,15 @@ import {
   type CreateTaskRequest,
 } from '../shared/contract';
 
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly details: z.infer<typeof errorResponseSchema>['error'],
+  ) {
+    super(details.message);
+  }
+}
+
 async function request<T>(
   path: string,
   schema: z.ZodType<T>,
@@ -46,7 +55,7 @@ async function request<T>(
   const body: unknown =
     response.status === 204 ? undefined : await response.json();
   if (!response.ok)
-    throw new Error(errorResponseSchema.parse(body).error.message);
+    throw new ApiError(response.status, errorResponseSchema.parse(body).error);
   return schema.parse(body);
 }
 

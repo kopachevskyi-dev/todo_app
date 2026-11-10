@@ -217,13 +217,15 @@ export function createRepositories(db: AppDatabase) {
               .from(tasks)
               .where(inArray(tasks.id, ids))
               .all();
-            if (
-              selected.length !== ids.length ||
-              selected.some(
-                (task) => task.day !== null || task.completedAt !== null,
-              )
-            )
-              return null;
+            const eligible = new Set(
+              selected
+                .filter(
+                  (task) => task.day === null && task.completedAt === null,
+                )
+                .map((task) => task.id),
+            );
+            const taskIds = ids.filter((id) => !eligible.has(id));
+            if (taskIds.length) return { taskIds };
 
             const at = now.toISOString();
             for (const id of ids) {
@@ -247,7 +249,7 @@ export function createRepositories(db: AppDatabase) {
               .where(inArray(tasks.id, ids))
               .all();
             const byId = new Map(planned.map((task) => [task.id, task]));
-            return ids.map((id) => byId.get(id)!);
+            return { tasks: ids.map((id) => byId.get(id)!) };
           },
           { behavior: 'immediate' },
         ),

@@ -63,7 +63,9 @@ Quick-add rules:
 - In Backlog the field creates a task with no day. Placeholder: "Add to backlog".
 - In Today the field creates a task planned for today. Placeholder: "Add to today".
 - New tasks appear at the top of the list.
-- **From backlog** (Today screen) opens a picker of backlog tasks to pull into today **[decision]**; not drawn.
+- **Add from Backlog** (Today screen) opens the picker of the same name. Its scope is **All lists**, independent of the screen's filter. The commit button reads "Add {count} to Today" and is disabled at zero and while saving.
+- Saving from the picker is all-or-nothing. After saving, close it, refresh affected views and show "Added {count} to Today" in the main notification area.
+- On a conflict, keep the picker open, refetch the choices, remove ineligible tasks and retain the valid selection. Explain: "1 task was already planned elsewhere. Add the remaining 1?" (pluralize for more tasks). Other failures retain the full selection and show "Couldn't add tasks. Try again."; retry uses the same commit button.
 
 Lists: Personal, Work, Home. Lists are optional per task (a new task has none until set). A task row shows the list dot and name only when a list is set.
 
@@ -264,7 +266,7 @@ Mobile: the field lives in the capture bottom sheet (4.11), opened by the FAB.
 | Variant | Look | Where |
 |---|---|---|
 | Primary | `primary` fill, no border, radius 12, label 15/500 `text`. Height 48 (panel footer, mobile action bar), 44 (inline Add, desktop), 48 (sheet Add) | Add, Plan for {day} |
-| Outline | `surface-raised` fill, `1px solid #E1E5DC`, radius 12, 15/500 `text`, height 44–48, padding 0 20 | Delete (desktop), From backlog |
+| Outline | `surface-raised` fill, `1px solid #E1E5DC`, radius 12, 15/500 `text`, height 44–48, padding 0 20 | Delete (desktop), Add from Backlog |
 | Outline strong | Transparent fill, `1px solid #AEB5AB`, radius 12, 15/500 | Reopen, Move to backlog (actions on a done task) |
 | Icon button | 44×44 (48×48 in mobile action bar), radius 12, `1px solid #E1E5DC`, `surface-raised` | Previous/Next week, mobile Delete |
 | Ghost icon | 44×44, no border, `text-muted` | Close (detail panel) |
@@ -373,7 +375,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
-- Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = completed tasks currently planned for today / all tasks currently planned for today. Min width 180 on desktop. On mobile the bar sits left of the "From backlog" button.
+- Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = completed tasks currently planned for today / all tasks currently planned for today. Min width 180 on desktop. On mobile the bar sits left of the "Add from Backlog" button.
 
 ### 4.13 Week strip (History)
 
@@ -430,7 +432,7 @@ All three list screens use the same main-column structure: header, quick-add (Ba
 | Screen | Header | Content |
 |---|---|---|
 | Backlog | H1 "Backlog", count pill, sub line "Everything you need to do someday. No date until you plan it." | Quick-add, task rows |
-| Today | H1 "Today", date line "Wednesday, November 4"; progress block on the right | Quick-add + "From backlog" button on one line, open rows, then "DONE · n" group |
+| Today | H1 "Today", date line "Wednesday, November 4"; progress block on the right | Quick-add + "Add from Backlog" button on one line, open rows, then "DONE · n" group |
 | History | H1 "History", sub line, prev/next week buttons | Week strip, day heading + summary, "DONE · n", "NOT DONE · n" |
 
 ---
@@ -543,4 +545,4 @@ Week strip data for Nov 2–8 (done of planned): Mon 3/3, Tue 4/5, Wed 4/5, Thu 
 6. Implement the model rules in section 2 and the counts in section 7.
 7. Run the flow in section 7 on both layouts as the acceptance test.
 
-Not designed yet (explicitly out of scope for v1): the date-picker calendar, "From backlog" picker, search results, list management, Settings, onboarding, empty states drawn as screens, dark theme.
+Not designed yet (explicitly out of scope for v1): the date-picker calendar, "Add from Backlog" picker, search results, list management, Settings, onboarding, empty states drawn as screens, dark theme.

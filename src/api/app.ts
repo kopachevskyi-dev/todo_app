@@ -380,19 +380,20 @@ export function createApp(options: {
         400,
       );
     const now = clock.now();
-    const tasks = repositories.tasks.planToday(
+    const result = repositories.tasks.planToday(
       parsed.data.taskIds,
       localDate(now, c.req.header('X-Timezone')!),
       now,
     );
-    if (!tasks)
+    if ('taskIds' in result)
       return apiError(
         c,
         'not_in_backlog',
         'One or more tasks are not in the backlog.',
         409,
+        result.taskIds,
       );
-    return c.json(planTodayResponseSchema.parse({ tasks }));
+    return c.json(planTodayResponseSchema.parse(result));
   });
   app.post('/api/tasks/:id/plan', async (c) => {
     const id = c.req.param('id');

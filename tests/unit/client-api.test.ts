@@ -1,5 +1,5 @@
 import { afterEach, expect, it, vi } from 'vitest';
-import { api } from '../../src/web/api';
+import { api, ApiError } from '../../src/web/api';
 import { examples } from '../../src/shared/contract';
 
 afterEach(() => vi.unstubAllGlobals());
@@ -59,7 +59,7 @@ const requestCalls: Record<string, () => Promise<unknown>> = {
   createTaskRequest: () => api.createTask(examples.createTaskRequest),
   planTaskRequest: () => api.planTask(id, examples.planTaskRequest.day),
 };
-const errorExamples = ['error', 'dayInPastError'] as const;
+const errorExamples = ['error', 'dayInPastError', 'notInBacklogError'] as const;
 
 it('covers every shared example with a client API call', () => {
   expect(
@@ -91,9 +91,24 @@ it.each(errorExamples)(
   async (name) => {
     vi.stubGlobal(
       'fetch',
-      vi.fn().mockResolvedValue(Response.json(examples[name], { status: 400 })),
+      vi.fn().mockResolvedValue(
+        Response.json(examples[name], {
+          status: name === 'notInBacklogError' ? 409 : 400,
+        }),
+      ),
     );
-    await expect(api.health()).rejects.toThrow(examples[name].error.message);
+    const response = api.health();
+    await expect(response).rejects.toThrow(examples[name].error.message);
+    if (name === 'notInBacklogError') {
+      await expect(response).rejects.toBeInstanceOf(ApiError);
+      await expect(response).rejects.toMatchObject({
+        status: 409,
+        details: {
+          code: examples.notInBacklogError.error.code,
+          taskIds: examples.notInBacklogError.error.taskIds,
+        },
+      });
+    }
   },
 );
 

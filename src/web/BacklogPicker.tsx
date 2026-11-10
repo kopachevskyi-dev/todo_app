@@ -13,7 +13,13 @@ export function BacklogPicker({
     picker;
   return (
     <>
-      {mobile && <h2 className="planner-title">From backlog</h2>}
+      {mobile && <h2 className="planner-title">Add from Backlog</h2>}
+      <p className="row-meta">All lists</p>
+      {picker.error && (
+        <p role="alert" className="field-error">
+          {picker.error}
+        </p>
+      )}
       <div className="planner-rows">
         {pickerBacklog.isPending && <p role="status">Loading tasks…</p>}
         {pickerBacklog.isError && (
@@ -30,6 +36,7 @@ export function BacklogPicker({
               type="button"
               role="checkbox"
               aria-checked={checked}
+              disabled={planToday.isPending}
               className={`planner-row ${checked ? 'row-selected' : ''}`}
               onClick={() =>
                 setPlannedSelection((current) =>
@@ -74,7 +81,7 @@ export function BacklogPicker({
         disabled={plannedSelection.length === 0 || planToday.isPending}
         onClick={() => planToday.mutate(plannedSelection)}
       >
-        Plan for today ({plannedSelection.length})
+        Add {plannedSelection.length} to Today
       </Button>
     </>
   );

@@ -230,6 +230,7 @@ export function App() {
               onFilter={filterList}
             />
           )}
+          {picker.confirmation && <p role="status">{picker.confirmation}</p>}
           {completion.isError && (
             <p role="alert" className="field-error">
               {completion.error.message}
@@ -271,13 +272,13 @@ export function App() {
         planning &&
         !task &&
         (mobile ? (
-          <BottomSheet label="From backlog" onClose={closePlanner}>
+          <BottomSheet label="Add from Backlog" onClose={closePlanner}>
             <BacklogPicker mobile={mobile} picker={picker} />
           </BottomSheet>
         ) : (
           <Popover
             anchor={planButton}
-            label="From backlog"
+            label="Add from Backlog"
             onClose={closePlanner}
           >
             <BacklogPicker mobile={mobile} picker={picker} />
