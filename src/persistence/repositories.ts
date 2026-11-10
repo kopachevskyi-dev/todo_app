@@ -30,6 +30,10 @@ import { localDate } from '../domain/time';
 import { rolloverTasks } from '../domain/rollover';
 
 export function createRepositories(db: AppDatabase) {
+  const transaction = <T>(
+    work: (tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0]) => T,
+    config?: Parameters<AppDatabase['transaction']>[1],
+  ) => db.transaction(work, config);
   const taskFields = {
     id: tasks.id,
     title: tasks.title,
@@ -95,7 +99,7 @@ export function createRepositories(db: AppDatabase) {
   return {
     tasks: {
       rollover: (now: Date, timeZone: string) =>
-        db.transaction(
+        transaction(
           (tx) => {
             const candidates = tx
               .select({
@@ -133,7 +137,7 @@ export function createRepositories(db: AppDatabase) {
           { behavior: 'immediate' },
         ),
       create: (input: CreateTaskRequest, now: Date, timeZone: string) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const id = createId(now);
           const at = now.toISOString();
           const day =
@@ -168,7 +172,7 @@ export function createRepositories(db: AppDatabase) {
             .get()!;
         }),
       plan: (id: string, day: string | null, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const at = now.toISOString();
           tx.update(tasks)
             .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
@@ -190,7 +194,7 @@ export function createRepositories(db: AppDatabase) {
             .get()!;
         }),
       planToday: (ids: string[], day: string, now: Date) =>
-        db.transaction(
+        transaction(
           (tx) => {
             const selected = tx
               .select({
@@ -234,7 +238,7 @@ export function createRepositories(db: AppDatabase) {
           { behavior: 'immediate' },
         ),
       moveToBacklog: (id: string, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const at = now.toISOString();
           tx.update(tasks)
             .set({
@@ -347,7 +351,7 @@ export function createRepositories(db: AppDatabase) {
         now: Date,
         timeZone: string,
       ) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const at = now.toISOString();
           const day = localDate(now, timeZone);
           const previous = tx
@@ -413,7 +417,7 @@ export function createRepositories(db: AppDatabase) {
           .all(),
       delete: (id: string) => db.delete(tasks).where(eq(tasks.id, id)).run(),
       patch: (id: string, input: PatchTaskRequest, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const previous = tx
             .select()
             .from(tasks)
@@ -457,7 +461,7 @@ export function createRepositories(db: AppDatabase) {
       get: (id: string) =>
         db.select().from(subtasks).where(eq(subtasks.id, id)).get(),
       create: (taskId: string, title: string, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const last = tx
             .select({ position: subtasks.position })
             .from(subtasks)
@@ -484,7 +488,7 @@ export function createRepositories(db: AppDatabase) {
           return subtask;
         }),
       patch: (id: string, input: PatchSubtaskRequest, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const subtask = tx
             .update(subtasks)
             .set(input)
@@ -498,7 +502,7 @@ export function createRepositories(db: AppDatabase) {
           return subtask;
         }),
       delete: (id: string, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const subtask = tx
             .delete(subtasks)
             .where(eq(subtasks.id, id))
@@ -520,7 +524,7 @@ export function createRepositories(db: AppDatabase) {
           .where(sql`${lists.name} = ${name} COLLATE NOCASE`)
           .get(),
       create: (input: CreateListRequest, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const existing = tx
             .select()
             .from(lists)
@@ -565,8 +569,6 @@ export function createRepositories(db: AppDatabase) {
           .orderBy(asc(lists.position))
           .all(),
     },
-    transaction: <T>(
-      work: (tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0]) => T,
-    ) => db.transaction(work),
+    transaction,
   };
 }

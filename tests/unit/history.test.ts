@@ -9,7 +9,7 @@ import {
 const zone = 'America/New_York';
 const event = (
   taskId: string,
-  type: string,
+  type: HistoryEvent['type'],
   at: string,
   day: string | null = null,
 ): HistoryEvent => ({ taskId, type, at, day });
