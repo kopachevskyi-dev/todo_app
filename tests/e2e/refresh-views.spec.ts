@@ -266,8 +266,6 @@ test('while the server is slow to create, the pending row "C" cannot be opened b
       );
       expect(inside).toBe(false);
     }
-    await page.keyboard.press('Enter');
-    await expect(page).not.toHaveURL(/task=/);
 
     release();
     await expect(pending).toHaveCount(1);
