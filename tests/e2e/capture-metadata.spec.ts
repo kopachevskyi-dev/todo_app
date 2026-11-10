@@ -61,7 +61,7 @@ test('Today: Enter with default controls adds the task to Today with no list', a
       area.getByRole('button', { name: /^List No list/ }),
     ).toBeVisible();
     await expect(area.getByRole('button', { name: /^Day/ })).toContainText(
-      'Tue, Nov 10',
+      'Today',
     );
     await field(area).fill('Pay rent');
     await add(area);
@@ -147,13 +147,19 @@ test('the task list picker creates a list via New list and the card shows it', a
     await page.goto(`${server.url}/backlog`);
     await rows(page).filter({ hasText: 'Fix tap' }).first().click();
 
-    await page.getByRole('button', { name: /^List/ }).click();
-    await page.getByRole('button', { name: 'New list', exact: true }).click();
+    const card = mobile()
+      ? page.getByRole('main')
+      : page.getByRole('complementary', { name: 'Task details' });
+    await card.getByRole('button', { name: /^List/ }).click();
+    await page
+      .getByRole('dialog', { name: 'Choose a list' })
+      .getByRole('button', { name: 'New list', exact: true })
+      .click();
     const form = page.getByRole('dialog').last();
     await form.getByRole('textbox', { name: /name/i }).fill('Repairs');
     await form.getByRole('button', { name: 'Save', exact: true }).click();
 
-    await expect(page.getByRole('button', { name: /^List/ })).toContainText(
+    await expect(card.getByRole('button', { name: /^List/ })).toContainText(
       'Repairs',
     );
   } finally {

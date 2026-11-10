@@ -8,7 +8,8 @@ import { TaskActivity } from './TaskActivity';
 import { useDeleteTask } from './useDeleteTask';
 import { useTaskEditor } from './useTaskEditor';
 import { useRef, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ListForm } from './ListForm';
 import type { TaskDetailData } from './task-detail-types';
 import { formatActivityTimestamp } from './dates';
 import { api } from './api';
@@ -38,6 +39,16 @@ export function TaskDetail({
   mobile: boolean;
 }) {
   const { task } = detail;
+  const client = useQueryClient();
+  const [creatingList, setCreatingList] = useState(false);
+  const createList = useMutation({
+    mutationFn: api.createList,
+    onSuccess: async ({ list }) => {
+      await client.invalidateQueries({ queryKey: queryKeys.lists });
+      save({ listId: list.id });
+      setCreatingList(false);
+    },
+  });
   const completion = useCompletion();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
   const [error, setError] = useState<string>();
@@ -117,6 +128,16 @@ export function TaskDetail({
           {list.name}
         </Button>
       ))}
+      <Button
+        variant="ghost"
+        onClick={() => {
+          setChoosingList(false);
+          createList.reset();
+          setCreatingList(true);
+        }}
+      >
+        New list
+      </Button>
       {lists.isError && <p role="alert">Could not load lists.</p>}
     </div>
   );
@@ -330,6 +351,17 @@ export function TaskDetail({
             {listOptions}
           </Popover>
         ))}
+      {creatingList && (
+        <ListForm
+          mobile={mobile}
+          pending={createList.isPending}
+          error={createList.isError ? createList.error.message : undefined}
+          onSave={(values) => createList.mutate(values)}
+          onClose={() => {
+            if (!createList.isPending) setCreatingList(false);
+          }}
+        />
+      )}
       {confirming && (
         <ConfirmDialog
           title="Delete task"

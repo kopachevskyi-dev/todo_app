@@ -255,7 +255,9 @@ export function QuickAdd({
   target = 'backlog',
   inputRef,
   onClose,
+  children,
 }: {
+  children?: ReactNode;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
@@ -298,6 +300,7 @@ export function QuickAdd({
           {error}
         </p>
       )}
+      {children}
       <div className="capture-footer">
         <p id={id} className="field-hint">
           {mobile
