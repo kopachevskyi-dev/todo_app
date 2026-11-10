@@ -28,6 +28,7 @@ async function startSeeded(page: Page) {
 
 test('production clock powers History and the task Day label', async ({
   page,
+  isMobile: mobile,
 }) => {
   const server = await startProductionServer({ testClock: false });
   try {
@@ -51,11 +52,13 @@ test('production clock powers History and the task Day label', async ({
       .getByRole('link', { name: /Today/ })
       .click();
     await main.getByRole('listitem').filter({ hasText: 'Today task' }).click();
+    const card = mobile
+      ? page.getByRole('main')
+      : page.getByRole('complementary', { name: 'Task details' });
     await expect(
-      page
-        .getByRole('complementary')
-        .getByRole('button', { name: 'Day Today' }),
+      card.getByRole('textbox', { name: 'Title', exact: true }),
     ).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Day Today' })).toBeVisible();
   } finally {
     await server.stop();
   }
