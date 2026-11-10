@@ -110,6 +110,28 @@ export const examples = {
     ],
     progress: { done: 1, total: 2 },
   },
+  // Placeholders: replaced by the real examples when #34 is implemented.
+  planTaskRequest: { day: '' },
+  dayInPastError: { error: { code: '', message: '' } },
+  dayLoad: { days: { placeholder: -1 } },
+  history: { weekStart: '', today: '', days: [] },
+  taskDetail: {
+    task: {
+      id: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
+      title: "Renew driver's license",
+      description: '',
+      listId: null,
+      day: null,
+      completedAt: null,
+      missedFrom: null,
+      subtaskCount: 0,
+      subtaskDoneCount: 0,
+      createdAt: '2026-11-02T14:12:00.000Z',
+      updatedAt: '2026-11-02T14:12:00.000Z',
+    },
+    subtasks: [],
+    activity: [],
+  },
 } as const;
 
 export const taskTitleSchema = z.string().trim().min(1).max(200);
