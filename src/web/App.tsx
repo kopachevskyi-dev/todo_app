@@ -10,6 +10,7 @@ import { Backlog } from './Backlog';
 import { BacklogPicker } from './BacklogPicker';
 import { SearchField } from './SearchField';
 import { Capture } from './Capture';
+import type { CaptureDraft } from './useCreateTask';
 import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   Link,
@@ -55,9 +56,11 @@ export function App() {
   const mobile = useMedia('(max-width: 767px)');
   const desktop = useMedia('(min-width: 1216px)');
   const [capturing, setCapturing] = useState(false);
-  const [captureDrafts, setCaptureDrafts] = useState({
-    backlog: '',
-    today: '',
+  const [captureDrafts, setCaptureDrafts] = useState<
+    Record<'backlog' | 'today', CaptureDraft>
+  >({
+    backlog: { title: '' },
+    today: { title: '' },
   });
   const picker = useBacklogPicker(path === '/today');
   const { planning, closePlanner } = picker;
@@ -95,18 +98,7 @@ export function App() {
   const pendingBacklog = pendingCreates.filter(
     ({ request }) => request.target === 'backlog',
   );
-  const pendingToday = pendingCreates.length - pendingBacklog.length;
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
-  const counts = useQuery({
-    queryKey: queryKeys.counts,
-    queryFn: api.counts,
-    select: (data) => ({
-      ...data,
-      backlog: data.backlog + pendingBacklog.length,
-      todayOpen: data.todayOpen + pendingToday,
-      todayTotal: data.todayTotal + pendingToday,
-    }),
-  });
   const selectedIds = listFilter?.split(',').filter(Boolean) ?? [];
   const activeLists =
     lists.data?.lists.filter((item) => selectedIds.includes(item.id)) ?? [];
@@ -151,6 +143,21 @@ export function App() {
       ...data,
       open: data.open.filter(matchesList),
       done: data.done.filter(matchesList),
+    }),
+  });
+  const pendingToday = pendingCreates.filter(
+    ({ request }) =>
+      request.target === 'today' &&
+      (!request.day || request.day === today.data?.day),
+  ).length;
+  const counts = useQuery({
+    queryKey: queryKeys.counts,
+    queryFn: api.counts,
+    select: (data) => ({
+      ...data,
+      backlog: data.backlog + pendingBacklog.length,
+      todayOpen: data.todayOpen + pendingToday,
+      todayTotal: data.todayTotal + pendingToday,
     }),
   });
   const upcoming = useQuery({

@@ -165,9 +165,15 @@ export function createApp(options: {
     }
     if (parsed.data.listId && !repositories.lists.get(parsed.data.listId))
       return apiError(c, 'invalid_list', 'List not found.', 400);
+    const now = clock.now();
+    if (
+      parsed.data.day &&
+      parsed.data.day < localDate(now, c.req.header('X-Timezone')!)
+    )
+      return apiError(c, 'day_in_past', 'Choose today or a later day.', 400);
     const task = repositories.tasks.create(
       parsed.data,
-      clock.now(),
+      now,
       c.req.header('X-Timezone')!,
     );
     return c.json(createTaskResponseSchema.parse({ task }), 201);

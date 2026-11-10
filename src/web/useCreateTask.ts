@@ -8,6 +8,16 @@ import type {
   TaskRow as TaskRowData,
 } from '../shared/contract';
 import { api } from './api';
+import { useNavigate } from '@tanstack/react-router';
+import { useNotification } from './notification-context';
+import { formatDay } from '../domain/day-picker';
+import { historyWeekStart } from '../domain/history';
+
+export type CaptureDraft = {
+  title: string;
+  listId?: string | null;
+  day?: string | null;
+};
 
 export const createTaskMutationKey = ['create-task'] as const;
 export type CreateTaskContext = {
@@ -19,18 +29,32 @@ export function useCreateTask({
   target,
   list,
   onAdded,
+  day,
+  today,
+  filteredIds,
   draft,
   onDraftChange,
 }: {
   target: 'backlog' | 'today';
   list?: List;
   onAdded?: () => void;
-  draft?: string;
-  onDraftChange?: (value: string) => void;
+  day?: string | null;
+  today?: string;
+  filteredIds: string[];
+  draft: CaptureDraft;
+  onDraftChange: (value: CaptureDraft) => void;
 }) {
-  const [localTitle, setLocalTitle] = useState('');
-  const title = draft ?? localTitle;
-  const setTitle = onDraftChange ?? setLocalTitle;
+  const currentDraft = draft;
+  const setDraft = onDraftChange;
+  const title = currentDraft.title;
+  const setTitle = (title: string) =>
+    setDraft(
+      title
+        ? { ...currentDraft, title, listId: list?.id ?? null, day }
+        : { title: '' },
+    );
+  const navigate = useNavigate();
+  const notify = useNotification();
   const [error, setError] = useState<string>();
   const input = useRef<HTMLInputElement>(null);
   const client = useQueryClient();
@@ -45,7 +69,7 @@ export function useCreateTask({
         description: '',
         listId: request.listId ?? null,
         list: list ?? null,
-        day: null,
+        day: request.day ?? null,
         completedAt: null,
         missedFrom: null,
         subtaskCount: 0,
@@ -63,7 +87,7 @@ export function useCreateTask({
       input.current?.focus();
     },
     onSuccess: ({ task }, request, context) => {
-      if (request.target === 'backlog')
+      if (task.day === null)
         client.setQueryData<{ tasks: TaskRowData[] }>(
           queryKeys.backlogList(),
           (previous) =>
@@ -74,7 +98,44 @@ export function useCreateTask({
               ],
             },
         );
-      if (title.trim() === request.title) setTitle('');
+      if (title.trim() === request.title) setDraft({ title: '' });
+      const outsideFilter =
+        filteredIds.length > 0 &&
+        (!task.listId || !filteredIds.includes(task.listId));
+      const outsideDay =
+        target === 'today' ? task.day !== today : task.day !== null;
+      if (outsideFilter || outsideDay) {
+        const destination = outsideDay
+          ? task.day
+            ? task.day === today
+              ? 'Today'
+              : formatDay(task.day)
+            : 'Backlog'
+          : (context.row.list?.name ?? 'No list');
+        notify({
+          message: `Added to ${destination}${outsideFilter ? ' — not shown in this filter' : ''}`,
+          actions: [
+            {
+              label: 'Open',
+              onClick: () => {
+                if (!task.day)
+                  void navigate({ to: '/backlog', search: { task: task.id } });
+                else if (task.day === today)
+                  void navigate({ to: '/today', search: { task: task.id } });
+                else
+                  void navigate({
+                    to: '/history',
+                    search: {
+                      week: historyWeekStart(task.day),
+                      day: task.day,
+                      task: task.id,
+                    },
+                  });
+              },
+            },
+          ],
+        });
+      }
       input.current?.focus();
       onAdded?.();
     },
@@ -91,7 +152,8 @@ export function useCreateTask({
     setError(undefined);
     mutation.mutate({
       title: title.trim(),
-      target,
+      target: day === undefined ? target : day === null ? 'backlog' : 'today',
+      ...(day !== undefined ? { day } : {}),
       ...(list ? { listId: list.id } : {}),
     });
   };

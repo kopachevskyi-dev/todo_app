@@ -1783,3 +1783,10 @@ button.check-hit:disabled {
 .managed-list .button {
   flex: none;
 }
+
+.capture-metadata {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}

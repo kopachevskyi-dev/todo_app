@@ -668,6 +668,7 @@ export const taskTitleSchema = z.string().trim().min(1).max(200);
 export const createTaskRequestSchema = z.object({
   title: taskTitleSchema,
   target: z.enum(['backlog', 'today']),
+  day: z.iso.date().nullable().optional(),
   listId: z.ulid().optional(),
 });
 export const taskSchema = z.object({

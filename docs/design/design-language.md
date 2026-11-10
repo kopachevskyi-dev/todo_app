@@ -20,7 +20,7 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 ## 1. Principles
 
 1. **One task, three places.** A task is created in the Backlog, planned into a day (Today), and remembered in History. It is always the same object with the same detail view; only its state changes.
-2. **Capture is instant, detail is optional.** A title and Enter/Add is a complete task. Description, list, subtasks and day come later.
+2. **Capture is instant, detail is optional.** A title and Enter/Add is a complete task. List and day can be set during capture; description and subtasks come later.
 3. **Calm and light.** Soft sage ground, off-white surfaces, one warm yellow action, one blue for focus and selection. No gradients, no emoji, no decorative illustration.
 4. **Color is never the only signal.** Done = filled dark check. Selected = blue border or tinted row. Missed = dashed box. List color always comes with the list name.
 5. **Same components, two layouts.** Desktop shows list and detail side by side. Mobile shows them as pushed screens. Rows, fields, chips, sheets and menus share one visual language.
@@ -261,6 +261,8 @@ Height min 60 (desktop and mobile sheet: 56), radius 16, `surface-raised`, plus 
 | Submitted | Field clears, new row appears at top of list. Focus stays in the field for the next task **[decision]** |
 
 Desktop: the Add button (44 high, `primary`, radius 12, padding 0 16, 14/500) sits inside the field on the right with an "Enter" key chip (13, radius 6, background `rgba(31,36,33,.1)`). Enter and the button do the same thing. Under the field, a hint line, 13 `text-muted`: "A title is enough. Add details, a list or a day later."
+
+Optional compact List and Day buttons show their current values beside the title on desktop and in the mobile sheet. Today defaults to Today; Backlog defaults to No day. A single active list filter supplies the list; no filter or several selected lists defaults to No list, with a note for several lists. Enter/Add creates the task with those values. If it is outside the current day or list filter, an Added to notification offers Open. Failed adds retain title, list and day. Dismissal retains each screen's draft in memory; success or clearing the title resets it. The task card's list picker offers New list using the shared name/color form and selects the saved list in the same card.
 
 Mobile: the field lives in the capture bottom sheet (4.11), opened by the FAB.
 

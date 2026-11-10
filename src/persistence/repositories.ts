@@ -156,7 +156,11 @@ export function createRepositories(db: AppDatabase) {
           const id = createId(now);
           const at = now.toISOString();
           const day =
-            input.target === 'today' ? localDate(now, timeZone) : null;
+            input.day !== undefined
+              ? input.day
+              : input.target === 'today'
+                ? localDate(now, timeZone)
+                : null;
           tx.insert(tasks)
             .values({
               id,
@@ -172,10 +176,11 @@ export function createRepositories(db: AppDatabase) {
             .values({
               id: createId(now),
               taskId: id,
-              type:
-                input.target === 'today'
+              type: !day
+                ? 'added_to_backlog'
+                : day === localDate(now, timeZone)
                   ? 'added_to_today'
-                  : 'added_to_backlog',
+                  : 'planned',
               at,
               day,
             })

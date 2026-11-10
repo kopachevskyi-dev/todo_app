@@ -237,7 +237,10 @@ test('desktop: renaming and recoloring a list in Manage lists shows Shop in Oran
       orange,
     );
     await row.click();
-    await page.getByRole('button', { name: /^List/ }).click();
+    await page
+      .getByRole('complementary', { name: 'Task details' })
+      .getByRole('button', { name: /^List/ })
+      .click();
     await expect(
       page.getByRole('button', { name: /^List Shop/ }),
     ).toBeVisible();
