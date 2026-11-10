@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { listPalette, type List } from '../shared/contract';
+import { type List } from '../shared/contract';
 import { api } from './api';
 import { queryKeys } from './query-keys';
 import { invalidateTaskQueries } from './invalidate-task-queries';
@@ -9,9 +9,10 @@ import {
   Button,
   ConfirmDialog,
   Icon,
-  Popover,
+  Modal,
   SectionLabel,
 } from './components';
+import { ListForm } from './ListForm';
 
 export function Lists({
   lists,
@@ -25,17 +26,9 @@ export function Lists({
   mobile: boolean;
 }) {
   const client = useQueryClient();
-  const anchor = useRef<HTMLButtonElement | null>(null);
-  const [menu, setMenu] = useState<List>();
-  const [colors, setColors] = useState(false);
-  const [editing, setEditing] = useState<string>();
-  const nameInput = useRef<HTMLInputElement>(null);
-  const [name, setName] = useState('');
+  const [managing, setManaging] = useState(false);
+  const [editing, setEditing] = useState<List | 'new'>();
   const [deleting, setDeleting] = useState<List>();
-  useEffect(() => {
-    if (editing) nameInput.current?.focus();
-  }, [editing]);
-  const closeMenu = useCallback(() => setMenu(undefined), []);
   const mutation = useMutation({
     mutationFn: (action: () => Promise<unknown>) => action(),
     onSuccess: async () => {
@@ -51,204 +44,116 @@ export function Lists({
       await mutation.mutateAsync(action);
       done();
     } catch {
-      /* Inline error below. */
+      /* Keep the form and show the error for retry. */
     }
   };
   const startEditing = (list?: List) => {
     mutation.reset();
-    setName(list?.name ?? '');
-    setEditing(list?.id ?? 'new');
-    closeMenu();
+    setEditing(list ?? 'new');
   };
-  const input = (
-    <form
-      className="list-name-form"
-      onSubmit={(event) => {
-        event.preventDefault();
-        void perform(
-          () =>
-            editing === 'new'
-              ? api.createList({ name })
-              : api.patchList(editing!, { name }),
-          () => setEditing(undefined),
-        );
-      }}
-    >
-      <input
-        autoFocus
-        ref={nameInput}
-        aria-label={editing === 'new' ? 'New list name' : 'Rename list name'}
-        aria-invalid={mutation.isError}
-        value={name}
-        maxLength={40}
-        required
-        onChange={(event) => setName(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            setEditing(undefined);
-            mutation.reset();
-          }
-        }}
-      />
-      <Button variant="ghost" type="submit" disabled={mutation.isPending}>
-        Save
-      </Button>
-      <Button
-        variant="icon"
-        aria-label="Cancel list name"
-        onClick={() => {
-          setEditing(undefined);
-          mutation.reset();
-        }}
-      >
-        <Icon name="close" size={16} />
-      </Button>
-    </form>
-  );
-  const menuContent = menu && (
-    <>
-      <h3 className="sheet-label">{menu.name}</h3>
-      {colors ? (
-        <div className="list-options">
-          {listPalette.map(({ hex: color, name }) => (
-            <Button
-              key={color}
-              variant="ghost"
-              aria-label={name}
-              aria-pressed={menu.color === color}
-              disabled={mutation.isPending}
-              onClick={() => {
-                void perform(
-                  () => api.patchList(menu.id, { color }),
-                  closeMenu,
-                );
-              }}
-            >
-              <span className="list-dot" style={{ background: color }} />
-              {name}
-              {menu.color === color && <Icon name="check" size={16} />}
-            </Button>
-          ))}
-        </div>
-      ) : (
-        <div
-          role="menu"
-          aria-label={`${menu.name} options`}
-          className="list-options"
-          onKeyDown={(event) => {
-            const buttons = Array.from(
-              event.currentTarget.querySelectorAll<HTMLButtonElement>(
-                '[role="menuitem"]',
-              ),
-            );
-            const index = buttons.indexOf(
-              document.activeElement as HTMLButtonElement,
-            );
-            if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-              event.preventDefault();
-              buttons[
-                (index + (event.key === 'ArrowDown' ? 1 : buttons.length - 1)) %
-                  buttons.length
-              ]?.focus();
-            }
-          }}
-        >
-          <Button
-            variant="ghost"
-            role="menuitem"
-            onClick={() => startEditing(menu)}
-          >
-            Rename
-          </Button>
-          <Button
-            variant="ghost"
-            role="menuitem"
-            onClick={() => setColors(true)}
-          >
-            Color
-          </Button>
-          <Button
-            variant="ghost"
-            role="menuitem"
-            onClick={() => {
-              setDeleting(menu);
-              closeMenu();
-            }}
-          >
-            Delete
-          </Button>
-        </div>
-      )}
-      {mutation.isError && (
-        <p className="field-error" role="alert">
-          {mutation.error.message}
-        </p>
-      )}
-    </>
-  );
+  const Container = mobile ? BottomSheet : Modal;
   return (
     <>
       <nav aria-label="Lists" className={mobile ? 'list-chips' : 'lists'}>
         {!mobile && <SectionLabel>Lists</SectionLabel>}
-        {lists.map((list) =>
-          editing === list.id ? (
-            <div key={list.id}>{input}</div>
-          ) : (
-            <div className="list-control" key={list.id}>
-              <button
-                className="list-link"
-                aria-pressed={active.includes(list.id)}
-                onClick={() => onFilter(list.id)}
-              >
-                <span className="list-dot" style={{ background: list.color }} />
-                {list.name}
-              </button>
-              <Button
-                variant="icon"
-                className="list-menu-trigger"
-                aria-label={`${list.name} options`}
-                aria-haspopup="menu"
-                aria-expanded={menu?.id === list.id}
-                onClick={(event) => {
-                  anchor.current = event.currentTarget;
-                  mutation.reset();
-                  setColors(false);
-                  setMenu(list);
-                }}
-              >
-                …
-              </Button>
-            </div>
-          ),
-        )}
-        {editing === 'new' ? (
-          input
-        ) : (
-          <button className="new-list" onClick={() => startEditing()}>
-            <Icon name="plus" size={14} />
-            New list
-          </button>
-        )}
-        {editing && mutation.isError && (
-          <p className="field-error" role="alert">
-            {mutation.error.message}
-          </p>
-        )}
-      </nav>
-      {menu &&
-        (mobile ? (
-          <BottomSheet label={`${menu.name} options`} onClose={closeMenu}>
-            {menuContent}
-          </BottomSheet>
-        ) : (
-          <Popover
-            anchor={anchor}
-            label={`${menu.name} options`}
-            onClose={closeMenu}
-          >
-            {menuContent}
-          </Popover>
+        {lists.map((list) => (
+          <div className="list-control" key={list.id}>
+            <button
+              className="list-link"
+              aria-pressed={active.includes(list.id)}
+              onClick={() => onFilter(list.id)}
+            >
+              <span className="list-dot" style={{ background: list.color }} />
+              {list.name}
+            </button>
+          </div>
         ))}
+      </nav>
+      <div className="list-management-actions">
+        <button className="new-list" onClick={() => startEditing()}>
+          <Icon name="plus" size={14} />
+          New list
+        </button>
+        <Button
+          variant="ghost"
+          onClick={() => {
+            mutation.reset();
+            setManaging(true);
+          }}
+        >
+          Manage lists
+        </Button>
+      </div>
+      {managing && (
+        <Container
+          label="Manage lists"
+          className="list-dialog"
+          onClose={() => {
+            if (editing || deleting) return false;
+            setManaging(false);
+          }}
+        >
+          <h3>Manage lists</h3>
+          <Button variant="outline" onClick={() => startEditing()}>
+            New list
+          </Button>
+          <div className="managed-lists">
+            {lists.map((list) => (
+              <div className="managed-list" key={list.id}>
+                <span className="managed-list-name">
+                  <span
+                    className="list-dot"
+                    style={{ background: list.color }}
+                  />
+                  {list.name}
+                </span>
+                <Button
+                  variant="ghost"
+                  aria-label={`Edit ${list.name}`}
+                  onClick={() => startEditing(list)}
+                >
+                  Edit
+                </Button>
+                <Button
+                  variant="icon"
+                  aria-label={`Delete ${list.name}`}
+                  onClick={() => {
+                    mutation.reset();
+                    setDeleting(list);
+                  }}
+                >
+                  <Icon name="trash" />
+                </Button>
+              </div>
+            ))}
+          </div>
+          <div className="dialog-actions">
+            <Button variant="outline" onClick={() => setManaging(false)}>
+              Close
+            </Button>
+          </div>
+        </Container>
+      )}
+      {editing && (
+        <ListForm
+          list={editing === 'new' ? undefined : editing}
+          mobile={mobile}
+          pending={mutation.isPending}
+          error={mutation.isError ? mutation.error.message : undefined}
+          onClose={() => {
+            if (!mutation.isPending) setEditing(undefined);
+          }}
+          onSave={(values) => {
+            void perform(
+              () =>
+                editing === 'new'
+                  ? api.createList(values)
+                  : api.patchList(editing.id, values),
+              () => setEditing(undefined),
+            );
+          }}
+        />
+      )}
       {deleting && (
         <ConfirmDialog
           title={`Delete list "${deleting.name}"? Its tasks stay, without a list.`}

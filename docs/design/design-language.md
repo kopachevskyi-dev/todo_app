@@ -102,7 +102,7 @@ Rules:
 - Exactly one yellow `primary` button per view.
 - `focus` blue is for borders, rings and icons. Do not use it for small text.
 - List dots are decoration plus a text label. Never show a dot without its name.
-- New user lists **[decision]** pick from the same three hues plus: `#8E7CC3` (purple), `#6FBF8A` (green). Keep lightness similar to the existing dots.
+- Lists use eight named presets **[decision]**: Red `#E3686A`, Teal `#5FB4C6`, Yellow `#F0C24B`, Purple `#8E7CC3`, Green `#6FBF8A`, Blue `#6A93D4`, Orange `#E8975A`, Pink `#D985A8`. New lists default to Purple; existing colors stay unchanged.
 
 ### 3.2 Typography
 
@@ -412,6 +412,14 @@ The screen uses the shared header and task rows on desktop and mobile. All open 
 
 With no future tasks, show "Nothing planned ahead", explain "Tasks you plan for a future day will appear here.", and provide a "Plan from Backlog" link to Backlog. Loading and retryable errors use the existing inline patterns. No quick-add or FAB appears on this screen; the three primary navigation items stay available.
 
+### List management **[decision]**
+
+New list and Manage lists are separate actions outside the scrolling filter controls. Desktop retains fast list filtering in the sidebar. Manage lists opens a scrollable list of all lists with New list, per-list Edit (name and color), and Delete. Deleting a list requires confirmation and leaves its tasks without a list.
+
+Create and edit share one form: labeled name field (1–40 characters), eight named color swatches, Save and Cancel. Purple is selected initially for creation; editing previews the current color. Each swatch includes its name and dot; selection adds a check, outline and accessible name such as "Blue, selected". Saving writes name and color together; errors keep the form open for retry.
+
+The form is a centered desktop dialog and a mobile bottom sheet. At 360 and 390 px the swatches use a four-column grid; fields and actions fit without horizontal scrolling. The sheet follows the visual viewport above the software keyboard, with vertical scrolling when needed. Focus enters the form, Tab stays inside the dialog, and Escape or Cancel closes it and returns focus to its opener.
+
 ### 4.15 Chips and meta
 
 - List dot: 10×10 radius 3 in meta lines; 12×12 radius 4 in fields and nav.
@@ -563,4 +571,4 @@ Week strip data for Nov 2–8 (done of planned): Mon 3/3, Tue 4/5, Wed 4/5, Thu 
 6. Implement the model rules in section 2 and the counts in section 7.
 7. Run the flow in section 7 on both layouts as the acceptance test.
 
-Not designed yet (explicitly out of scope for v1): the date-picker calendar, "Add from Backlog" picker, search results, list management, Settings, onboarding, empty states drawn as screens, dark theme.
+Not designed yet (explicitly out of scope for v1): the date-picker calendar, "Add from Backlog" picker, search results, Settings, onboarding, empty states drawn as screens, dark theme.
