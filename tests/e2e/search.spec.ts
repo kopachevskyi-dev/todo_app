@@ -47,7 +47,7 @@ test('desktop: typing in the sidebar search shows the result with its location; 
     seed(server.databasePath);
     await page.goto(`${server.url}/backlog`);
 
-    const field = page.getByRole('navigation').getByPlaceholder('Search');
+    const field = page.getByRole('search').getByPlaceholder('Search');
     await field.fill('license');
     await expect(page).toHaveURL(/\/search\?q=license/);
     const main = page.getByRole('main');
@@ -63,6 +63,65 @@ test('desktop: typing in the sidebar search shows the result with its location; 
     await field.press('Escape');
     await expect(page).toHaveURL(/\/backlog/);
     await expect(field).toHaveValue('');
+  } finally {
+    await server.stop();
+  }
+});
+
+test('desktop: a single match reads "1 result for"', async ({ page }) => {
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
+  try {
+    seed(server.databasePath);
+    await page.goto(`${server.url}/backlog`);
+    await page.getByRole('search').getByPlaceholder('Search').fill('milk');
+    await expect(page.getByRole('main')).toContainText('1 result for "milk"');
+  } finally {
+    await server.stop();
+  }
+});
+
+test('desktop: the sidebar search is a search landmark', async ({ page }) => {
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
+  try {
+    await page.goto(`${server.url}/backlog`);
+    await expect(page.getByRole('search')).toBeVisible();
+    await expect(
+      page.getByRole('search').getByPlaceholder('Search'),
+    ).toBeVisible();
+    await expect(
+      page.getByRole('navigation', { name: 'Search tasks' }),
+    ).toHaveCount(0);
+  } finally {
+    await server.stop();
+  }
+});
+
+test('desktop: Escape after reloading the search page returns to Backlog', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
+  try {
+    seed(server.databasePath);
+    await page.goto(`${server.url}/backlog`);
+    await page.getByRole('search').getByPlaceholder('Search').fill('license');
+    await expect(page).toHaveURL(/\/search\?q=license/);
+    await page.reload();
+    const field = page.getByRole('search').getByPlaceholder('Search');
+    await expect(field).toHaveValue('license');
+    await field.press('Escape');
+    await expect(page).toHaveURL(/\/backlog/);
   } finally {
     await server.stop();
   }

@@ -82,7 +82,9 @@ export function ScreenHeader({
       )}
       {isSearch && q?.trim() && search.data && (
         <p>
-          {search.data.results.length} results for "{q.trim()}"
+          {search.data.results.length}{' '}
+          {search.data.results.length === 1 ? 'result' : 'results'} for "
+          {q.trim()}"
         </p>
       )}
       {isBacklog && (

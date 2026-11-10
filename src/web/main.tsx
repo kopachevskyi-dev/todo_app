@@ -21,7 +21,13 @@ const rootRoute = createRootRoute({
     q?: string;
     week?: string;
     day?: string;
+    from?: string;
   } => ({
+    from:
+      typeof search.from === 'string' &&
+      /^\/(backlog|today|history)(\?|$)/.test(search.from)
+        ? search.from
+        : undefined,
     week: typeof search.week === 'string' ? search.week : undefined,
     day: typeof search.day === 'string' ? search.day : undefined,
     q: typeof search.q === 'string' ? search.q : undefined,
