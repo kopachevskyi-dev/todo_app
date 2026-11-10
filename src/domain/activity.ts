@@ -1,35 +1,13 @@
+import { dateLabel } from '../shared/dates';
+import type { ActivityType } from '../shared/contract';
 export type DetailPart = 'description' | 'list' | 'subtasks';
 
 /** A stored task event; `details_added` keeps its parts in `data.parts`. */
 export interface ActivityEvent {
-  type: string;
+  type: ActivityType;
   at: string;
   day?: string | null;
   data?: { parts?: DetailPart[]; listName?: string } | null;
-}
-
-/** `{Mon D}, {h:mm AM/PM} — {text}` in the given zone. */
-export function formatActivityLine(
-  event: ActivityEvent,
-  timeZone: string,
-): string {
-  return `${formatActivityTimestamp(event.at, timeZone)} — ${activityText(event)}`;
-}
-
-export function formatActivityTimestamp(at: string, timeZone: string): string {
-  const date = new Date(at);
-  const day = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    month: 'short',
-    day: 'numeric',
-  }).format(date);
-  const time = new Intl.DateTimeFormat('en-US', {
-    timeZone,
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(date);
-  return `${day}, ${time}`;
 }
 
 export interface DetailsEditResult {
@@ -58,11 +36,7 @@ export function applyDetailsEdit(
 
 export function activityText(event: ActivityEvent): string {
   const day = event.day
-    ? new Intl.DateTimeFormat('en-US', {
-        timeZone: 'UTC',
-        month: 'short',
-        day: 'numeric',
-      }).format(new Date(`${event.day}T12:00:00Z`))
+    ? dateLabel(event.day, { month: 'short', day: 'numeric' })
     : '';
   switch (event.type) {
     case 'added_to_backlog':

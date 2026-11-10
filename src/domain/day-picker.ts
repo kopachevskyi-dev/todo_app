@@ -1,3 +1,4 @@
+import { dateLabel, formatShortDate } from '../shared/dates';
 import { localDate } from './time';
 
 export interface DayPickerItem {
@@ -46,16 +47,8 @@ export function addDays(day: string, amount: number): string {
 
 export function formatDay(day: string, month = true): string {
   if (!month) {
-    const weekday = new Intl.DateTimeFormat('en-US', {
-      timeZone: 'UTC',
-      weekday: 'short',
-    }).format(new Date(`${day}T12:00:00Z`));
+    const weekday = dateLabel(day, { weekday: 'short' });
     return `${weekday} ${Number(day.slice(-2))}`;
   }
-  return new Intl.DateTimeFormat('en-US', {
-    timeZone: 'UTC',
-    weekday: 'short',
-    ...(month ? ({ month: 'short' } as const) : {}),
-    day: 'numeric',
-  }).format(new Date(`${day}T12:00:00Z`));
+  return formatShortDate(day, 'UTC');
 }

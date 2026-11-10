@@ -1,3 +1,4 @@
+import { browserTimeZone } from './dates';
 import { z } from 'zod';
 import {
   createListRequestSchema,
@@ -39,7 +40,7 @@ async function request<T>(
     ...init,
     headers: {
       ...init?.headers,
-      'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      'X-Timezone': browserTimeZone(),
     },
   });
   const body: unknown =

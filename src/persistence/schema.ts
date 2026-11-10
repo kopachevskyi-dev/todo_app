@@ -7,7 +7,7 @@ import {
   text,
   uniqueIndex,
 } from 'drizzle-orm/sqlite-core';
-import { listColors } from '../shared/contract';
+import { listColors, activityTypes } from '../shared/contract';
 
 export const lists = sqliteTable(
   'list',
@@ -74,16 +74,7 @@ export const subtasks = sqliteTable(
   ],
 );
 
-export const eventTypes = [
-  'added_to_backlog',
-  'added_to_today',
-  'details_added',
-  'planned',
-  'completed',
-  'reopened',
-  'moved_to_backlog',
-  'missed',
-] as const;
+export const eventTypes = activityTypes;
 export const taskEvents = sqliteTable(
   'task_event',
   {
