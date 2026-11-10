@@ -133,6 +133,7 @@ export function createRepositories(db: AppDatabase) {
               tx.update(tasks)
                 .set({
                   day: change.day,
+                  position: null,
                   missedFrom: change.missedFrom,
                   placedAt: change.placedAt,
                   updatedAt: now.toISOString(),
@@ -189,7 +190,13 @@ export function createRepositories(db: AppDatabase) {
         transaction((tx) => {
           const at = now.toISOString();
           tx.update(tasks)
-            .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
+            .set({
+              day,
+              position: null,
+              missedFrom: null,
+              placedAt: at,
+              updatedAt: at,
+            })
             .where(eq(tasks.id, id))
             .run();
           tx.insert(taskEvents)
@@ -232,7 +239,13 @@ export function createRepositories(db: AppDatabase) {
             const at = now.toISOString();
             for (const id of ids) {
               tx.update(tasks)
-                .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
+                .set({
+                  day,
+                  position: null,
+                  missedFrom: null,
+                  placedAt: at,
+                  updatedAt: at,
+                })
                 .where(eq(tasks.id, id))
                 .run();
               tx.insert(taskEvents)
@@ -261,6 +274,7 @@ export function createRepositories(db: AppDatabase) {
           tx.update(tasks)
             .set({
               completedAt: null,
+              position: null,
               day: null,
               missedFrom: null,
               placedAt: at,
@@ -351,6 +365,7 @@ export function createRepositories(db: AppDatabase) {
           .select({
             ...taskFields,
             placedAt: tasks.placedAt,
+            position: tasks.position,
             list: listFields,
           })
           .from(tasks)
@@ -365,6 +380,27 @@ export function createRepositories(db: AppDatabase) {
           .all();
         return { day, ...todayView(rows, day) };
       },
+      setTodayOrder: (ids: string[], day: string) =>
+        transaction(
+          (tx) => {
+            const open = tx
+              .select({ id: tasks.id })
+              .from(tasks)
+              .where(and(eq(tasks.day, day), isNull(tasks.completedAt)))
+              .all();
+            const eligible = new Set(open.map((task) => task.id));
+            if (
+              ids.length !== eligible.size ||
+              ids.some((id) => !eligible.has(id))
+            )
+              return false;
+            for (const [position, id] of ids.entries()) {
+              tx.update(tasks).set({ position }).where(eq(tasks.id, id)).run();
+            }
+            return true;
+          },
+          { behavior: 'immediate' },
+        ),
       setCompletion: (
         id: string,
         completed: boolean,
@@ -377,6 +413,7 @@ export function createRepositories(db: AppDatabase) {
           tx.update(tasks)
             .set({
               completedAt: completed ? at : null,
+              position: null,
               day,
               updatedAt: at,
             })

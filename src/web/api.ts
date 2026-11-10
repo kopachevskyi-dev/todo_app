@@ -18,6 +18,8 @@ import {
   planTodayRequestSchema,
   planTodayResponseSchema,
   todayResponseSchema,
+  setTodayOrderRequestSchema,
+  setTodayOrderResponseSchema,
   patchTaskRequestSchema,
   type PatchTaskRequest,
   searchResponseSchema,
@@ -124,6 +126,12 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(planTodayRequestSchema.parse({ taskIds })),
+    }),
+  setTodayOrder: (taskIds: string[]) =>
+    request('/views/today/order', setTodayOrderResponseSchema, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(setTodayOrderRequestSchema.parse({ taskIds })),
     }),
   today: (listId?: string) =>
     request(

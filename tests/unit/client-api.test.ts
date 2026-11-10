@@ -50,6 +50,8 @@ const responseCalls: Record<string, () => Promise<unknown>> = {
   lists: () => api.lists(),
   clock: () => api.clock(),
   today: () => api.today(),
+  todayOrderResponse: () =>
+    api.setTodayOrder([...examples.todayOrderRequest.taskIds]),
   upcoming: () => api.upcoming(),
   createTaskResponse: () => api.createTask(examples.createTaskRequest),
   dayLoad: () => api.dayLoad('from', 'to'),
@@ -59,6 +61,8 @@ const responseCalls: Record<string, () => Promise<unknown>> = {
 const requestCalls: Record<string, () => Promise<unknown>> = {
   createTaskRequest: () => api.createTask(examples.createTaskRequest),
   planTaskRequest: () => api.planTask(id, examples.planTaskRequest.day),
+  todayOrderRequest: () =>
+    api.setTodayOrder([...examples.todayOrderRequest.taskIds]),
 };
 const errorExamples = ['error', 'dayInPastError', 'notInBacklogError'] as const;
 
@@ -118,7 +122,13 @@ it.each(Object.entries(requestCalls))(
   async (name, call) => {
     const fetchMock = vi
       .fn()
-      .mockResolvedValue(Response.json(examples.createTaskResponse));
+      .mockResolvedValue(
+        Response.json(
+          name === 'todayOrderRequest'
+            ? examples.todayOrderResponse
+            : examples.createTaskResponse,
+        ),
+      );
     vi.stubGlobal('fetch', fetchMock);
     await call();
     const init = fetchMock.mock.calls[0]?.[1] as { body: string };

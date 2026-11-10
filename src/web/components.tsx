@@ -148,7 +148,9 @@ export function TaskRow({
   location,
   onToggle,
   pending,
+  orderControls,
 }: {
+  orderControls?: ReactNode;
   onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
@@ -238,6 +240,7 @@ export function TaskRow({
         )}
         {!task.completedAt && !creating && <Icon name="chevron" size={18} />}
       </a>
+      {orderControls}
     </li>
   );
 }

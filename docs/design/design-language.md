@@ -381,6 +381,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 ### 4.12 Section label, count pill, progress
 
+- Today ordering: open tasks with a saved position come first in ascending order; unpositioned tasks follow newest-first. Each open row has visible 44px Move up / Move down buttons, operable by keyboard and touch, disabled at the visible ends. In a filtered view, moves swap visible neighbors while retaining hidden tasks in the full saved order. Order persists after reload; leaving Today by moving, completing, or rollover clears the position. Completed tasks remain a separate group; other days, lists, and Backlog keep their existing order.
 - Today: one date and day-progress summary (`2 of 5 done`), open rows first, then a "Completed" heading only when completed rows exist. Quick-add and task surfaces stay available.
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
