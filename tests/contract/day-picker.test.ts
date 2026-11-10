@@ -1,64 +1,92 @@
 import { expect, it } from 'vitest';
 import {
+  createTaskResponseSchema,
   dayLoadResponseSchema,
   errorResponseSchema,
+  examples,
   planTaskRequestSchema,
 } from '../../src/shared/contract';
 import { tasks } from '../../src/persistence/schema';
 import { testApp } from '../helpers/app';
+import {
+  dayBeforeExample,
+  exampleInstant,
+  jsonRequest,
+  setClock,
+} from '../helpers/contract-fixture';
 
-const planRequest = { day: '2026-11-04' };
-const pastError = {
-  error: { code: 'day_in_past', message: 'Choose today or a later day.' },
-};
-const dayLoad = {
-  days: {
-    '2026-11-03': 5,
-    '2026-11-04': 4,
-    '2026-11-05': 0,
-    '2026-11-06': 2,
-    '2026-11-07': 0,
-  },
-};
+const taskId = examples.createTaskResponse.task.id;
+const created = examples.createTaskResponse.task.createdAt;
 
-it('parses the plan request, error and day-load examples with the shared schemas', () => {
-  expect(planTaskRequestSchema.parse(planRequest)).toEqual(planRequest);
-  expect(planTaskRequestSchema.parse({ day: null })).toEqual({ day: null });
-  expect(errorResponseSchema.parse(pastError)).toEqual(pastError);
-  expect(dayLoadResponseSchema.parse(dayLoad)).toEqual(dayLoad);
+function insertTask(
+  app: ReturnType<typeof testApp>,
+  id: string,
+  day: string | null,
+) {
+  app.database.db
+    .insert(tasks)
+    .values({
+      id,
+      title: 'x',
+      day,
+      placedAt: created,
+      createdAt: created,
+      updatedAt: created,
+    })
+    .run();
+}
+
+it('parses the plan request, past-day error and day-load examples with the shared schemas', () => {
+  expect(planTaskRequestSchema.parse(examples.planTaskRequest)).toEqual(
+    examples.planTaskRequest,
+  );
+  expect(errorResponseSchema.parse(examples.dayInPastError)).toEqual(
+    examples.dayInPastError,
+  );
+  expect(dayLoadResponseSchema.parse(examples.dayLoad)).toEqual(
+    examples.dayLoad,
+  );
 });
 
-it('the server returns the past-day error and a day-load body matching the examples', async () => {
-  const app = testApp();
+it('accepts the plan request example and returns the past-day error example', async () => {
+  const app = testApp({ testClock: true });
   try {
-    // fixedClock: 2026-11-04T19:20Z = Wed Nov 4 in New York
-    const created = '2026-11-02T14:12:00.000Z';
-    const id = '01JBX7Q3M2V8R4K9T6N0P1S5WZ';
-    app.database.db
-      .insert(tasks)
-      .values({
-        id,
-        title: 'x',
-        placedAt: created,
-        createdAt: created,
-        updatedAt: created,
-      })
-      .run();
-    const past = await app.request(`/api/tasks/${id}/plan`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ day: '2026-11-03' }),
-    });
+    await setClock(app, exampleInstant);
+    insertTask(app, taskId, null);
+    const past = await app.request(
+      `/api/tasks/${taskId}/plan`,
+      jsonRequest('POST', { day: dayBeforeExample }),
+    );
     expect(past.status).toBe(400);
-    expect(await past.json()).toEqual(pastError);
+    expect(await past.json()).toEqual(examples.dayInPastError);
 
+    const planned = await app.request(
+      `/api/tasks/${taskId}/plan`,
+      jsonRequest('POST', examples.planTaskRequest),
+    );
+    expect(planned.status).toBe(200);
+    expect(createTaskResponseSchema.parse(await planned.json()).task.day).toBe(
+      examples.planTaskRequest.day,
+    );
+  } finally {
+    app.close();
+  }
+});
+
+it('returns the day-load example in full for a fixture with the example counts', async () => {
+  const app = testApp({ testClock: true });
+  try {
+    await setClock(app, exampleInstant);
+    const days = Object.keys(examples.dayLoad.days).sort();
+    let n = 0;
+    for (const [day, count] of Object.entries(examples.dayLoad.days))
+      for (let i = 0; i < count; i++)
+        insertTask(app, `01JBZ${String(++n).padStart(21, '0')}`, day);
     const load = await app.request(
-      '/api/day-load?from=2026-11-03&to=2026-11-07',
+      `/api/day-load?from=${days[0]}&to=${days[days.length - 1]}`,
     );
     expect(load.status).toBe(200);
-    const body: unknown = await load.json();
-    const parsed = dayLoadResponseSchema.parse(body);
-    expect(Object.keys(parsed.days)).toEqual(Object.keys(dayLoad.days));
+    expect(await load.json()).toEqual(examples.dayLoad);
   } finally {
     app.close();
   }

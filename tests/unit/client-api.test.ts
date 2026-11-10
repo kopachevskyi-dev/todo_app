@@ -43,3 +43,71 @@ it('parses API errors and rejects invalid success payloads', async () => {
   await expect(api.health()).rejects.toThrow(examples.error.error.message);
   await expect(api.health()).rejects.toThrow();
 });
+
+const id = examples.createTaskResponse.task.id;
+const responseCalls: Record<string, () => Promise<unknown>> = {
+  health: () => api.health(),
+  lists: () => api.lists(),
+  clock: () => api.clock(),
+  today: () => api.today(),
+  createTaskResponse: () => api.createTask(examples.createTaskRequest),
+  dayLoad: () => api.dayLoad('from', 'to'),
+  history: () => api.history('week'),
+  taskDetail: () => api.task(id),
+};
+const requestCalls: Record<string, () => Promise<unknown>> = {
+  createTaskRequest: () => api.createTask(examples.createTaskRequest),
+  planTaskRequest: () => api.planTask(id, examples.planTaskRequest.day),
+};
+const errorExamples = ['error', 'dayInPastError'] as const;
+
+it('covers every shared example with a client API call', () => {
+  expect(
+    [
+      ...Object.keys(responseCalls),
+      ...Object.keys(requestCalls),
+      ...errorExamples,
+    ].sort(),
+  ).toEqual(Object.keys(examples).sort());
+});
+
+it.each(Object.entries(responseCalls))(
+  'the client API parses the %s example',
+  async (name, call) => {
+    vi.stubGlobal(
+      'fetch',
+      vi
+        .fn()
+        .mockResolvedValue(
+          Response.json(examples[name as keyof typeof examples]),
+        ),
+    );
+    expect(await call()).toEqual(examples[name as keyof typeof examples]);
+  },
+);
+
+it.each(errorExamples)(
+  'the client API surfaces the %s example',
+  async (name) => {
+    vi.stubGlobal(
+      'fetch',
+      vi.fn().mockResolvedValue(Response.json(examples[name], { status: 400 })),
+    );
+    await expect(api.health()).rejects.toThrow(examples[name].error.message);
+  },
+);
+
+it.each(Object.entries(requestCalls))(
+  'the client API sends the %s example as the request body',
+  async (name, call) => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValue(Response.json(examples.createTaskResponse));
+    vi.stubGlobal('fetch', fetchMock);
+    await call();
+    const init = fetchMock.mock.calls[0]?.[1] as { body: string };
+    expect(JSON.parse(init.body)).toEqual(
+      examples[name as keyof typeof examples],
+    );
+  },
+);
