@@ -8,6 +8,7 @@ import { Button, EmptyPanel, Icon, TaskRow } from './components';
 import { Capture } from './Capture';
 import { Fragment, type RefObject } from 'react';
 import { queryKeys } from './query-keys';
+import { moveTodayTask } from './today-order';
 import { useNotification } from './notification-context';
 import type { TodayResponse, List } from '../shared/contract';
 import { useCompletion } from './useCompletion';
@@ -53,18 +54,19 @@ export function Today({
         return client.invalidateQueries({ queryKey: queryKeys.today });
     },
   });
-  const move = (id: string, direction: -1 | 1) => {
-    const visible = today.data?.open ?? [];
-    const index = visible.findIndex((row) => row.id === id);
-    const neighbor = visible[index + direction];
+  const move = async (id: string, direction: -1 | 1) => {
+    // Finish cancellation before reading/updating the cache so a previous
+    // refetch cannot restore its snapshot over this optimistic move.
+    await client.cancelQueries({ queryKey: queryKeys.today });
     const full = client.getQueryData<TodayResponse>(queryKeys.todayList());
-    if (!neighbor || !full) return;
-    const open = [...full.open];
-    const from = open.findIndex((row) => row.id === id);
-    const to = open.findIndex((row) => row.id === neighbor.id);
-    if (from < 0 || to < 0) return;
-    [open[from], open[to]] = [open[to]!, open[from]!];
-    void client.cancelQueries({ queryKey: queryKeys.today });
+    if (!full) return;
+    const open = moveTodayTask(
+      full.open,
+      today.data?.open ?? [],
+      id,
+      direction,
+    );
+    if (!open) return;
     client.setQueryData(queryKeys.todayList(), { ...full, open });
     order.mutate(open.map((row) => row.id));
   };
