@@ -6,9 +6,12 @@ export function apiError(
   code: string,
   message: string,
   status: 400 | 404 | 409 | 500,
+  taskIds?: string[],
 ) {
   return c.json(
-    errorResponseSchema.parse({ error: { code, message } }),
+    errorResponseSchema.parse({
+      error: { code, message, ...(taskIds ? { taskIds } : {}) },
+    }),
     status,
   );
 }
