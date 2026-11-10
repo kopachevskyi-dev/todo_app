@@ -34,6 +34,12 @@ export function createRepositories(db: AppDatabase) {
     work: (tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0]) => T,
     config?: Parameters<AppDatabase['transaction']>[1],
   ) => db.transaction(work, config);
+  const listFields = {
+    id: lists.id,
+    name: lists.name,
+    color: lists.color,
+    position: lists.position,
+  };
   const taskFields = {
     id: tasks.id,
     title: tasks.title,
@@ -44,8 +50,14 @@ export function createRepositories(db: AppDatabase) {
     missedFrom: tasks.missedFrom,
     createdAt: tasks.createdAt,
     updatedAt: tasks.updatedAt,
-    subtaskCount: sql<number>`(SELECT count(*) FROM subtask WHERE subtask.task_id = task.id)`,
-    subtaskDoneCount: sql<number>`(SELECT count(*) FROM subtask WHERE subtask.task_id = task.id AND subtask.done = 1)`,
+    subtaskCount: sql<number>`${db
+      .select({ value: count() })
+      .from(subtasks)
+      .where(eq(subtasks.taskId, tasks.id))}`,
+    subtaskDoneCount: sql<number>`${db
+      .select({ value: count() })
+      .from(subtasks)
+      .where(and(eq(subtasks.taskId, tasks.id), eq(subtasks.done, true)))}`,
   };
   const total = (where: ReturnType<typeof and>) =>
     db.select({ value: count() }).from(tasks).where(where).get()!.value;
@@ -229,11 +241,13 @@ export function createRepositories(db: AppDatabase) {
                 })
                 .run();
             }
-            return tx
+            const planned = tx
               .select(taskFields)
               .from(tasks)
               .where(inArray(tasks.id, ids))
               .all();
+            const byId = new Map(planned.map((task) => [task.id, task]));
+            return ids.map((id) => byId.get(id)!);
           },
           { behavior: 'immediate' },
         ),
@@ -273,12 +287,7 @@ export function createRepositories(db: AppDatabase) {
         const rows = db
           .select({
             ...taskFields,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -303,12 +312,7 @@ export function createRepositories(db: AppDatabase) {
         db
           .select({
             ...taskFields,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -326,12 +330,7 @@ export function createRepositories(db: AppDatabase) {
           .select({
             ...taskFields,
             placedAt: tasks.placedAt,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -386,12 +385,7 @@ export function createRepositories(db: AppDatabase) {
         db
           .select({
             ...taskFields,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -558,16 +552,7 @@ export function createRepositories(db: AppDatabase) {
           : db.select().from(lists).where(eq(lists.id, id)).get()!,
       delete: (id: string) => db.delete(lists).where(eq(lists.id, id)).run(),
       all: () =>
-        db
-          .select({
-            id: lists.id,
-            name: lists.name,
-            color: lists.color,
-            position: lists.position,
-          })
-          .from(lists)
-          .orderBy(asc(lists.position))
-          .all(),
+        db.select(listFields).from(lists).orderBy(asc(lists.position)).all(),
     },
     transaction,
   };
