@@ -19,5 +19,4 @@ export const queryKeys = {
   task: ['task'] as const,
   taskDetail: (id?: string) => ['task', id] as const,
   lists: ['lists'] as const,
-  clock: ['clock'] as const,
 };

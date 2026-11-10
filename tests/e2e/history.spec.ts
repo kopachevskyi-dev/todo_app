@@ -1,5 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { startTestServer, setClock } from '../helpers/e2e-clock';
+import { startTestServer as startProductionServer } from '../../scripts/test-server.mjs';
 import {
   LICENSE,
   seedHistoryWeek,
@@ -24,6 +25,44 @@ async function startSeeded(page: Page) {
   const ids = await seedHistoryWeek(send);
   return { server, send, ids };
 }
+
+test('production clock powers History and the task Day label', async ({
+  page,
+  isMobile: mobile,
+}) => {
+  const server = await startProductionServer({ testClock: false });
+  try {
+    await page.clock.install({ time: new Date('2026-11-10T14:00:00.000Z') });
+    const response = await fetch(`${server.url}/api/tasks`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Timezone': 'America/New_York',
+      },
+      body: JSON.stringify({ title: 'Today task', target: 'today' }),
+    });
+    expect(response.ok).toBe(true);
+    await page.goto(`${server.url}/history`);
+    const main = page.getByRole('main');
+    await expect(main).not.toContainText('Could not load history');
+    await expect(main.getByRole('group', { name: 'Week days' })).toBeVisible();
+
+    await page
+      .getByRole('navigation')
+      .getByRole('link', { name: /Today/ })
+      .click();
+    await main.getByRole('listitem').filter({ hasText: 'Today task' }).click();
+    const card = mobile
+      ? page.getByRole('main')
+      : page.getByRole('complementary', { name: 'Task details' });
+    await expect(
+      card.getByRole('textbox', { name: 'Title', exact: true }),
+    ).toBeVisible();
+    await expect(card.getByRole('button', { name: 'Day Today' })).toBeVisible();
+  } finally {
+    await server.stop();
+  }
+});
 
 test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task moves to the top of the Backlog', async ({
   page,

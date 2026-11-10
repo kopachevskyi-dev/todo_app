@@ -1,7 +1,7 @@
 import { usePlanTask } from './usePlanTask';
 import { useEscape } from './useEscape';
 import { browserTimeZone } from './dates';
-import { localDate } from '../domain/time';
+import { today } from './useToday';
 import { queryKeys } from './query-keys';
 import { TaskDetailFooter } from './TaskDetailFooter';
 import { TaskActivity } from './TaskActivity';
@@ -52,15 +52,13 @@ export function TaskDetail({
   const completion = useCompletion();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
   const [error, setError] = useState<string>();
-  const clock = useQuery({ queryKey: queryKeys.clock, queryFn: api.clock });
   const [choosingDay, setChoosingDay] = useState(false);
   const [planning, setPlanning] = useState(false);
   const dayAnchor = useRef<HTMLButtonElement>(null);
   const day = task.day;
-  const today = clock.data
-    ? localDate(new Date(clock.data.now), browserTimeZone())
-    : undefined;
-  const dayLabel = day === today ? 'Today' : day ? formatDay(day) : 'No day';
+  const currentDay = today();
+  const dayLabel =
+    day === currentDay ? 'Today' : day ? formatDay(day) : 'No day';
   const dismissDay = () => {
     setChoosingDay(false);
   };
@@ -252,9 +250,7 @@ export function TaskDetail({
             aria-label={`Day ${planning ? 'Saving…' : dayLabel}`}
             aria-busy={planning}
             aria-expanded={choosingDay}
-            disabled={
-              Boolean(task.completedAt) || planning || deleting || !clock.data
-            }
+            disabled={Boolean(task.completedAt) || planning || deleting}
             onClick={() => setChoosingDay(true)}
           >
             <Icon name="today" size={18} />
@@ -264,11 +260,6 @@ export function TaskDetail({
       </div>
       <Subtasks taskId={task.id} subtasks={detail.subtasks} />
       <TaskActivity detail={detail} />
-      {clock.isError && (
-        <p role="alert">
-          Could not load the current day. Reopen the task to try again.
-        </p>
-      )}
       {completion.isError && (
         <p role="alert" className="field-error">
           {completion.error.message}
@@ -304,33 +295,25 @@ export function TaskDetail({
         (mobile ? (
           <BottomSheet label="Choose a day" onClose={dismissDay}>
             <h3>Choose a day</h3>
-            {clock.data ? (
-              <DayPicker
-                now={new Date(clock.data.now)}
-                selected={day}
-                onChoose={(value) => {
-                  setChoosingDay(false);
-                  void plan(value);
-                }}
-              />
-            ) : (
-              <p role="status">Loading days…</p>
-            )}
+            <DayPicker
+              now={new Date()}
+              selected={day}
+              onChoose={(value) => {
+                setChoosingDay(false);
+                void plan(value);
+              }}
+            />
           </BottomSheet>
         ) : (
           <Popover anchor={dayAnchor} label="Choose a day" onClose={dismissDay}>
-            {clock.data ? (
-              <DayPicker
-                now={new Date(clock.data.now)}
-                selected={day}
-                onChoose={(value) => {
-                  setChoosingDay(false);
-                  void plan(value);
-                }}
-              />
-            ) : (
-              <p role="status">Loading days…</p>
-            )}
+            <DayPicker
+              now={new Date()}
+              selected={day}
+              onChoose={(value) => {
+                setChoosingDay(false);
+                void plan(value);
+              }}
+            />
           </Popover>
         ))}
       {choosingList &&
