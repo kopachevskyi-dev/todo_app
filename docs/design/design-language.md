@@ -394,7 +394,15 @@ Selecting a day updates the day heading, summary and groups. Week arrows move by
 
 Day heading (H2): "Wednesday, November 4". Summary (15 desktop / 14 mobile, `text-muted`): "4 of 5 done · 1 moved to Thursday". Groups: "DONE · n" (sorted by completion time), "NOT DONE · n".
 
-### 4.14 Chips and meta
+### 4.14 Upcoming agenda
+
+Upcoming is a secondary screen at `/upcoming`, reached by a link in the Today header: "Upcoming · N" for the total number of open future tasks, or "Upcoming" when there are none. It does not add a primary navigation item.
+
+The screen uses the shared header and task rows on desktop and mobile. All open tasks planned after local today appear in date groups ascending, with short headings such as "Tue, Nov 17". Each group is an accessible region named by its heading. Rows show their list and open the usual task detail panel, drawer, or pushed screen. Saving a new day, completing, or deleting a task updates the agenda and Today entry count without a reload.
+
+With no future tasks, show "Nothing planned ahead", explain "Tasks you plan for a future day will appear here.", and provide a "Plan from Backlog" link to Backlog. Loading and retryable errors use the existing inline patterns. No quick-add or FAB appears on this screen; the three primary navigation items stay available.
+
+### 4.15 Chips and meta
 
 - List dot: 10×10 radius 3 in meta lines; 12×12 radius 4 in fields and nav.
 - Key chip (desktop Add button): "Enter", 13, padding 2/8, radius 6.

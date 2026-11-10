@@ -1593,3 +1593,14 @@ h3 {
   font-size: 14px;
   align-self: flex-start;
 }
+
+.upcoming-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-2);
+}
+.upcoming-agenda {
+  display: grid;
+  gap: 28px;
+}

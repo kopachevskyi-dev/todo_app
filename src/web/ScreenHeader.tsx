@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router';
 import { dateLabel } from './dates';
 import type { RefObject } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
@@ -12,6 +13,7 @@ export function ScreenHeader({
   title,
   isToday,
   today,
+  upcomingCount,
   isBacklog,
   list,
   rows,
@@ -30,6 +32,7 @@ export function ScreenHeader({
   title: string;
   isToday: boolean;
   today: UseQueryResult<Awaited<ReturnType<typeof api.today>>>;
+  upcomingCount: number;
   isBacklog: boolean;
   list?: string;
   rows?: TaskRow[];
@@ -101,6 +104,11 @@ export function ScreenHeader({
             day: 'numeric',
           })}
         </p>
+      )}
+      {isToday && (
+        <Link to="/upcoming" className="upcoming-link">
+          Upcoming{upcomingCount > 0 ? ` · ${upcomingCount}` : ''}
+        </Link>
       )}
       {isToday && today.data && (
         <div className="today-tools">

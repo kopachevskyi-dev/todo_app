@@ -50,6 +50,7 @@ const responseCalls: Record<string, () => Promise<unknown>> = {
   lists: () => api.lists(),
   clock: () => api.clock(),
   today: () => api.today(),
+  upcoming: () => api.upcoming(),
   createTaskResponse: () => api.createTask(examples.createTaskRequest),
   dayLoad: () => api.dayLoad('from', 'to'),
   history: () => api.history('week'),

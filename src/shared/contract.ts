@@ -147,7 +147,7 @@ export const examples = {
             id: '01JBZ100000000000000000001',
             title: 'Call mom',
             description: '',
-            listId: '01JBX0000000000000000HOME1',
+            listId: '01JBX0000000000000000H0ME0',
             day: '2026-11-11',
             completedAt: null,
             missedFrom: null,
@@ -156,10 +156,10 @@ export const examples = {
             createdAt: '2026-11-02T14:12:00.000Z',
             updatedAt: '2026-11-02T14:12:00.000Z',
             list: {
-              id: '01JBX0000000000000000HOME1',
+              id: '01JBX0000000000000000H0ME0',
               name: 'Home',
-              color: '#E3686A',
-              position: 1,
+              color: '#F0C24B',
+              position: 2,
             },
           },
         ],
@@ -819,12 +819,7 @@ export const historyResponseSchema = z.object({
 });
 export type HistoryResponse = z.infer<typeof historyResponseSchema>;
 
-/** Placeholder until #43 is implemented: rejects every payload. */
-export const upcomingResponseSchema = z
-  .object({
-    today: z.iso.date(),
-    days: z.array(
-      z.object({ day: z.iso.date(), tasks: z.array(taskRowSchema) }),
-    ),
-  })
-  .refine(() => false, 'Not implemented (#43).');
+export const upcomingResponseSchema = z.object({
+  today: z.iso.date(),
+  days: z.array(z.object({ day: z.iso.date(), tasks: z.array(taskRowSchema) })),
+});

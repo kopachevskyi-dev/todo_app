@@ -24,6 +24,7 @@ const group = (page: Page, heading: string) =>
 
 test('opening Upcoming from Today lists "Dentist" under Tue, Nov 17; changing its day to Tomorrow moves it under Wed, Nov 11 without reload', async ({
   page,
+  isMobile,
 }) => {
   const server = await startTestServer(page);
   try {
@@ -47,6 +48,9 @@ test('opening Upcoming from Today lists "Dentist" under Tue, Nov 17; changing it
     await page.getByRole('button', { name: /^Day/ }).click();
     await page.getByRole('button', { name: /Tomorrow, Wed 11/ }).click();
     await page.getByRole('button', { name: 'Plan for Wed, Nov 11' }).click();
+
+    if (isMobile)
+      await page.getByRole('link', { name: 'Back to Upcoming' }).click();
 
     await expect(group(page, 'Wed, Nov 11')).toContainText('Dentist');
     await expect(group(page, 'Tue, Nov 17')).toHaveCount(0);

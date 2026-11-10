@@ -25,6 +25,7 @@ import { useCompletion } from './useCompletion';
 import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
 import { BottomSheet, Button, Icon, Popover } from './components';
 import { Lists } from './Lists';
+import { Upcoming } from './Upcoming';
 import { History } from './History';
 import { captureLayout } from './layout-animation';
 
@@ -76,7 +77,9 @@ export function App() {
     queryFn: () => api.search(q!.trim()),
     enabled: isSearch && Boolean(q?.trim()),
   });
-  const title = tabs.find((tab) => tab.to === path)?.label ?? 'Search';
+  const title =
+    tabs.find((tab) => tab.to === path)?.label ??
+    (path === '/upcoming' ? 'Upcoming' : 'Search');
   // Pending UI comes from the mutation, so focus refetches cannot erase it.
   const pendingCreates = useMutationState({
     filters: { mutationKey: createTaskMutationKey, status: 'pending' },
@@ -101,7 +104,7 @@ export function App() {
   const activeList = lists.data?.lists.find((item) => item.id === list);
   const filterList = (id?: string) => {
     void navigate({
-      to: path as '/backlog' | '/today' | '/history' | '/search',
+      to: path as '/backlog' | '/today' | '/history' | '/search' | '/upcoming',
       search: (previous) => ({
         ...(path === '/history' ? previous : {}),
         list: id,
@@ -128,6 +131,11 @@ export function App() {
     queryFn: () => api.today(list),
     enabled: isToday,
   });
+  const upcoming = useQuery({
+    queryKey: queryKeys.upcoming,
+    queryFn: api.upcoming,
+    enabled: isToday || path === '/upcoming',
+  });
   const rows = isToday ? today.data?.open : backlog.data?.tasks;
   const rowContainer = useRef<HTMLUListElement>(null);
   const animateLayout = useRef<(() => void) | undefined>(undefined);
@@ -140,14 +148,14 @@ export function App() {
     // Async task actions may finish after the user has navigated elsewhere.
     if (!task || router.history.location.href !== location.href) return;
     void navigate({
-      to: path as '/backlog' | '/today' | '/history' | '/search',
+      to: path as '/backlog' | '/today' | '/history' | '/search' | '/upcoming',
       search: (previous) => ({ ...previous, task: undefined }),
     });
   };
   useEscape(closeTask, 0, Boolean(task));
   const openTask = (id: string) => {
     void navigate({
-      to: path as '/backlog' | '/today' | '/history' | '/search',
+      to: path as '/backlog' | '/today' | '/history' | '/search' | '/upcoming',
       search: (previous) => ({ ...previous, task: id }),
     });
   };
@@ -210,6 +218,12 @@ export function App() {
             title={title}
             isToday={isToday}
             today={today}
+            upcomingCount={
+              upcoming.data?.days.reduce(
+                (count, day) => count + day.tasks.length,
+                0,
+              ) ?? 0
+            }
             isBacklog={isBacklog}
             list={list}
             rows={rows}
@@ -235,6 +249,14 @@ export function App() {
             <p role="alert" className="field-error">
               {completion.error.message}
             </p>
+          )}
+          {path === '/upcoming' && (
+            <Upcoming
+              upcoming={upcoming}
+              task={task}
+              onOpen={openTask}
+              completion={completion}
+            />
           )}
           {path === '/history' && <History onOpen={openTask} />}
           {isToday && (

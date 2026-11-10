@@ -7,6 +7,7 @@ import {
   type CreateListRequest,
   type PatchListRequest,
   historyResponseSchema,
+  upcomingResponseSchema,
   createSubtaskRequestSchema,
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
@@ -60,6 +61,7 @@ async function request<T>(
 }
 
 export const api = {
+  upcoming: () => request('/upcoming', upcomingResponseSchema),
   createList: (input: CreateListRequest) =>
     request('/lists', listResponseSchema, {
       method: 'POST',
