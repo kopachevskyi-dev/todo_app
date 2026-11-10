@@ -91,3 +91,27 @@ it('returns the day-load example in full for a fixture with the example counts',
     app.close();
   }
 });
+
+it('parses the not_in_backlog example with the shared error schema, keeping taskIds', () => {
+  expect(errorResponseSchema.parse(examples.notInBacklogError)).toEqual(
+    examples.notInBacklogError,
+  );
+});
+
+it('returns the not_in_backlog example when a requested task is already planned', async () => {
+  const app = testApp({ testClock: true });
+  try {
+    await setClock(app, exampleInstant);
+    const planned = examples.notInBacklogError.error.taskIds[0];
+    insertTask(app, taskId, null);
+    insertTask(app, planned, examples.planTaskRequest.day);
+    const response = await app.request(
+      '/api/tasks/plan-today',
+      jsonRequest('POST', { taskIds: [taskId, planned] }),
+    );
+    expect(response.status).toBe(409);
+    expect(await response.json()).toEqual(examples.notInBacklogError);
+  } finally {
+    app.close();
+  }
+});

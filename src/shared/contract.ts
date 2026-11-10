@@ -119,6 +119,13 @@ export const examples = {
       message: 'Choose today or a later day.',
     },
   },
+  notInBacklogError: {
+    error: {
+      code: 'not_in_backlog',
+      message: 'One or more tasks are not in the backlog.',
+      taskIds: ['01JBY2000000000000000000CD'],
+    },
+  },
   dayLoad: {
     days: {
       '2026-11-10': 2,
