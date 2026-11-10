@@ -1,0 +1,50 @@
+# Compose derives its project name from this worktree's folder. Do not set a
+# shared container_name, volume name, or fixed host port here.
+services:
+  app:
+    image: ${COMPOSE_PROJECT_NAME}-app
+    build:
+      context: .
+      target: runtime
+    init: true
+    volumes:
+      - data:/app/data
+
+  verify:
+    image: ${COMPOSE_PROJECT_NAME}-verify
+    build:
+      context: .
+      target: verify
+    init: true
+    shm_size: 1gb
+    environment:
+      CI: ${CI:-}
+      SMOKE_IMAGE: ${COMPOSE_PROJECT_NAME}-app
+    # The smoke script creates and removes a sibling runtime container. No
+    # source, host node_modules, or persistent app database is mounted.
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  e2e:
+    image: ${COMPOSE_PROJECT_NAME}-e2e
+    build:
+      context: .
+      target: e2e
+    init: true
+    shm_size: 1gb
+    environment:
+      CI: ${CI:-}
+
+  smoke:
+    image: ${COMPOSE_PROJECT_NAME}-smoke
+    build:
+      context: .
+      target: smoke
+    init: true
+    environment:
+      SMOKE_IMAGE: ${COMPOSE_PROJECT_NAME}-app
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+volumes:
+  data:
