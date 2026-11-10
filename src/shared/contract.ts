@@ -137,6 +137,54 @@ export const examples = {
       '2026-11-12': 3,
     },
   },
+  upcoming: {
+    today: '2026-11-10',
+    days: [
+      {
+        day: '2026-11-11',
+        tasks: [
+          {
+            id: '01JBZ100000000000000000001',
+            title: 'Call mom',
+            description: '',
+            listId: '01JBX0000000000000000HOME1',
+            day: '2026-11-11',
+            completedAt: null,
+            missedFrom: null,
+            subtaskCount: 0,
+            subtaskDoneCount: 0,
+            createdAt: '2026-11-02T14:12:00.000Z',
+            updatedAt: '2026-11-02T14:12:00.000Z',
+            list: {
+              id: '01JBX0000000000000000HOME1',
+              name: 'Home',
+              color: '#E3686A',
+              position: 1,
+            },
+          },
+        ],
+      },
+      {
+        day: '2026-11-17',
+        tasks: [
+          {
+            id: '01JBZ100000000000000000002',
+            title: 'Dentist',
+            description: '',
+            listId: null,
+            day: '2026-11-17',
+            completedAt: null,
+            missedFrom: null,
+            subtaskCount: 0,
+            subtaskDoneCount: 0,
+            createdAt: '2026-11-02T14:12:00.000Z',
+            updatedAt: '2026-11-02T14:12:00.000Z',
+            list: null,
+          },
+        ],
+      },
+    ],
+  },
   history: {
     weekStart: '2026-11-02',
     today: '2026-11-08',
@@ -770,3 +818,13 @@ export const historyResponseSchema = z.object({
   ),
 });
 export type HistoryResponse = z.infer<typeof historyResponseSchema>;
+
+/** Placeholder until #43 is implemented: rejects every payload. */
+export const upcomingResponseSchema = z
+  .object({
+    today: z.iso.date(),
+    days: z.array(
+      z.object({ day: z.iso.date(), tasks: z.array(taskRowSchema) }),
+    ),
+  })
+  .refine(() => false, 'Not implemented (#43).');
