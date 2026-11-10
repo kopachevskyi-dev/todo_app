@@ -55,6 +55,10 @@ export function App() {
   const mobile = useMedia('(max-width: 767px)');
   const desktop = useMedia('(min-width: 1216px)');
   const [capturing, setCapturing] = useState(false);
+  const [captureDrafts, setCaptureDrafts] = useState({
+    backlog: '',
+    today: '',
+  });
   const picker = useBacklogPicker();
   const { planning, closePlanner, openPlanner } = picker;
   const planButton = useRef<HTMLButtonElement>(null);
@@ -369,7 +373,15 @@ export function App() {
             target={isBacklog ? 'backlog' : 'today'}
             list={activeList}
             mobile
+            draft={captureDrafts[isBacklog ? 'backlog' : 'today']}
+            onDraftChange={(draft) =>
+              setCaptureDrafts((current) => ({
+                ...current,
+                [isBacklog ? 'backlog' : 'today']: draft,
+              }))
+            }
             onAdded={() => setCapturing(false)}
+            onClose={() => setCapturing(false)}
           />
         </BottomSheet>
       )}

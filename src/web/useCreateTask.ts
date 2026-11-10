@@ -19,12 +19,18 @@ export function useCreateTask({
   target,
   list,
   onAdded,
+  draft,
+  onDraftChange,
 }: {
   target: 'backlog' | 'today';
   list?: List;
   onAdded?: () => void;
+  draft?: string;
+  onDraftChange?: (value: string) => void;
 }) {
-  const [title, setTitle] = useState('');
+  const [localTitle, setLocalTitle] = useState('');
+  const title = draft ?? localTitle;
+  const setTitle = onDraftChange ?? setLocalTitle;
   const [error, setError] = useState<string>();
   const input = useRef<HTMLInputElement>(null);
   const client = useQueryClient();
@@ -68,7 +74,7 @@ export function useCreateTask({
               ],
             },
         );
-      setTitle((current) => (current.trim() === request.title ? '' : current));
+      if (title.trim() === request.title) setTitle('');
       input.current?.focus();
       onAdded?.();
     },

@@ -5,14 +5,20 @@ export function Capture({
   mobile = false,
   list,
   onAdded,
+  draft,
+  onDraftChange,
+  onClose,
 }: {
   target: 'backlog' | 'today';
   mobile?: boolean;
   list?: import('../shared/contract').List;
   onAdded?: () => void;
+  draft?: string;
+  onDraftChange?: (value: string) => void;
+  onClose?: () => void;
 }) {
   const { title, setTitle, error, setError, input, mutation, submit } =
-    useCreateTask({ target, list, onAdded });
+    useCreateTask({ target, list, onAdded, draft, onDraftChange });
   return (
     <QuickAdd
       value={title}
@@ -26,6 +32,7 @@ export function Capture({
       pending={mutation.isPending}
       mobile={mobile}
       target={target}
+      onClose={onClose}
     />
   );
 }
