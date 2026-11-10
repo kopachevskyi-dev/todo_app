@@ -80,3 +80,17 @@ it('rejects a request containing an already planned task with 409 not_in_backlog
   expect(activity.filter((e) => e.type === 'planned')).toHaveLength(0);
   expect(await backlogCount(app)).toBe(1);
 });
+
+it('returns the planned tasks in the order of the requested taskIds', async () => {
+  const app = await start();
+  const a = await create(app, 'Task A', 'backlog');
+  const b = await create(app, 'Task B', 'backlog');
+  const c = await create(app, 'Task C', 'backlog');
+
+  const response = await send(app, 'POST', '/api/tasks/plan-today', {
+    taskIds: [c, a, b],
+  });
+  expect(response.status).toBe(200);
+  const { tasks } = (await response.json()) as { tasks: { id: string }[] };
+  expect(tasks.map((t) => t.id)).toEqual([c, a, b]);
+});
