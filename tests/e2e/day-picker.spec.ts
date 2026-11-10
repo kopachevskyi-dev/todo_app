@@ -25,7 +25,7 @@ async function seed(url: string, title: string, day?: string) {
 }
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 
-test('desktop: pick Tomorrow shows "Plan for Wed, Nov 4"; Escape keeps "No day"; planning removes the task from the Backlog', async ({
+test('desktop: Escape keeps "No day"; choosing Tomorrow saves and removes the task from the Backlog', async ({
   page,
 }) => {
   test.skip(
@@ -51,22 +51,14 @@ test('desktop: pick Tomorrow shows "Plan for Wed, Nov 4"; Escape keeps "No day";
     await expect(
       page.getByRole('button', { name: /Tomorrow, Wed 4/ }),
     ).toContainText('4 tasks');
-    await page.getByRole('button', { name: /Tomorrow, Wed 4/ }).click();
-    await expect(
-      panel.getByRole('button', { name: 'Plan for Wed, Nov 4' }),
-    ).toBeVisible();
 
-    // Escape before pressing the primary button changes nothing
-    await day.click();
+    // Escape before choosing a day changes nothing
     await page.keyboard.press('Escape');
     await expect(day).toContainText('No day');
-    await expect(
-      panel.getByRole('button', { name: 'Choose a day' }),
-    ).toBeVisible();
 
+    // Choosing a day saves at once
     await day.click();
     await page.getByRole('button', { name: /Tomorrow, Wed 4/ }).click();
-    await panel.getByRole('button', { name: 'Plan for Wed, Nov 4' }).click();
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(0);
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('1');
     await expect(day).toContainText('Wed, Nov 4');
@@ -75,7 +67,7 @@ test('desktop: pick Tomorrow shows "Plan for Wed, Nov 4"; Escape keeps "No day";
   }
 });
 
-test('mobile: pick Nov 20 in the calendar, plan it, reopen and move it back to the Backlog', async ({
+test('mobile: pick Nov 20 in the calendar, save it, reopen and move it back to the Backlog', async ({
   page,
 }) => {
   test.skip(
@@ -94,7 +86,7 @@ test('mobile: pick Nov 20 in the calendar, plan it, reopen and move it back to t
     await expect(sheet).toContainText('Choose a day');
     await sheet.getByRole('button', { name: /Pick a date/ }).click();
     await sheet.getByRole('button', { name: /Nov(ember)? 20/ }).click();
-    await page.getByRole('button', { name: 'Plan for Fri, Nov 20' }).click();
+    await sheet.getByRole('button', { name: 'Save date' }).click();
 
     await page.getByRole('link', { name: /back/i }).click();
     await expect(rows(page)).toHaveCount(0);

@@ -142,7 +142,6 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       page.getByRole('button', { name: /Tomorrow, Wed 4/ }),
     ).toContainText('4 tasks');
     await page.getByRole('button', { name: /Tomorrow, Wed 4/ }).click();
-    await page.getByRole('button', { name: 'Plan for Wed, Nov 4' }).click();
     await expect(detail).toContainText('planned for Nov 4');
     if (mobile)
       await page.getByRole('link', { name: 'Back to Backlog' }).click();
@@ -217,7 +216,6 @@ test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once
     const panel = page.getByRole('complementary');
     await panel.getByRole('button', { name: /^Day/ }).click();
     await page.getByRole('button', { name: /Today, Thu 5/ }).click();
-    await panel.getByRole('button', { name: 'Plan for today' }).click();
 
     await page.goto(`${server.url}/today`);
     const row = rows(page).filter({ hasText: 'Pay rent' });
@@ -306,10 +304,22 @@ test('desktop keyboard only: quick-add, rows, Day popover, Plan, Escape', async 
       'Keyboard task',
     );
 
-    // Day field: open, arrows to Tomorrow, Enter, activate Plan.
+    // Escape closes the popover first, then the drawer.
     const day = panel.getByRole('button', { name: /^Day/ });
     await day.focus();
     await expectFocusRing(page);
+    await page.keyboard.press('Enter');
+    await expect(day).toHaveAttribute('aria-expanded', 'true');
+    await page.keyboard.press('Escape');
+    await expect(day).toHaveAttribute('aria-expanded', 'false');
+    await expect(panel.getByRole('textbox', { name: 'Title' })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(page).not.toHaveURL(/task=/);
+
+    // Reopen with the keyboard; arrows to Tomorrow, Enter saves at once.
+    await rows(page).first().getByRole('link').focus();
+    await page.keyboard.press('Enter');
+    await day.focus();
     await page.keyboard.press('Enter');
     await expect(day).toHaveAttribute('aria-expanded', 'true');
     const tomorrow = page.getByRole('button', { name: /Tomorrow, Wed 4/ });
@@ -320,34 +330,7 @@ test('desktop keyboard only: quick-add, rows, Day popover, Plan, Escape', async 
     await expect(tomorrow).toBeFocused();
     await expectFocusRing(page);
     await page.keyboard.press('Enter');
-    const planButton = panel.getByRole('button', {
-      name: 'Plan for Wed, Nov 4',
-    });
-    await expect(planButton).toBeVisible();
-
-    // Escape closes the popover first, then the drawer.
-    await day.focus();
-    await page.keyboard.press('Enter');
-    await expect(day).toHaveAttribute('aria-expanded', 'true');
-    await page.keyboard.press('Escape');
-    await expect(day).toHaveAttribute('aria-expanded', 'false');
-    await expect(panel.getByRole('textbox', { name: 'Title' })).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(page).not.toHaveURL(/task=/);
-
-    // Reopen with the keyboard and activate Plan.
-    await rows(page).first().getByRole('link').focus();
-    await page.keyboard.press('Enter');
-    await day.focus();
-    await page.keyboard.press('Enter');
-    for (let i = 0; i < 6; i++) {
-      if (await tomorrow.evaluate((el) => el === document.activeElement)) break;
-      await page.keyboard.press('ArrowDown');
-    }
-    await page.keyboard.press('Enter');
-    await planButton.focus();
-    await expectFocusRing(page);
-    await page.keyboard.press('Enter');
+    await expect(day).toContainText('Wed, Nov 4');
     await expect(rows(page).filter({ hasText: 'Keyboard task' })).toHaveCount(
       0,
     );
