@@ -1,5 +1,5 @@
 import { dateLabel } from './dates';
-import { browserTimeZone } from './dates';
+import { today as getToday } from './useToday';
 import { queryKeys } from './query-keys';
 import { HistoryDayGroups } from './HistoryDayGroups';
 import { useEffect, useRef } from 'react';
@@ -8,7 +8,6 @@ import { useNavigate, useSearch } from '@tanstack/react-router';
 import { z } from 'zod';
 import { addDays } from '../domain/day-picker';
 import { historySummary, historyWeekStart } from '../domain/history';
-import { localDate } from '../domain/time';
 import { api } from './api';
 import { Button, Icon } from './components';
 
@@ -28,10 +27,7 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
   const { week, day, lists: list, task } = useSearch({ strict: false });
   const navigate = useNavigate();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
-  const clock = useQuery({ queryKey: queryKeys.clock, queryFn: api.clock });
-  const today = clock.data
-    ? localDate(new Date(clock.data.now), browserTimeZone())
-    : undefined;
+  const today = getToday();
   const validWeek = z.iso.date().safeParse(week);
   const weekStart =
     validWeek.success && historyWeekStart(validWeek.data) === validWeek.data
@@ -103,14 +99,13 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
   const pageWeek = (offset: number) => {
     if (selected) choose(addDays(selected.day, offset));
   };
-  if (clock.isError || history.isError)
+  if (history.isError)
     return (
       <p role="alert" className="field-error">
         Could not load history.{' '}
         <Button
           variant="outline"
           onClick={() => {
-            void clock.refetch();
             void history.refetch();
           }}
         >

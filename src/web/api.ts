@@ -12,7 +12,6 @@ import {
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
   type PatchSubtaskRequest,
-  clockSchema,
   dayLoadResponseSchema,
   planTaskRequestSchema,
   planTodayRequestSchema,
@@ -112,7 +111,6 @@ export const api = {
       method: 'DELETE',
     }),
 
-  clock: () => request('/clock', clockSchema),
   dayLoad: (from: string, to: string) =>
     request(`/day-load?from=${from}&to=${to}`, dayLoadResponseSchema),
   planTask: (id: string, day: string | null) =>

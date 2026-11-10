@@ -48,7 +48,6 @@ const id = examples.createTaskResponse.task.id;
 const responseCalls: Record<string, () => Promise<unknown>> = {
   health: () => api.health(),
   lists: () => api.lists(),
-  clock: () => api.clock(),
   today: () => api.today(),
   todayOrderResponse: () =>
     api.setTodayOrder([...examples.todayOrderRequest.taskIds]),
@@ -73,7 +72,12 @@ it('covers every shared example with a client API call', () => {
       ...Object.keys(requestCalls),
       ...errorExamples,
     ].sort(),
-  ).toEqual(Object.keys(examples).sort());
+  ).toEqual(
+    // clock is test-clock only; the client no longer calls /api/clock.
+    Object.keys(examples)
+      .filter((key) => key !== 'clock')
+      .sort(),
+  );
 });
 
 it.each(Object.entries(responseCalls))(
