@@ -24,6 +24,7 @@ export function DayPicker({
   const zone = browserTimeZone();
   const today = localDate(now, zone);
   const [calendar, setCalendar] = useState(false);
+  const [draft, setDraft] = useState(selected);
   const [month, setMonth] = useState(
     (selected && selected >= today ? selected : today).slice(0, 7),
   );
@@ -118,10 +119,10 @@ export function DayPicker({
                 type="button"
                 key={day}
                 data-day={day}
-                className={`calendar-day ${selected === day ? 'selected-day' : ''}`}
+                className={`calendar-day ${draft === day ? 'selected-day' : ''}`}
                 aria-label={`${formatDay(day)} — ${count(day)}`}
                 aria-current={day === today ? 'date' : undefined}
-                aria-pressed={selected === day}
+                aria-pressed={draft === day}
                 disabled={day < today}
                 tabIndex={
                   day ===
@@ -134,7 +135,7 @@ export function DayPicker({
                     : -1
                 }
                 onFocus={() => setFocused(day)}
-                onClick={() => onChoose(day)}
+                onClick={() => setDraft(day)}
                 onKeyDown={(event) => {
                   const step = {
                     ArrowLeft: -1,
@@ -162,6 +163,12 @@ export function DayPicker({
               </button>
             ))}
           </div>
+          <Button
+            disabled={!draft || draft < today}
+            onClick={() => onChoose(draft)}
+          >
+            Save date
+          </Button>
           <Button variant="ghost" onClick={() => setCalendar(false)}>
             Suggested days
           </Button>

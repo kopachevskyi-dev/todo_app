@@ -97,7 +97,7 @@ test('planning "Pay rent" for today refreshes Today, the backlog count, History 
 
     await rows(page).filter({ hasText: 'Pay rent' }).click();
     await expect(page.getByRole('button', { name: /^Day/ })).toContainText(
-      'Tue, Nov 10',
+      'Today',
     );
     await closeCard(page);
 

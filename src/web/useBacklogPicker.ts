@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNotification } from './notification-context';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from './query-keys';
 import { invalidateTaskQueries } from './invalidate-task-queries';
@@ -8,7 +9,7 @@ export function useBacklogPicker() {
   const client = useQueryClient();
   const [plannedSelection, setPlannedSelection] = useState<string[]>([]);
   const [error, setError] = useState<string>();
-  const [confirmation, setConfirmation] = useState<string>();
+  const notify = useNotification();
   const pickerBacklog = useQuery({
     queryKey: queryKeys.backlogPicker,
     queryFn: () => api.backlog(),
@@ -20,7 +21,7 @@ export function useBacklogPicker() {
     onSuccess: (_result, taskIds) => {
       setPlanning(false);
       setPlannedSelection([]);
-      setConfirmation(`Added ${taskIds.length} to Today`);
+      notify({ message: `Added ${taskIds.length} to Today` });
       return invalidateTaskQueries(client, taskIds);
     },
     onError: async (failure, taskIds) => {
@@ -58,7 +59,6 @@ export function useBacklogPicker() {
   const openPlanner = () => {
     setPlannedSelection([]);
     setError(undefined);
-    setConfirmation(undefined);
     setPlanning(true);
   };
   return {
@@ -68,7 +68,6 @@ export function useBacklogPicker() {
     setPlannedSelection,
     planToday,
     error,
-    confirmation,
     closePlanner,
     openPlanner,
   };

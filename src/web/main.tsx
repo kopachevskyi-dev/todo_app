@@ -10,6 +10,7 @@ import {
   RouterProvider,
 } from '@tanstack/react-router';
 import { App } from './App';
+import { NotificationProvider } from './NotificationProvider';
 import './style.css';
 
 const rootRoute = createRootRoute({
@@ -64,7 +65,9 @@ declare module '@tanstack/react-router' {
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <RouterProvider router={router} />
+      <NotificationProvider>
+        <RouterProvider router={router} />
+      </NotificationProvider>
     </QueryClientProvider>
   </StrictMode>,
 );
