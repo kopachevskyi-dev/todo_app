@@ -1,5 +1,6 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { api } from './api';
 import type { RefObject } from 'react';
 import type { TaskDetailData } from './task-detail-types';
@@ -45,17 +46,7 @@ export function usePlanTask(
       }
       setChosenDay(undefined);
       setError(undefined);
-      await Promise.all(
-        [
-          queryKeys.taskDetail(task.id),
-          queryKeys.backlog,
-          queryKeys.today,
-          queryKeys.counts,
-          queryKeys.search,
-          queryKeys.dayLoad,
-          queryKeys.history,
-        ].map((queryKey) => client.invalidateQueries({ queryKey })),
-      );
+      await invalidateTaskQueries(client, [task.id]);
     } catch (failure) {
       setError(
         failure instanceof Error

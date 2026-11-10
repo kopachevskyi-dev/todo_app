@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { api } from './api';
 export function useBacklogPicker() {
   const [planning, setPlanning] = useState(false);
@@ -13,13 +14,11 @@ export function useBacklogPicker() {
   });
   const planToday = useMutation({
     mutationFn: api.planToday,
-    onSuccess: () => {
+    onSuccess: (_result, taskIds) => {
       setPlanning(false);
       setPlannedSelection([]);
 
-      void client.invalidateQueries({ queryKey: queryKeys.today });
-      void client.invalidateQueries({ queryKey: queryKeys.backlog });
-      void client.invalidateQueries({ queryKey: queryKeys.counts });
+      return invalidateTaskQueries(client, taskIds);
     },
   });
   const closePlanner = () => {

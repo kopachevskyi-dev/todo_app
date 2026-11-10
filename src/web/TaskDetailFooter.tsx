@@ -1,5 +1,5 @@
 import { browserTimeZone } from './dates';
-import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import type { RefObject } from 'react';
 import type { TaskDetailData } from './task-detail-types';
 import { useQueryClient } from '@tanstack/react-query';
@@ -94,17 +94,7 @@ export function TaskDetailFooter({
               void queue.current.then(async () => {
                 try {
                   await api.moveToBacklog(task.id);
-                  await Promise.all(
-                    [
-                      queryKeys.history,
-                      queryKeys.backlog,
-                      queryKeys.today,
-                      queryKeys.counts,
-                      queryKeys.task,
-                      queryKeys.search,
-                      queryKeys.dayLoad,
-                    ].map((queryKey) => client.invalidateQueries({ queryKey })),
-                  );
+                  await invalidateTaskQueries(client, [task.id]);
                   setError(undefined);
                   onClose();
                 } catch (failure) {

@@ -4,6 +4,7 @@ export const queryKeys = {
   backlogPicker: ['backlog', 'picker'] as const,
   today: ['today'] as const,
   todayList: (list?: string) => ['today', list] as const,
+  upcoming: ['upcoming'] as const,
   history: ['history'] as const,
   historyWeek: (
     week: string | undefined,

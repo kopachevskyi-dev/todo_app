@@ -1,4 +1,5 @@
 import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
@@ -28,17 +29,19 @@ export function useCreateTask({
         client.cancelQueries({ queryKey: queryKeys.backlog }),
         client.cancelQueries({ queryKey: queryKeys.counts }),
       ]);
+      const backlogKey = queryKeys.backlogList(request.listId);
       const previousBacklog = client.getQueryData<{ tasks: TaskRowData[] }>(
-        queryKeys.backlogList(list?.id),
+        backlogKey,
       );
       const previousCounts = client.getQueryData<Counts>(queryKeys.counts);
       const id = `optimistic-${globalThis.crypto.randomUUID()}`;
-      if (request.target === 'backlog') {
+      // An unloaded backlog must stay undefined, including after a failure.
+      if (request.target === 'backlog' && previousBacklog) {
         const optimistic: TaskRowData = {
           id,
           title: request.title,
           description: '',
-          listId: list?.id ?? null,
+          listId: request.listId ?? null,
           list: list ?? null,
           day: null,
           completedAt: null,
@@ -48,8 +51,8 @@ export function useCreateTask({
           createdAt: '1970-01-01T00:00:00.000Z',
           updatedAt: '1970-01-01T00:00:00.000Z',
         };
-        client.setQueryData(queryKeys.backlogList(list?.id), {
-          tasks: [optimistic, ...(previousBacklog?.tasks ?? [])],
+        client.setQueryData(backlogKey, {
+          tasks: [optimistic, ...previousBacklog.tasks],
         });
       }
       if (previousCounts)
@@ -62,15 +65,11 @@ export function useCreateTask({
           todayTotal:
             previousCounts.todayTotal + (request.target === 'today' ? 1 : 0),
         });
-      return { previousBacklog, previousCounts, id };
+      return { backlogKey, previousBacklog, previousCounts, id };
     },
     onError: (failure, _request, context) => {
       if (context?.previousBacklog)
-        client.setQueryData(
-          queryKeys.backlogList(list?.id),
-          context.previousBacklog,
-        );
-      else client.setQueryData(queryKeys.backlogList(list?.id), { tasks: [] });
+        client.setQueryData(context.backlogKey, context.previousBacklog);
       if (context?.previousCounts)
         client.setQueryData(queryKeys.counts, context.previousCounts);
       setError(
@@ -82,11 +81,11 @@ export function useCreateTask({
     },
     onSuccess: ({ task }, request, context) => {
       client.setQueryData<{ tasks: TaskRowData[] }>(
-        queryKeys.backlogList(list?.id),
+        context.backlogKey,
         (previous) =>
           previous && {
             tasks: previous.tasks.map((row) =>
-              row.id === context.id ? { ...task, list: list ?? null } : row,
+              row.id === context.id ? { ...task, list: row.list } : row,
             ),
           },
       );
@@ -94,10 +93,8 @@ export function useCreateTask({
       input.current?.focus();
       onAdded?.();
     },
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: queryKeys.today });
-      void client.invalidateQueries({ queryKey: queryKeys.backlog });
-      void client.invalidateQueries({ queryKey: queryKeys.counts });
+    onSettled: (result) => {
+      void invalidateTaskQueries(client, result ? [result.task.id] : []);
     },
   });
   const submit = () => {

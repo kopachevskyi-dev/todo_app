@@ -183,7 +183,8 @@ test('renaming a subtask of a completed task refreshes History without reload', 
 
     const historyRefetch = page.waitForRequest(
       (request) =>
-        request.method() === 'GET' && request.url().includes('/api/history'),
+        request.method() === 'GET' &&
+        request.url().includes('/api/views/history'),
       { timeout: 5000 },
     );
     await page.getByText('Transfer money', { exact: true }).click();

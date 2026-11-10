@@ -167,6 +167,7 @@ export function TaskRow({
   href: string;
   onOpen: () => void;
 }) {
+  const creating = task.id.startsWith('optimistic-');
   const meta = [
     task.missedFrom
       ? rowMetaText({
@@ -182,7 +183,9 @@ export function TaskRow({
   return (
     <li
       data-layout-id={task.id}
-      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''}`}
+      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''}`}
+      inert={creating}
+      aria-busy={creating || undefined}
     >
       {section && (
         <div className="done-section">
@@ -190,8 +193,13 @@ export function TaskRow({
         </div>
       )}
       <a
-        href={href}
+        href={creating ? undefined : href}
+        tabIndex={creating ? -1 : undefined}
         onClick={(event) => {
+          if (creating) {
+            event.preventDefault();
+            return;
+          }
           if (
             !event.metaKey &&
             !event.ctrlKey &&
@@ -218,8 +226,8 @@ export function TaskRow({
         <Checkbox
           label={`Completion of ${task.title}`}
           checked={Boolean(task.completedAt)}
-          onChange={onToggle}
-          disabled={pending}
+          onChange={creating ? undefined : onToggle}
+          disabled={pending || creating}
         />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
@@ -235,12 +243,13 @@ export function TaskRow({
             </span>
           )}
         </span>
+        {creating && <span className="row-meta">Saving…</span>}
         {task.completedAt && !location && (
           <time className="completion-time" dateTime={task.completedAt}>
             {completionTime(task.completedAt)}
           </time>
         )}
-        {!task.completedAt && <Icon name="chevron" size={18} />}
+        {!task.completedAt && !creating && <Icon name="chevron" size={18} />}
       </a>
     </li>
   );

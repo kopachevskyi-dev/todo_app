@@ -409,6 +409,9 @@ h3 {
 .task-row a > svg {
   color: var(--text-muted);
 }
+.task-row.pending {
+  opacity: 0.4;
+}
 .check-hit {
   flex: 0 0 22px;
   display: flex;
