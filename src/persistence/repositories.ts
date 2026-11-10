@@ -10,6 +10,7 @@ import {
   isNull,
   inArray,
   lt,
+  gt,
   sql,
 } from 'drizzle-orm';
 import type { AppDatabase } from './database';
@@ -23,6 +24,7 @@ import type {
   CreateTaskRequest,
   PatchTaskRequest,
   PatchSubtaskRequest,
+  TaskRow,
 } from '../shared/contract';
 import { matchesQuery } from '../domain/search';
 import { todayView } from '../domain/today';
@@ -302,6 +304,23 @@ export function createRepositories(db: AppDatabase) {
           .orderBy(asc(taskEvents.at), asc(sql`task_event.rowid`))
           .all();
         return historyView(rows, events, weekStart, now, zone);
+      },
+      upcoming: (today: string) => {
+        const rows = db
+          .select({ ...taskFields, list: listFields })
+          .from(tasks)
+          .leftJoin(lists, eq(tasks.listId, lists.id))
+          .where(and(gt(tasks.day, today), isNull(tasks.completedAt)))
+          .orderBy(asc(tasks.day), desc(tasks.placedAt), desc(sql`task.rowid`))
+          .all();
+        const days: { day: string; tasks: TaskRow[] }[] = [];
+        for (const row of rows) {
+          const day = row.day!;
+          const previous = days.at(-1);
+          if (previous?.day === day) previous.tasks.push(row);
+          else days.push({ day, tasks: [row] });
+        }
+        return { today, days };
       },
       dayLoad: (from: string, to: string) =>
         db
