@@ -244,7 +244,6 @@ export function App() {
               onFilter={filterList}
             />
           )}
-          {picker.confirmation && <p role="status">{picker.confirmation}</p>}
           {completion.isError && (
             <p role="alert" className="field-error">
               {completion.error.message}

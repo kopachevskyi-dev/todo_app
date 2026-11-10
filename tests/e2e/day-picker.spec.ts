@@ -81,7 +81,7 @@ test('mobile: pick Nov 20 in the calendar, save it, reopen and move it back to t
     await page.goto(`${server.url}/backlog`);
     await rows(page).first().click();
 
-    await page.getByRole('button', { name: 'Choose a day' }).click();
+    await page.getByRole('button', { name: /^Day/ }).click();
     const sheet = page.getByRole('dialog');
     await expect(sheet).toContainText('Choose a day');
     await sheet.getByRole('button', { name: /Pick a date/ }).click();
@@ -95,7 +95,8 @@ test('mobile: pick Nov 20 in the calendar, save it, reopen and move it back to t
     await expect(page.getByRole('button', { name: /^Day/ })).toContainText(
       'Fri, Nov 20',
     );
-    await page.getByRole('button', { name: 'Move to backlog' }).click();
+    await page.getByRole('button', { name: /^Day/ }).click();
+    await page.getByRole('button', { name: 'Keep in backlog' }).click();
     await page.goto(`${server.url}/backlog`);
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(1);
   } finally {

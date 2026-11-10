@@ -1,23 +1,15 @@
-import { browserTimeZone } from './dates';
 import { invalidateTaskQueries } from './invalidate-task-queries';
 import type { RefObject } from 'react';
 import type { TaskDetailData } from './task-detail-types';
 import { useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 import { Button } from './components';
-import { planButtonLabel } from '../domain/day-picker';
-import { localDate } from '../domain/time';
 import { useCompletion } from './useCompletion';
 export function TaskDetailFooter({
   task,
   deleting,
   flushDescription,
-  chosenDay,
   planning,
-  clock,
-  plan,
-  day,
-  setChoosingDay,
   history,
   setPlanning,
   queue,
@@ -28,12 +20,7 @@ export function TaskDetailFooter({
   task: TaskDetailData['task'];
   deleting: boolean;
   flushDescription: () => void;
-  chosenDay: string | null | undefined;
   planning: boolean;
-  clock: { data?: { now: string } };
-  plan: (target: string | null) => Promise<void>;
-  day: string | null;
-  setChoosingDay: (value: boolean) => void;
   history: boolean;
   setPlanning: (value: boolean) => void;
   queue: RefObject<Promise<void>>;
@@ -44,29 +31,6 @@ export function TaskDetailFooter({
   const client = useQueryClient();
   return (
     <footer className="detail-footer">
-      {!task.completedAt && (
-        <Button
-          className="plan-action"
-          variant={task.day && chosenDay === undefined ? 'outline' : 'primary'}
-          disabled={planning || !clock.data}
-          onClick={() => {
-            if (task.day && chosenDay === undefined) void plan(null);
-            else if (day === null && !task.day) setChoosingDay(true);
-            else void plan(day);
-          }}
-        >
-          {task.day && chosenDay === undefined
-            ? 'Move to backlog'
-            : task.day && day === null
-              ? 'Save'
-              : clock.data
-                ? planButtonLabel(
-                    day,
-                    localDate(new Date(clock.data.now), browserTimeZone()),
-                  )
-                : 'Choose a day'}
-        </Button>
-      )}
       {task.completedAt && (
         <Button
           variant="strong"
