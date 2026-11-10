@@ -251,6 +251,7 @@ export function QuickAdd({
   mobile = false,
   target = 'backlog',
   inputRef,
+  onClose,
 }: {
   value: string;
   onChange: (value: string) => void;
@@ -260,6 +261,7 @@ export function QuickAdd({
   mobile?: boolean;
   target?: 'backlog' | 'today';
   inputRef: RefObject<HTMLInputElement | null>;
+  onClose?: () => void;
 }) {
   const id = useId();
   return (
@@ -300,9 +302,16 @@ export function QuickAdd({
             : 'A title is enough. Add details, a list or a day later.'}
         </p>
         {mobile && (
-          <Button type="submit" disabled={pending}>
-            Add
-          </Button>
+          <div className="capture-actions">
+            {onClose && (
+              <Button type="button" variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            )}
+            <Button type="submit" disabled={pending}>
+              Add
+            </Button>
+          </div>
         )}
       </div>
     </form>

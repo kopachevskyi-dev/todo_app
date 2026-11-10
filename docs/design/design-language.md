@@ -374,7 +374,7 @@ The bar is hidden on pushed task screens (they have their own action bar). It st
 Anchored to the bottom edge, full width, `surface`, top radius 24, sheet shadow, padding 10 top / 16 sides / 24–28 bottom. A 40×4 `handle` bar centered at the top. Scrim `rgba(31,36,33,.38)` over everything else.
 
 Two sheets are drawn:
-- **Capture** ("New task"): label 14/500 `text-muted`, quick-add field (4.3), hint 13 "A title is enough. Add details later." on the left and `Add` primary button (48 high, padding 0 28) on the right. The keyboard is the real system keyboard (never drawn); the sheet rides above it.
+- **Capture** ("New task"): label 14/500 `text-muted`, quick-add field (4.3), hint 13 "A title is enough. Add details later." on the left and `Close` outline and `Add` primary buttons (48 high, padding 0 28) on the right. Dismissing the sheet keeps its unsent draft in memory for that screen; adding a task or clearing the field clears the draft. The keyboard is the real system keyboard (never drawn); the sheet rides above it.
 - **Choose a day**: H3 title, list of day items (4.6).
 
 Dismiss: tap scrim, swipe down, or Back **[decision]**.
