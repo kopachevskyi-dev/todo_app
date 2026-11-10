@@ -39,7 +39,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
   // The task detail is a right panel on desktop and a pushed screen on mobile.
   const detail = mobile
     ? page.getByRole('main')
-    : page.getByRole('complementary');
+    : page.getByRole('complementary', { name: 'Task details' });
   // Mobile tabs have no badges: counts belong to the screen header.
   const expectBacklogCount = async (count: string) => {
     if (!mobile) {
@@ -127,7 +127,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       await subtask.press('Enter');
       await expect(detail).toContainText(title);
     }
-    await page.getByRole('button', { name: /^List/ }).click();
+    await detail.getByRole('button', { name: /^List/ }).click();
     await page
       .getByRole('dialog')
       .getByRole('button', { name: 'Personal' })
@@ -137,7 +137,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
 
     // 2b. 8:05 PM: plan for tomorrow.
     await at('2026-11-04T01:05:00.000Z');
-    await page.getByRole('button', { name: /^Day/ }).click();
+    await detail.getByRole('button', { name: /^Day/ }).click();
     await expect(
       page.getByRole('button', { name: /Tomorrow, Wed 4/ }),
     ).toContainText('4 tasks');
