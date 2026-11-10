@@ -758,6 +758,7 @@ h3 {
   .back-link {
     display: flex;
     align-items: center;
+    gap: var(--space-6);
     min-height: 44px;
     margin-bottom: 20px;
     font-size: 15px;
@@ -829,8 +830,8 @@ h3 {
   font: var(--font-button);
 }
 .field-value[aria-expanded='true'] {
-  outline: 2px solid var(--focus);
-  outline-offset: -2px;
+  border: 2px solid var(--focus);
+  font-weight: 500;
 }
 .empty-value {
   color: var(--text-muted);
@@ -944,7 +945,6 @@ h3 {
 }
 .task-row.done .row-title {
   color: var(--text-muted);
-  text-decoration: line-through;
 }
 
 .day-option {
@@ -966,6 +966,10 @@ h3 {
 .day-option.selected-day {
   background: var(--row-selected);
 }
+.day-option[aria-pressed='true'] {
+  background: var(--row-selected);
+  font-weight: 500;
+}
 .day-load {
   margin-left: auto;
   white-space: nowrap;
@@ -974,6 +978,9 @@ h3 {
 }
 .day-option svg:last-child {
   color: var(--focus);
+}
+.day-option[aria-pressed='true'] svg {
+  stroke-width: 2.6;
 }
 .day-divider {
   height: 1px;
@@ -1015,7 +1022,7 @@ h3 {
   cursor: pointer;
 }
 .calendar-day small {
-  font-size: 10px;
+  font: var(--font-meta);
   color: var(--text-muted);
 }
 .calendar-day:hover {
@@ -1089,7 +1096,7 @@ h3 {
   display: grid;
   place-items: center;
   flex: none;
-  color: white;
+  color: var(--surface-raised);
 }
 .planner-check.checked {
   border-color: var(--focus);
@@ -1546,7 +1553,7 @@ h3 {
 }
 .list-link[aria-pressed='true'] {
   background: var(--nav-active);
-  font-weight: 500;
+  font-weight: 600;
 }
 .list-chips {
   display: flex;

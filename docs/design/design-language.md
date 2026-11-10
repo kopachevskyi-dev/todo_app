@@ -231,7 +231,7 @@ Anatomy (left to right): checkbox, text block (title, meta line), optional trail
 | Hover (desktop) **[decision]** | Background `row-selected` at 50% |
 | Pressed (mobile) **[decision]** | Background `row-selected` |
 | Selected | Background `row-selected`, radius 14, desktop backlog title weight 500. Detail panel shows this task |
-| Done | Filled checkbox, title `text-muted` (History: `text-2`), time on the right in 13 `text-muted`, no chevron |
+| Done | Filled checkbox, no title strike-through, title `text-muted` (History: `text-2`), time on the right in 13 `text-muted`, no chevron |
 | Missed (History) | Dashed checkbox, title `text-2`, meta carries "moved to {day}" |
 | Focus (keyboard) | Focus ring on the row |
 
@@ -308,6 +308,8 @@ Load counts: "N task(s)" is how many tasks are already planned that day; "Free" 
 
 Selected item: background `row-selected`, weight 500, blue check (16, stroke 2.6) at the far right after the count.
 
+Custom calendar **[decision]**: selection uses a 2px `focus` border and `aria-pressed`, without the suggested-item check; today is underlined. Day-load counts use the Meta type token (13px) in `text-muted`. The calendar was not drawn in the v1 mockups.
+
 | Shell | Desktop | Mobile |
 |---|---|---|
 | Container | Popover under the Day field, offset left 84px from field row, top 52px, width 300, padding 8, radius 18, `surface-raised`, `1px solid #E1E5DC`, popover shadow | Bottom sheet (4.11) titled "Choose a day" |
@@ -354,6 +356,7 @@ Width basis 248. Background `surface-side`. Top to bottom: app name, search fiel
 | Active | Background `nav-active`, label weight 600 `text`, `aria-current="page"` |
 | Hover **[decision]** | Background `nav-active` at 50% |
 
+- Selected list filters use weight 600 and `nav-active`; desktop hover uses `nav-active` at 50%, matching primary navigation **[decision]**.
 - Lists section: label "LISTS" (section label style), items 40 high, 12×12 dot radius 4, 15px. "New list" row with plus, `text-muted`. Clicking a list toggles its selection for the current screen; selected lists combine with OR and expose `aria-pressed`. Backlog, Today and History store selection in their own URL as `lists=<id>,<id>`. Navigation opens screens unfiltered; reload and browser Back retain the URL selection. With no selection, all lists and tasks without a list are included. There is no separate "No list" filter. Both layouts show "Showing: Work, Home" beside results and a "Show all" button to clear selection; the unfiltered scope reads "All lists".
 - Settings: 44 high, same as nav item without count.
 
@@ -385,7 +388,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 ### 4.12 Section label, count pill, progress
 
 - Today ordering: open tasks with a saved position come first in ascending order; unpositioned tasks follow newest-first. Each open row has visible 44px Move up / Move down buttons, operable by keyboard and touch, disabled at the visible ends. In a filtered view, moves swap visible neighbors while retaining hidden tasks in the full saved order. Order persists after reload; leaving Today by moving, completing, or rollover clears the position. Completed tasks remain a separate group; other days, lists, and Backlog keep their existing order.
-- Today: one date and day-progress summary (`2 of 5 done`), open rows first, then a "Completed" heading only when completed rows exist. Quick-add and task surfaces stay available.
+- Today: no total-count pill beside H1 on either layout; one date and day-progress summary (`2 of 5 done`), open rows first, then a "Completed" heading only when completed rows exist. Quick-add and task surfaces stay available.
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
 - Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = completed tasks currently planned for today / all tasks currently planned for today. Min width 180 on desktop. On mobile the bar sits left of the "Add from Backlog" button.
@@ -474,7 +477,7 @@ Design size 390×844. Works from 360 wide up. No fake status bar and no fake key
 
 - **Three tabs** at the bottom: Backlog, Today, History. They replace the sidebar. Lists (Personal, Work, Home) become a filter on the Backlog and Today headers **[decision]**; Search and Settings live behind a header icon on each tab **[decision]**, not drawn.
 - **One + button** (FAB) for capture, reachable by the thumb at bottom right.
-- **Task opens as a full screen** pushed on top of the tab screen, with a "‹ {Previous screen}" back link at top left (44 high) and a sticky action bar at the bottom. The tab bar is hidden there.
+- **Task opens as a full screen** pushed on top of the tab screen, with a chevron-left icon and "{Previous screen}" back link at top left (44 high) and a sticky action bar at the bottom. The tab bar is hidden there.
 - **Choosers are bottom sheets**, never popovers: capture, day picker.
 - **The scrolling area** is the middle region; header scrolls with content, tab bar and action bar stay fixed.
 
@@ -547,6 +550,7 @@ Week strip data for Nov 2–8 (done of planned): Mon 3/3, Tue 4/5, Wed 4/5, Thu 
 - **Section labels:** uppercase via style, written "DONE · 2" with a middle dot.
 - **Placeholders:** "Search", "Add to backlog", "Add to today", "Add a description" **[decision]**.
 - **Empty states [decision]:** Backlog: "Nothing waiting. Add a task above." Today without a filter: "Nothing planned for today", with "Add from Backlog" when backlog tasks exist, otherwise "Add a task". A filter with no matches reads "No Work tasks planned for today" (using the selected list names) beside "Show all". When the whole day is complete, show "All done for today" and retain the Completed group. History day: "Nothing planned this day."
+- **Add from Backlog picker [decision]:** loading: "Loading tasks…"; load failure: "Could not load backlog tasks."; empty: "Nothing waiting in the backlog."
 - **Errors [decision]:** inline under the field, 13px, `text`, with an icon; no red-only signals.
 
 ---

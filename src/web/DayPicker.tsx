@@ -185,7 +185,7 @@ export function DayPicker({
             >
               <span>{item.label}</span>
               <span className="day-load">{count(item.day)}</span>
-              {selected === item.day && <Icon name="check" size={18} />}
+              {selected === item.day && <Icon name="check" size={16} />}
             </button>
           ))}
           <button
@@ -205,7 +205,7 @@ export function DayPicker({
         aria-pressed={selected === null}
         onClick={() => onChoose(null)}
       >
-        Keep in backlog{selected === null && <Icon name="check" size={18} />}
+        Keep in backlog{selected === null && <Icon name="check" size={16} />}
       </button>
       {load.isError && <p role="alert">Could not load planned task counts.</p>}
     </div>
