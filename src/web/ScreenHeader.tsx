@@ -47,7 +47,8 @@ export function ScreenHeader({
     <header className={`screen-header ${isToday ? 'today-header' : ''}`}>
       {mobile && isSearch && (
         <button className="back-link search-back" onClick={leaveSearch}>
-          ‹ Back
+          <Icon name="chevron-left" size={18} />
+          Back
         </button>
       )}
       <div className="screen-heading">

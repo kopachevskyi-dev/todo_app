@@ -43,6 +43,7 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
       </>
     ),
     chevron: <path d="m9 6 6 6-6 6" />,
+    'chevron-left': <path d="m15 6-6 6 6 6" />,
     close: <path d="m6 6 12 12M6 18 18 6" />,
     error: (
       <>
@@ -59,7 +60,7 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={name === 'plus' ? 2 : 1.7}
+      strokeWidth={name === 'plus' ? 2 : name.startsWith('chevron') ? 1.8 : 1.7}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"

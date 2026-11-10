@@ -70,7 +70,8 @@ export function TaskSurface({
             aria-label={`Back to ${title}`}
             className="back-link"
           >
-            ‹ {title}
+            <Icon name="chevron-left" size={18} />
+            {title}
           </Link>
           <Detail
             id={task}
