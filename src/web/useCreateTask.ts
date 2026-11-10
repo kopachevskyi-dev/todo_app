@@ -1,13 +1,20 @@
 import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
-  Counts,
   CreateTaskRequest,
   List,
   TaskRow as TaskRowData,
 } from '../shared/contract';
 import { api } from './api';
+
+export const createTaskMutationKey = ['create-task'] as const;
+export type CreateTaskContext = {
+  request: CreateTaskRequest;
+  row: TaskRowData;
+};
+
 export function useCreateTask({
   target,
   list,
@@ -22,57 +29,26 @@ export function useCreateTask({
   const input = useRef<HTMLInputElement>(null);
   const client = useQueryClient();
   const mutation = useMutation({
+    mutationKey: createTaskMutationKey,
     mutationFn: api.createTask,
-    onMutate: async (request: CreateTaskRequest) => {
-      await Promise.all([
-        client.cancelQueries({ queryKey: queryKeys.backlog }),
-        client.cancelQueries({ queryKey: queryKeys.counts }),
-      ]);
-      const previousBacklog = client.getQueryData<{ tasks: TaskRowData[] }>(
-        queryKeys.backlogList(list?.id),
-      );
-      const previousCounts = client.getQueryData<Counts>(queryKeys.counts);
-      const id = `optimistic-${globalThis.crypto.randomUUID()}`;
-      if (request.target === 'backlog') {
-        const optimistic: TaskRowData = {
-          id,
-          title: request.title,
-          description: '',
-          listId: list?.id ?? null,
-          list: list ?? null,
-          day: null,
-          completedAt: null,
-          missedFrom: null,
-          subtaskCount: 0,
-          subtaskDoneCount: 0,
-          createdAt: '1970-01-01T00:00:00.000Z',
-          updatedAt: '1970-01-01T00:00:00.000Z',
-        };
-        client.setQueryData(queryKeys.backlogList(list?.id), {
-          tasks: [optimistic, ...(previousBacklog?.tasks ?? [])],
-        });
-      }
-      if (previousCounts)
-        client.setQueryData<Counts>(queryKeys.counts, {
-          ...previousCounts,
-          backlog:
-            previousCounts.backlog + (request.target === 'backlog' ? 1 : 0),
-          todayOpen:
-            previousCounts.todayOpen + (request.target === 'today' ? 1 : 0),
-          todayTotal:
-            previousCounts.todayTotal + (request.target === 'today' ? 1 : 0),
-        });
-      return { previousBacklog, previousCounts, id };
-    },
-    onError: (failure, _request, context) => {
-      if (context?.previousBacklog)
-        client.setQueryData(
-          queryKeys.backlogList(list?.id),
-          context.previousBacklog,
-        );
-      else client.setQueryData(queryKeys.backlogList(list?.id), { tasks: [] });
-      if (context?.previousCounts)
-        client.setQueryData(queryKeys.counts, context.previousCounts);
+    onMutate: (request: CreateTaskRequest): CreateTaskContext => ({
+      request,
+      row: {
+        id: `optimistic-${globalThis.crypto.randomUUID()}`,
+        title: request.title,
+        description: '',
+        listId: request.listId ?? null,
+        list: list ?? null,
+        day: null,
+        completedAt: null,
+        missedFrom: null,
+        subtaskCount: 0,
+        subtaskDoneCount: 0,
+        createdAt: '1970-01-01T00:00:00.000Z',
+        updatedAt: '1970-01-01T00:00:00.000Z',
+      },
+    }),
+    onError: (failure) => {
       setError(
         failure instanceof Error
           ? failure.message
@@ -81,23 +57,23 @@ export function useCreateTask({
       input.current?.focus();
     },
     onSuccess: ({ task }, request, context) => {
-      client.setQueryData<{ tasks: TaskRowData[] }>(
-        queryKeys.backlogList(list?.id),
-        (previous) =>
-          previous && {
-            tasks: previous.tasks.map((row) =>
-              row.id === context.id ? { ...task, list: list ?? null } : row,
-            ),
-          },
-      );
+      if (request.target === 'backlog')
+        client.setQueryData<{ tasks: TaskRowData[] }>(
+          queryKeys.backlogList(request.listId),
+          (previous) =>
+            previous && {
+              tasks: [
+                { ...task, list: context.row.list },
+                ...previous.tasks.filter((row) => row.id !== task.id),
+              ],
+            },
+        );
       setTitle((current) => (current.trim() === request.title ? '' : current));
       input.current?.focus();
       onAdded?.();
     },
-    onSettled: () => {
-      void client.invalidateQueries({ queryKey: queryKeys.today });
-      void client.invalidateQueries({ queryKey: queryKeys.backlog });
-      void client.invalidateQueries({ queryKey: queryKeys.counts });
+    onSettled: (result) => {
+      void invalidateTaskQueries(client, result ? [result.task.id] : []);
     },
   });
   const submit = () => {

@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { listPalette, type List } from '../shared/contract';
 import { api } from './api';
+import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import {
   BottomSheet,
   Button,
@@ -37,7 +39,10 @@ export function Lists({
   const mutation = useMutation({
     mutationFn: (action: () => Promise<unknown>) => action(),
     onSuccess: async () => {
-      await client.invalidateQueries();
+      await Promise.all([
+        client.invalidateQueries({ queryKey: queryKeys.lists }),
+        invalidateTaskQueries(client),
+      ]);
     },
   });
   const perform = async (action: () => Promise<unknown>, done: () => void) => {

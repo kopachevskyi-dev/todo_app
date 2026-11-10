@@ -1,5 +1,6 @@
 import { api } from './api';
 import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { useEffect, useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { PatchTaskRequest, TaskRow, List } from '../shared/contract';
@@ -73,13 +74,7 @@ export function useTaskEditor(
             : 'Could not save the task. Try again.',
         );
       }
-      await Promise.all([
-        client.invalidateQueries({ queryKey: queryKeys.taskDetail(task.id) }),
-        client.invalidateQueries({ queryKey: queryKeys.backlog }),
-        client.invalidateQueries({ queryKey: queryKeys.today }),
-        client.invalidateQueries({ queryKey: queryKeys.search }),
-        client.invalidateQueries({ queryKey: queryKeys.history }),
-      ]);
+      await invalidateTaskQueries(client, [task.id]);
     });
   };
   const saveRef = useRef(save);

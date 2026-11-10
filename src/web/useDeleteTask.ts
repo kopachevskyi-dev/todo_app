@@ -1,4 +1,5 @@
 import { queryKeys } from './query-keys';
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { useState } from 'react';
 import type { RefObject } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -51,11 +52,7 @@ export function useDeleteTask(
       );
     } finally {
       setDeleting(false);
-      void client.invalidateQueries({ queryKey: queryKeys.today });
-      void client.invalidateQueries({ queryKey: queryKeys.search });
-      void client.invalidateQueries({ queryKey: queryKeys.history });
-      void client.invalidateQueries({ queryKey: queryKeys.backlog });
-      void client.invalidateQueries({ queryKey: queryKeys.counts });
+      void invalidateTaskQueries(client, [task.id]);
     }
   };
   return { deleting, remove };

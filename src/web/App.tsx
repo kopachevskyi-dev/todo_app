@@ -18,10 +18,11 @@ import {
   useRouter,
   useSearch,
 } from '@tanstack/react-router';
-import { useQuery } from '@tanstack/react-query';
+import { useMutationState, useQuery } from '@tanstack/react-query';
 
 import { api } from './api';
 import { useCompletion } from './useCompletion';
+import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
 import { BottomSheet, Button, Icon, Popover } from './components';
 import { Lists } from './Lists';
 import { History } from './History';
@@ -76,8 +77,27 @@ export function App() {
     enabled: isSearch && Boolean(q?.trim()),
   });
   const title = tabs.find((tab) => tab.to === path)?.label ?? 'Search';
+  // Pending UI comes from the mutation, so focus refetches cannot erase it.
+  const pendingCreates = useMutationState({
+    filters: { mutationKey: createTaskMutationKey, status: 'pending' },
+    select: (mutation) =>
+      mutation.state.context as CreateTaskContext | undefined,
+  }).filter((context) => context !== undefined);
+  const pendingBacklog = pendingCreates.filter(
+    ({ request }) => request.target === 'backlog',
+  );
+  const pendingToday = pendingCreates.length - pendingBacklog.length;
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
-  const counts = useQuery({ queryKey: queryKeys.counts, queryFn: api.counts });
+  const counts = useQuery({
+    queryKey: queryKeys.counts,
+    queryFn: api.counts,
+    select: (data) => ({
+      ...data,
+      backlog: data.backlog + pendingBacklog.length,
+      todayOpen: data.todayOpen + pendingToday,
+      todayTotal: data.todayTotal + pendingToday,
+    }),
+  });
   const activeList = lists.data?.lists.find((item) => item.id === list);
   const filterList = (id?: string) => {
     void navigate({
@@ -93,6 +113,15 @@ export function App() {
     queryKey: queryKeys.backlogList(list),
     queryFn: () => api.backlog(list),
     enabled: isBacklog,
+    select: (data) => ({
+      tasks: [
+        ...pendingBacklog
+          .filter(({ request }) => !list || request.listId === list)
+          .reverse()
+          .map(({ row }) => row),
+        ...data.tasks,
+      ],
+    }),
   });
   const today = useQuery({
     queryKey: queryKeys.todayList(list),
