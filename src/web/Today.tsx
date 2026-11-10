@@ -10,6 +10,9 @@ export function Today({
   mobile,
   today,
   activeList,
+  scope,
+  backlogCount,
+  onCapture,
   planButton,
   openPlanner,
   rowContainer,
@@ -21,6 +24,9 @@ export function Today({
   mobile: boolean;
   today: UseQueryResult<Awaited<ReturnType<typeof api.today>>>;
   activeList?: List;
+  scope?: string;
+  backlogCount: number;
+  onCapture: () => void;
   planButton: RefObject<HTMLButtonElement | null>;
   openPlanner: () => void;
   rowContainer: RefObject<HTMLUListElement | null>;
@@ -34,10 +40,12 @@ export function Today({
       {!mobile && (
         <div className="today-capture">
           <Capture target="today" list={activeList} />
-          <Button ref={planButton} variant="outline" onClick={openPlanner}>
-            <Icon name="backlog" size={18} />
-            Add from Backlog
-          </Button>
+          {(backlogCount > 0 || (today.data?.progress.total ?? 0) > 0) && (
+            <Button ref={planButton} variant="outline" onClick={openPlanner}>
+              <Icon name="backlog" size={18} />
+              Add from Backlog
+            </Button>
+          )}
         </div>
       )}
       {today.isPending && <p role="status">Loading tasks…</p>}
@@ -54,11 +62,40 @@ export function Today({
           </Button>
         </p>
       )}
-      {today.data?.progress.total === 0 && (
-        <EmptyPanel>
-          Nothing planned for today. Add a task or pull one from the backlog.
-        </EmptyPanel>
-      )}
+      {today.data &&
+        (list && today.data.open.length + today.data.done.length === 0 ? (
+          <EmptyPanel>No {scope} tasks planned for today</EmptyPanel>
+        ) : today.data.progress.total === 0 ? (
+          <EmptyPanel>
+            <p>Nothing planned for today</p>
+            {backlogCount > 0 ? (
+              mobile && (
+                <Button
+                  ref={planButton}
+                  variant="outline"
+                  onClick={openPlanner}
+                >
+                  Add from Backlog
+                </Button>
+              )
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (mobile) onCapture();
+                  else
+                    document
+                      .querySelector<HTMLInputElement>('.today-capture input')
+                      ?.focus();
+                }}
+              >
+                Add a task
+              </Button>
+            )}
+          </EmptyPanel>
+        ) : today.data.progress.done === today.data.progress.total ? (
+          <EmptyPanel>All done for today</EmptyPanel>
+        ) : null)}
       <ul ref={rowContainer} className="task-list today-list">
         {today.data &&
           [...today.data.open, ...today.data.done].map((row, index) => (
@@ -73,7 +110,7 @@ export function Today({
                 key={row.id}
                 task={row}
                 selected={row.id === task}
-                href={`/today?${new URLSearchParams({ ...(list ? { list } : {}), task: row.id })}`}
+                href={`/today?${new URLSearchParams({ ...(list ? { lists: list } : {}), task: row.id })}`}
                 onOpen={() => openTask(row.id)}
                 onToggle={() =>
                   completion.mutateAsync({

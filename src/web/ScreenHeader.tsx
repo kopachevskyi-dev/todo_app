@@ -1,7 +1,7 @@
 import { dateLabel } from './dates';
 import type { RefObject } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
-import type { Counts, List, TaskRow } from '../shared/contract';
+import type { Counts, TaskRow } from '../shared/contract';
 import { api } from './api';
 import { Button, CountPill, Icon } from './components';
 import { SearchField } from './SearchField';
@@ -20,7 +20,6 @@ export function ScreenHeader({
   path,
   q,
   search,
-  activeList,
   planButton,
   openPlanner,
 }: {
@@ -38,7 +37,6 @@ export function ScreenHeader({
   path: string;
   q?: string;
   search: UseQueryResult<Awaited<ReturnType<typeof api.search>>>;
-  activeList?: List;
   planButton: RefObject<HTMLButtonElement | null>;
   openPlanner: () => void;
 }) {
@@ -121,19 +119,13 @@ export function ScreenHeader({
               />
             </div>
           </div>
-          {mobile && (
+          {mobile && today.data.progress.total > 0 && (
             <Button ref={planButton} variant="outline" onClick={openPlanner}>
               <Icon name="backlog" size={18} />
               Add from Backlog
             </Button>
           )}
         </div>
-      )}
-      {activeList && (isBacklog || isToday) && !mobile && (
-        <span className="active-list-chip">
-          <span className="list-dot" style={{ background: activeList.color }} />
-          {activeList.name}
-        </span>
       )}
     </header>
   );

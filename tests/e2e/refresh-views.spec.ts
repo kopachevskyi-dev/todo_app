@@ -286,7 +286,7 @@ test('a failed quick-add in the "Work" filter keeps the filtered rows and shows 
     await createTask(server.url, 'A', { listId: work });
     await createTask(server.url, 'B', { listId: work });
     await createTask(server.url, 'No list');
-    await page.goto(`${server.url}/backlog?list=${work}`);
+    await page.goto(`${server.url}/backlog?lists=${work}`);
     await expect(rows(page)).toHaveCount(2);
 
     await server.stop();

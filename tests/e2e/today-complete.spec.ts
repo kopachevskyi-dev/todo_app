@@ -119,9 +119,12 @@ test('an empty day shows the empty state', async ({ page }) => {
     await setClock(page, server.url, '2026-11-04T19:20:00.000Z');
     await page.goto(server.url);
     await expect(
-      page.getByText(
-        'Nothing planned for today. Add a task or pull one from the backlog.',
-      ),
+      page.getByText('Nothing planned for today', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('main')
+        .getByRole('button', { name: 'Add a task', exact: true }),
     ).toBeVisible();
   } finally {
     await server.stop();

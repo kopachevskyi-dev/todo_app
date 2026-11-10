@@ -33,7 +33,7 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 |---|---|
 | **Backlog** | Open tasks with no day. Count in nav = number of these. |
 | **Planned** | A task with a day. It leaves the Backlog the moment a day is set. |
-| **Today** | Tasks currently planned for today, grouped into open and done. Nav badge = open tasks left today (not total). Header shows "N of M done", counting only this list. |
+| **Today** | Tasks currently planned for today, grouped into open and done. Nav badge = open tasks left today (not total). Header shows "N of M done", counting the whole day even when lists are filtered; a separate "N shown" label counts the filtered results. |
 | **Done** | Completing a task sets its day to local today in the request's time zone; reopening keeps it on local today. In History, a day's done group contains tasks with a completed event carrying that stored day, minus later reopened events carrying the same day. Moving a task to the Backlog leaves its historical completion in that group. |
 | **History** | Review of days, by week. Today and past days use the same event-based done rule. Events belong to their stored day, regardless of the viewing time zone. |
 | **Not done** | A task planned for a day that ended unfinished. **[decision]** It rolls over to the next day automatically and the old day shows "Moved to Thu, Nov 5". |
@@ -345,7 +345,7 @@ Width basis 248. Background `surface-side`. Top to bottom: app name, search fiel
 | Active | Background `nav-active`, label weight 600 `text`, `aria-current="page"` |
 | Hover **[decision]** | Background `nav-active` at 50% |
 
-- Lists section: label "LISTS" (section label style), items 40 high, 12×12 dot radius 4, 15px. "New list" row with plus, `text-muted`. Clicking a list filters the current screen to that list **[decision]**.
+- Lists section: label "LISTS" (section label style), items 40 high, 12×12 dot radius 4, 15px. "New list" row with plus, `text-muted`. Clicking a list toggles its selection for the current screen; selected lists combine with OR and expose `aria-pressed`. Backlog, Today and History store selection in their own URL as `lists=<id>,<id>`. Navigation opens screens unfiltered; reload and browser Back retain the URL selection. With no selection, all lists and tasks without a list are included. There is no separate "No list" filter. Both layouts show "Showing: Work, Home" beside results and a "Show all" button to clear selection; the unfiltered scope reads "All lists".
 - Settings: 44 high, same as nav item without count.
 
 ### 4.9 Bottom tab bar (mobile)
@@ -520,7 +520,7 @@ Week strip data for Nov 2–8 (done of planned): Mon 3/3, Tue 4/5, Wed 4/5, Thu 
 - **Counts:** "1 task", "4 tasks", "Free" (zero), "3 subtasks". "2 of 5 done".
 - **Section labels:** uppercase via style, written "DONE · 2" with a middle dot.
 - **Placeholders:** "Search", "Add to backlog", "Add to today", "Add a description" **[decision]**.
-- **Empty states [decision]:** Backlog: "Nothing waiting. Add a task above." Today: "Nothing planned for today. Add a task or pull one from the backlog." History day: "Nothing planned this day."
+- **Empty states [decision]:** Backlog: "Nothing waiting. Add a task above." Today without a filter: "Nothing planned for today", with "Add from Backlog" when backlog tasks exist, otherwise "Add a task". A filter with no matches reads "No Work tasks planned for today" (using the selected list names) beside "Show all". When the whole day is complete, show "All done for today" and retain the Completed group. History day: "Nothing planned this day."
 - **Errors [decision]:** inline under the field, 13px, `text`, with an icon; no red-only signals.
 
 ---
