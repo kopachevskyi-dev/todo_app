@@ -47,7 +47,6 @@ test('opening Upcoming from Today lists "Dentist" under Tue, Nov 17; changing it
     await group(page, 'Tue, Nov 17').getByText('Dentist').click();
     await page.getByRole('button', { name: /^Day/ }).click();
     await page.getByRole('button', { name: /Tomorrow, Wed 11/ }).click();
-    await page.getByRole('button', { name: 'Plan for Wed, Nov 11' }).click();
 
     if (isMobile)
       await page.getByRole('link', { name: 'Back to Upcoming' }).click();

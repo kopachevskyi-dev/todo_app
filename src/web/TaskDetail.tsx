@@ -1,6 +1,7 @@
 import { usePlanTask } from './usePlanTask';
 import { useEscape } from './useEscape';
 import { browserTimeZone } from './dates';
+import { localDate } from '../domain/time';
 import { queryKeys } from './query-keys';
 import { TaskDetailFooter } from './TaskDetailFooter';
 import { TaskActivity } from './TaskActivity';
@@ -42,15 +43,15 @@ export function TaskDetail({
   const [error, setError] = useState<string>();
   const clock = useQuery({ queryKey: queryKeys.clock, queryFn: api.clock });
   const [choosingDay, setChoosingDay] = useState(false);
-  const [chosenDay, setChosenDay] = useState<string | null | undefined>(
-    undefined,
-  );
   const [planning, setPlanning] = useState(false);
   const dayAnchor = useRef<HTMLButtonElement>(null);
-  const day = chosenDay === undefined ? task.day : chosenDay;
+  const day = task.day;
+  const today = clock.data
+    ? localDate(new Date(clock.data.now), browserTimeZone())
+    : undefined;
+  const dayLabel = day === today ? 'Today' : day ? formatDay(day) : 'No day';
   const dismissDay = () => {
     setChoosingDay(false);
-    setChosenDay(undefined);
   };
   const [choosingList, setChoosingList] = useState(false);
   const [confirming, setConfirming] = useState(false);
@@ -82,11 +83,9 @@ export function TaskDetail({
     cancelTitle();
     titleInput.current?.blur();
   }, 30);
-  const plan = usePlanTask(
+  const { plan, failedTarget } = usePlanTask(
     task,
-    planning,
     setPlanning,
-    setChosenDay,
     setError,
     flushDescription,
     queue,
@@ -229,13 +228,16 @@ export function TaskDetail({
             ref={dayAnchor}
             type="button"
             className={`field-value ${!day ? 'empty-value' : ''}`}
-            aria-label={`Day ${day ? formatDay(day) : 'No day'}`}
+            aria-label={`Day ${planning ? 'Saving…' : dayLabel}`}
+            aria-busy={planning}
             aria-expanded={choosingDay}
-            disabled={Boolean(task.completedAt)}
+            disabled={
+              Boolean(task.completedAt) || planning || deleting || !clock.data
+            }
             onClick={() => setChoosingDay(true)}
           >
             <Icon name="today" size={18} />
-            {day ? formatDay(day) : 'No day'}
+            {planning ? 'Saving…' : dayLabel}
           </button>
         </div>
       </div>
@@ -254,18 +256,22 @@ export function TaskDetail({
       {error && (
         <p role="alert" className="field-error">
           {error}
+          {failedTarget !== undefined && (
+            <Button
+              variant="ghost"
+              disabled={planning}
+              onClick={() => void plan(failedTarget)}
+            >
+              Retry
+            </Button>
+          )}
         </p>
       )}
       <TaskDetailFooter
         task={task}
         deleting={deleting}
         flushDescription={flushDescription}
-        chosenDay={chosenDay}
         planning={planning}
-        clock={clock}
-        plan={plan}
-        day={day}
-        setChoosingDay={setChoosingDay}
         history={history}
         setPlanning={setPlanning}
         queue={queue}
@@ -282,8 +288,8 @@ export function TaskDetail({
                 now={new Date(clock.data.now)}
                 selected={day}
                 onChoose={(value) => {
-                  setChosenDay(value);
                   setChoosingDay(false);
+                  void plan(value);
                 }}
               />
             ) : (
@@ -297,8 +303,8 @@ export function TaskDetail({
                 now={new Date(clock.data.now)}
                 selected={day}
                 onChoose={(value) => {
-                  setChosenDay(value);
                   setChoosingDay(false);
+                  void plan(value);
                 }}
               />
             ) : (

@@ -310,7 +310,13 @@ Selected item: background `row-selected`, weight 500, blue check (16, stroke 2.6
 | Container | Popover under the Day field, offset left 84px from field row, top 52px, width 300, padding 8, radius 18, `surface-raised`, `1px solid #E1E5DC`, popover shadow | Bottom sheet (4.11) titled "Choose a day" |
 | Item | Height 44, padding 0 12, radius 12, 15px | Height 52, padding 0 12, radius 14, 16px |
 
-Choosing an item sets the Day field and updates the primary button label. It does not commit: committing is the primary button **[decision]**. Escape or tap on the scrim closes without change.
+Named choices (Today, Tomorrow, Weekend, Keep in backlog) save immediately and close the picker. In the custom calendar, selecting or browsing dates only changes the draft selection; the internal "Save date" button saves it. Escape or tapping the scrim discards the draft. The Day field always displays the saved value ("Today" for the current day), shows "Saving…" while pending, and returns to the saved value with an error and Retry on failure. There is no separate footer planning action. Moving to Backlog clears the day through the same planning model and refreshes counts, rows, search and History.
+
+### Notifications
+
+One shared notification sits above the app content near the bottom of the viewport, above mobile navigation. It is a polite, atomic live region with a message and up to two keyboard-reachable action buttons. A new notification replaces the previous one. It dismisses after about six seconds; hovering or focusing it pauses dismissal, with six seconds available after leaving.
+
+A successful day save says "Moved to Wed, Nov 11", "Moved to Today", or "Moved to Backlog", with Undo and Open day. Undo saves the previous day or Backlog through the regular planning API and refreshes affected views. Open day navigates to Today, Backlog, or the selected day and week in History. Failed saves offer Retry. Bulk planning reuses the same notification for "Added {count} to Today".
 
 ### 4.7 Detail view (right panel on desktop, full screen on mobile)
 
@@ -320,13 +326,13 @@ Order of blocks, top to bottom: header (label "Task" 14/500 `text-muted`, close 
 - Subtasks: heading H3 17/600; rows min-height 44, 15px, checkbox 20; last row "Add subtask" with plus icon in `text-muted`. Done subtask: filled check, text `text-muted`.
 - Activity: an `Activity (N)` button in the H3 heading exposes `aria-expanded`; collapsed by default when opening an open task, expanded when opening a completed task; each line 13 `text-muted` with an 8px dot (`check-border`; the "completed" event uses `text`). Format: `{Mon D}, {h:mm AM/PM} — {event}`.
 - Status pill: height 32, padding 0 12, radius 10, fill `text`, white text 13/500, 14px white check. Text: "Completed at 2:20 PM" on Today, "Completed Nov 4, 2:20 PM" in History.
-- Footer: desktop = pinned to panel bottom (`margin-top: auto`), one flexible planning action (or the existing completed-task action). Mobile = sticky bar, padding 12/16/20, top border `divider-menu`, flexible action. Delete lives in the title’s secondary More menu on both layouts.
+- Footer: desktop = pinned to panel bottom (`margin-top: auto`), the completed-task action when applicable. Mobile = sticky bar, padding 12/16/20, top border `divider-menu`, completed-task action when applicable. Delete lives in the title’s secondary More menu on both layouts.
 
 Footer action by context:
 
 | Task state | Context | Action |
 |---|---|---|
-| Open, no day | Backlog | Primary "Plan for {day}" (needs a day chosen; before that: "Choose a day" opening the picker) |
+| Open | Any | No footer action; use the Day field to plan |
 | Done | Today | Outline strong "Reopen" |
 | Done | History | Outline strong "Move to backlog" |
 
