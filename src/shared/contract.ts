@@ -29,7 +29,11 @@ export type PatchListRequest = z.infer<typeof patchListRequestSchema>;
 export const listsResponseSchema = z.object({ lists: z.array(listSchema) });
 export const healthResponseSchema = z.object({ ok: z.literal(true) });
 export const errorResponseSchema = z.object({
-  error: z.object({ code: z.string(), message: z.string() }),
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    taskIds: z.array(z.ulid()).optional(),
+  }),
 });
 export const clockSchema = z.object({ now: z.iso.datetime() });
 export type ListsResponse = z.infer<typeof listsResponseSchema>;
@@ -117,6 +121,13 @@ export const examples = {
     error: {
       code: 'day_in_past',
       message: 'Choose today or a later day.',
+    },
+  },
+  notInBacklogError: {
+    error: {
+      code: 'not_in_backlog',
+      message: 'One or more tasks are not in the backlog.',
+      taskIds: ['01JBY2000000000000000000CD'],
     },
   },
   dayLoad: {

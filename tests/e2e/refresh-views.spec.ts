@@ -86,10 +86,10 @@ test('planning "Pay rent" for today refreshes Today, the backlog count, History 
     await expectBacklogCount(page, '2');
     await nav(page).getByRole('link', { name: /Today/ }).click();
 
-    await main(page).getByRole('button', { name: 'From backlog' }).click();
-    const picker = page.getByRole('dialog', { name: 'From backlog' });
+    await main(page).getByRole('button', { name: 'Add from Backlog' }).click();
+    const picker = page.getByRole('dialog', { name: 'Add from Backlog' });
     await picker.getByRole('checkbox', { name: /Pay rent/ }).click();
-    await picker.getByRole('button', { name: 'Plan for today (1)' }).click();
+    await picker.getByRole('button', { name: 'Add 1 to Today' }).click();
     await expect(picker).toBeHidden();
 
     await expect(rows(page).filter({ hasText: 'Pay rent' })).toBeVisible();

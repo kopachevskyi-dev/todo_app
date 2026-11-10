@@ -36,7 +36,7 @@ export function Today({
           <Capture target="today" list={activeList} />
           <Button ref={planButton} variant="outline" onClick={openPlanner}>
             <Icon name="backlog" size={18} />
-            From backlog
+            Add from Backlog
           </Button>
         </div>
       )}
