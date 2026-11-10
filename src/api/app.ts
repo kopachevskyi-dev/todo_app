@@ -13,6 +13,7 @@ import {
   listResponseSchema,
   listColors,
   historyResponseSchema,
+  upcomingResponseSchema,
   createSubtaskRequestSchema,
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
@@ -182,6 +183,15 @@ export function createApp(options: {
         repositories.tasks.today(
           localDate(clock.now(), c.req.header('X-Timezone')!),
           c.req.query('listId'),
+        ),
+      ),
+    ),
+  );
+  app.get('/api/upcoming', (c) =>
+    c.json(
+      upcomingResponseSchema.parse(
+        repositories.tasks.upcoming(
+          localDate(clock.now(), c.req.header('X-Timezone')!),
         ),
       ),
     ),

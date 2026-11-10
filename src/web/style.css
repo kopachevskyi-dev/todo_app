@@ -1594,6 +1594,17 @@ h3 {
   align-self: flex-start;
 }
 
+.upcoming-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text-2);
+}
+.upcoming-agenda {
+  display: grid;
+  gap: 28px;
+}
+
 /* Completion and navigation are separate, non-overlapping row targets. */
 .task-row {
   display: flex;

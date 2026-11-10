@@ -25,7 +25,7 @@ const rootRoute = createRootRoute({
   } => ({
     from:
       typeof search.from === 'string' &&
-      /^\/(backlog|today|history)(\?|$)/.test(search.from)
+      /^\/(backlog|today|history|upcoming)(\?|$)/.test(search.from)
         ? search.from
         : undefined,
     week: typeof search.week === 'string' ? search.week : undefined,
@@ -42,9 +42,9 @@ const indexRoute = createRoute({
     throw redirect({ to: '/today' });
   },
 });
-const routes = (['/backlog', '/today', '/history', '/search'] as const).map(
-  (path) => createRoute({ getParentRoute: () => rootRoute, path }),
-);
+const routes = (
+  ['/backlog', '/today', '/history', '/search', '/upcoming'] as const
+).map((path) => createRoute({ getParentRoute: () => rootRoute, path }));
 const router = createRouter({
   routeTree: rootRoute.addChildren([indexRoute, ...routes]),
 });

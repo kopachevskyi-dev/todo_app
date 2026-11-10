@@ -62,7 +62,10 @@ export function TaskSurface({
       {mobile && task && (
         <main className="pushed-detail">
           <Link
-            to={path as '/backlog' | '/today' | '/history' | '/search'}
+            to={
+              path as
+                '/backlog' | '/today' | '/history' | '/search' | '/upcoming'
+            }
             search={(previous) => ({ ...previous, task: undefined })}
             aria-label={`Back to ${title}`}
             className="back-link"
