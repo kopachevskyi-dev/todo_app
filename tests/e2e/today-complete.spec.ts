@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer, setClock } from '../helpers/e2e-clock';
 
 test.use({ timezoneId: 'America/New_York' });
 
@@ -18,36 +18,45 @@ async function api(url: string, method: string, path: string, body?: unknown) {
   expect(response.ok).toBe(true);
   return (await response.json()) as { task: { id: string } };
 }
-const setClock = (url: string, now: string) =>
-  api(url, 'PUT', '/api/test/clock', { now });
 
 /** Wed Nov 4: 5 tasks today, "Pay rent" completed at 10:00 AM, clock left at 2:20 PM. */
-async function seedToday(url: string) {
-  await setClock(url, '2026-11-04T14:00:00.000Z');
+async function seedToday(page: Page, url: string) {
+  await setClock(page, url, '2026-11-04T14:00:00.000Z');
   for (const title of [LICENSE, 'Call the dentist', 'Buy milk', 'Water plants'])
     await api(url, 'POST', '/api/tasks', { title, target: 'today' });
   const rent = await api(url, 'POST', '/api/tasks', {
     title: 'Pay rent',
     target: 'today',
   });
-  await setClock(url, '2026-11-04T15:00:00.000Z');
+  await setClock(page, url, '2026-11-04T15:00:00.000Z');
   await api(url, 'POST', `/api/tasks/${rent.task.id}/complete`);
-  await setClock(url, '2026-11-04T19:20:00.000Z');
+  await setClock(page, url, '2026-11-04T19:20:00.000Z');
 }
 
-test('desktop: checking a task moves it under DONE · 2 with its time, updates progress, nav badge and detail; Reopen restores it', async ({
+test('desktop: checking a task moves it under Completed with its time, updates progress, nav badge and detail; Reopen restores it', async ({
   page,
 }) => {
-  const server = await startTestServer({ testClock: true });
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
-    await seedToday(server.url);
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await seedToday(page, server.url);
     await page.goto(server.url);
     const main = page.getByRole('main');
     await expect(main).toContainText('1 of 5 done');
 
     await page.getByRole('checkbox', { name: LICENSE }).check();
-    await expect(main).toContainText('DONE · 2');
+    await expect(
+      main.getByRole('heading', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).filter({ hasText: LICENSE }).getByRole('checkbox'),
+    ).toBeChecked();
+    await expect(
+      rows(page).filter({ hasText: 'Pay rent' }).getByRole('checkbox'),
+    ).toBeChecked();
     await expect(rows(page).filter({ hasText: LICENSE })).toContainText(
       '2:20 PM',
     );
@@ -62,7 +71,15 @@ test('desktop: checking a task moves it under DONE · 2 with its time, updates p
     await panel.getByRole('button', { name: 'Reopen' }).click();
 
     await expect(main).toContainText('1 of 5 done');
-    await expect(main).toContainText('DONE · 1');
+    await expect(
+      main.getByRole('heading', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).filter({ hasText: LICENSE }).getByRole('checkbox'),
+    ).not.toBeChecked();
+    await expect(
+      rows(page).filter({ hasText: 'Pay rent' }).getByRole('checkbox'),
+    ).toBeChecked();
     await expect(rows(page).filter({ hasText: LICENSE })).not.toContainText(
       '2:20 PM',
     );
@@ -74,10 +91,13 @@ test('desktop: checking a task moves it under DONE · 2 with its time, updates p
 test('mobile: the + button adds "Buy stamps" as the first open row and the total becomes 6', async ({
   page,
 }) => {
-  const server = await startTestServer({ testClock: true });
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
-    await seedToday(server.url);
-    await page.setViewportSize({ width: 390, height: 844 });
+    await seedToday(page, server.url);
     await page.goto(server.url);
     await expect(page.getByRole('main')).toContainText('1 of 5 done');
 
@@ -94,15 +114,17 @@ test('mobile: the + button adds "Buy stamps" as the first open row and the total
 });
 
 test('an empty day shows the empty state', async ({ page }) => {
-  const server = await startTestServer({ testClock: true });
+  const server = await startTestServer(page);
   try {
-    await setClock(server.url, '2026-11-04T19:20:00.000Z');
-    await page.setViewportSize({ width: 1440, height: 900 });
+    await setClock(page, server.url, '2026-11-04T19:20:00.000Z');
     await page.goto(server.url);
     await expect(
-      page.getByText(
-        'Nothing planned for today. Add a task or pull one from the backlog.',
-      ),
+      page.getByText('Nothing planned for today', { exact: true }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('main')
+        .getByRole('button', { name: 'Add a task', exact: true }),
     ).toBeVisible();
   } finally {
     await server.stop();

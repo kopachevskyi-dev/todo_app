@@ -1,19 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  activityText,
   applyDetailsEdit,
-  formatActivityLine,
+  type ActivityEvent,
 } from '../../src/domain/activity';
-
-describe('formatActivityLine', () => {
-  it('formats a planned event in the request zone', () => {
-    expect(
-      formatActivityLine(
-        { type: 'planned', at: '2026-11-04T01:05:00.000Z', day: '2026-11-04' },
-        'America/New_York',
-      ),
-    ).toBe('Nov 3, 8:05 PM — planned for Nov 4');
-  });
-});
 
 describe('details_added merging', () => {
   const first = {
@@ -32,17 +22,6 @@ describe('details_added merging', () => {
       at: '2026-11-04T01:03:00.000Z',
       parts: ['description', 'subtasks'],
     });
-    expect(
-      formatActivityLine(
-        {
-          type: 'details_added',
-          at: result.at,
-          day: null,
-          data: { parts: result.parts },
-        },
-        'America/New_York',
-      ),
-    ).toBe('Nov 3, 8:03 PM — description and subtasks added');
   });
 
   it('creates a new event 17 minutes later', () => {
@@ -53,5 +32,39 @@ describe('details_added merging', () => {
       at: '2026-11-04T01:20:00.000Z',
       parts: ['subtasks'],
     });
+  });
+});
+
+describe('activityText wording (documented in the design language)', () => {
+  const at = '2026-11-04T01:03:00.000Z';
+  it.each([
+    [{ type: 'added_to_backlog', at }, 'added to backlog'],
+    [{ type: 'added_to_today', at }, 'added to today'],
+    [{ type: 'planned', at, day: '2026-11-04' }, 'planned for Nov 4'],
+    [{ type: 'completed', at }, 'completed'],
+    [{ type: 'reopened', at }, 'reopened'],
+    [{ type: 'moved_to_backlog', at }, 'moved to backlog'],
+    [
+      { type: 'missed', at, day: '2026-11-09' },
+      'missed Nov 9, moved to backlog',
+    ],
+    [
+      {
+        type: 'details_added',
+        at,
+        data: { parts: ['list'], listName: 'Personal' },
+      },
+      'list set to Personal',
+    ],
+    [
+      {
+        type: 'details_added',
+        at,
+        data: { parts: ['description', 'subtasks', 'list'] },
+      },
+      'description, subtasks and list added',
+    ],
+  ] as const)('%j reads "%s"', (event, text) => {
+    expect(activityText(event as ActivityEvent)).toBe(text);
   });
 });

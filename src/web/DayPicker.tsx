@@ -1,3 +1,5 @@
+import { browserTimeZone, dateLabel } from './dates';
+import { queryKeys } from './query-keys';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -19,9 +21,10 @@ export function DayPicker({
   selected: string | null;
   onChoose: (day: string | null) => void;
 }) {
-  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const zone = browserTimeZone();
   const today = localDate(now, zone);
   const [calendar, setCalendar] = useState(false);
+  const [draft, setDraft] = useState(selected);
   const [month, setMonth] = useState(
     (selected && selected >= today ? selected : today).slice(0, 7),
   );
@@ -48,7 +51,7 @@ export function DayPicker({
   const from = calendar ? monthStart : today;
   const to = calendar ? end : items[2]!.day;
   const load = useQuery({
-    queryKey: ['day-load', from, to],
+    queryKey: queryKeys.dayLoadRange(from, to),
     queryFn: () => api.dayLoad(from, to),
   });
   const count = (day: string) =>
@@ -92,11 +95,7 @@ export function DayPicker({
               ‹
             </Button>
             <span>
-              {new Intl.DateTimeFormat('en-US', {
-                timeZone: 'UTC',
-                month: 'long',
-                year: 'numeric',
-              }).format(new Date(`${monthStart}T12:00:00Z`))}
+              {dateLabel(monthStart, { month: 'long', year: 'numeric' })}
             </span>
             <Button
               variant="ghost"
@@ -120,10 +119,10 @@ export function DayPicker({
                 type="button"
                 key={day}
                 data-day={day}
-                className={`calendar-day ${selected === day ? 'selected-day' : ''}`}
+                className={`calendar-day ${draft === day ? 'selected-day' : ''}`}
                 aria-label={`${formatDay(day)} — ${count(day)}`}
                 aria-current={day === today ? 'date' : undefined}
-                aria-pressed={selected === day}
+                aria-pressed={draft === day}
                 disabled={day < today}
                 tabIndex={
                   day ===
@@ -136,7 +135,7 @@ export function DayPicker({
                     : -1
                 }
                 onFocus={() => setFocused(day)}
-                onClick={() => onChoose(day)}
+                onClick={() => setDraft(day)}
                 onKeyDown={(event) => {
                   const step = {
                     ArrowLeft: -1,
@@ -164,6 +163,12 @@ export function DayPicker({
               </button>
             ))}
           </div>
+          <Button
+            disabled={!draft || draft < today}
+            onClick={() => onChoose(draft)}
+          >
+            Save date
+          </Button>
           <Button variant="ghost" onClick={() => setCalendar(false)}>
             Suggested days
           </Button>
@@ -180,7 +185,7 @@ export function DayPicker({
             >
               <span>{item.label}</span>
               <span className="day-load">{count(item.day)}</span>
-              {selected === item.day && <Icon name="check" size={18} />}
+              {selected === item.day && <Icon name="check" size={16} />}
             </button>
           ))}
           <button
@@ -200,7 +205,7 @@ export function DayPicker({
         aria-pressed={selected === null}
         onClick={() => onChoose(null)}
       >
-        Keep in backlog{selected === null && <Icon name="check" size={18} />}
+        Keep in backlog{selected === null && <Icon name="check" size={16} />}
       </button>
       {load.isError && <p role="alert">Could not load planned task counts.</p>}
     </div>

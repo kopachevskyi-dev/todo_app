@@ -1,12 +1,19 @@
 import { z } from 'zod';
 
-export const listColors = [
-  '#E3686A',
-  '#5FB4C6',
-  '#F0C24B',
-  '#8E7CC3',
-  '#6FBF8A',
+export const listPalette = [
+  { name: 'Red', hex: '#E3686A' },
+  { name: 'Teal', hex: '#5FB4C6' },
+  { name: 'Yellow', hex: '#F0C24B' },
+  { name: 'Purple', hex: '#8E7CC3' },
+  { name: 'Green', hex: '#6FBF8A' },
+  { name: 'Blue', hex: '#6A93D4' },
+  { name: 'Orange', hex: '#E8975A' },
+  { name: 'Pink', hex: '#D985A8' },
 ] as const;
+export const listColors = listPalette.map(({ hex }) => hex) as [
+  (typeof listPalette)[number]['hex'],
+  ...(typeof listPalette)[number]['hex'][],
+];
 export const listSchema = z.object({
   id: z.ulid(),
   name: z.string().trim().min(1).max(40),
@@ -25,7 +32,11 @@ export type PatchListRequest = z.infer<typeof patchListRequestSchema>;
 export const listsResponseSchema = z.object({ lists: z.array(listSchema) });
 export const healthResponseSchema = z.object({ ok: z.literal(true) });
 export const errorResponseSchema = z.object({
-  error: z.object({ code: z.string(), message: z.string() }),
+  error: z.object({
+    code: z.string(),
+    message: z.string(),
+    taskIds: z.array(z.ulid()).optional(),
+  }),
 });
 export const clockSchema = z.object({ now: z.iso.datetime() });
 export type ListsResponse = z.infer<typeof listsResponseSchema>;
@@ -64,9 +75,9 @@ export const examples = {
       message: 'A valid X-Timezone header is required.',
     },
   },
-  clock: { now: '2026-11-04T19:20:00.000Z' },
+  clock: { now: '2026-11-10T14:00:00.000Z' },
   today: {
-    day: '2026-11-04',
+    day: '2026-11-10',
     open: [
       {
         id: '01JBY1000000000000000000AB',
@@ -74,13 +85,13 @@ export const examples = {
         description: '',
         listId: null,
         list: null,
-        day: '2026-11-04',
+        day: '2026-11-10',
         completedAt: null,
         missedFrom: null,
         subtaskCount: 0,
         subtaskDoneCount: 0,
-        createdAt: '2026-11-04T14:00:00.000Z',
-        updatedAt: '2026-11-04T14:00:00.000Z',
+        createdAt: '2026-11-10T14:00:00.000Z',
+        updatedAt: '2026-11-10T14:00:00.000Z',
       },
     ],
     done: [
@@ -95,16 +106,561 @@ export const examples = {
           color: '#E3686A',
           position: 0,
         },
-        day: '2026-11-04',
-        completedAt: '2026-11-04T19:20:00.000Z',
+        day: '2026-11-10',
+        completedAt: '2026-11-10T14:00:00.000Z',
         missedFrom: null,
         subtaskCount: 0,
         subtaskDoneCount: 0,
         createdAt: '2026-11-02T14:12:00.000Z',
-        updatedAt: '2026-11-04T19:20:00.000Z',
+        updatedAt: '2026-11-10T14:00:00.000Z',
       },
     ],
     progress: { done: 1, total: 2 },
+  },
+  planTaskRequest: {
+    day: '2026-11-11',
+  },
+  todayOrderRequest: {
+    taskIds: ['01JBY3000000000000000000EF', '01JBY1000000000000000000AB'],
+  },
+  todayOrderResponse: {
+    taskIds: ['01JBY3000000000000000000EF', '01JBY1000000000000000000AB'],
+  },
+  dayInPastError: {
+    error: {
+      code: 'day_in_past',
+      message: 'Choose today or a later day.',
+    },
+  },
+  notInBacklogError: {
+    error: {
+      code: 'not_in_backlog',
+      message: 'One or more tasks are not in the backlog.',
+      taskIds: ['01JBY2000000000000000000CD'],
+    },
+  },
+  dayLoad: {
+    days: {
+      '2026-11-10': 2,
+      '2026-11-11': 0,
+      '2026-11-12': 3,
+    },
+  },
+  upcoming: {
+    today: '2026-11-10',
+    days: [
+      {
+        day: '2026-11-11',
+        tasks: [
+          {
+            id: '01JBZ100000000000000000001',
+            title: 'Call mom',
+            description: '',
+            listId: '01JBX0000000000000000H0ME0',
+            day: '2026-11-11',
+            completedAt: null,
+            missedFrom: null,
+            subtaskCount: 0,
+            subtaskDoneCount: 0,
+            createdAt: '2026-11-02T14:12:00.000Z',
+            updatedAt: '2026-11-02T14:12:00.000Z',
+            list: {
+              id: '01JBX0000000000000000H0ME0',
+              name: 'Home',
+              color: '#F0C24B',
+              position: 2,
+            },
+          },
+        ],
+      },
+      {
+        day: '2026-11-17',
+        tasks: [
+          {
+            id: '01JBZ100000000000000000002',
+            title: 'Dentist',
+            description: '',
+            listId: null,
+            day: '2026-11-17',
+            completedAt: null,
+            missedFrom: null,
+            subtaskCount: 0,
+            subtaskDoneCount: 0,
+            createdAt: '2026-11-02T14:12:00.000Z',
+            updatedAt: '2026-11-02T14:12:00.000Z',
+            list: null,
+          },
+        ],
+      },
+    ],
+  },
+  history: {
+    weekStart: '2026-11-02',
+    today: '2026-11-08',
+    days: [
+      {
+        day: '2026-11-02',
+        done: 3,
+        notDone: 0,
+        planned: 0,
+        groups: {
+          done: [
+            {
+              id: '01JBZ000000000000000000001',
+              title: 'Mon done 1',
+              description: '',
+              listId: null,
+              day: '2026-11-02',
+              completedAt: '2026-11-02T19:20:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-02T15:00:00.000Z',
+              updatedAt: '2026-11-02T19:20:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000002',
+              title: 'Mon done 2',
+              description: '',
+              listId: null,
+              day: '2026-11-02',
+              completedAt: '2026-11-02T19:21:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-02T15:00:00.000Z',
+              updatedAt: '2026-11-02T19:21:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000003',
+              title: 'Mon done 3',
+              description: '',
+              listId: null,
+              day: '2026-11-02',
+              completedAt: '2026-11-02T19:22:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-02T15:00:00.000Z',
+              updatedAt: '2026-11-02T19:22:00.000Z',
+              list: null,
+            },
+          ],
+          notDone: [],
+          planned: [],
+        },
+      },
+      {
+        day: '2026-11-03',
+        done: 4,
+        notDone: 1,
+        planned: 0,
+        groups: {
+          done: [
+            {
+              id: '01JBZ000000000000000000004',
+              title: 'Tue done 1',
+              description: '',
+              listId: null,
+              day: '2026-11-03',
+              completedAt: '2026-11-03T19:20:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-03T15:00:00.000Z',
+              updatedAt: '2026-11-03T19:20:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000005',
+              title: 'Tue done 2',
+              description: '',
+              listId: null,
+              day: '2026-11-03',
+              completedAt: '2026-11-03T19:21:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-03T15:00:00.000Z',
+              updatedAt: '2026-11-03T19:21:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000006',
+              title: 'Tue done 3',
+              description: '',
+              listId: null,
+              day: '2026-11-03',
+              completedAt: '2026-11-03T19:22:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-03T15:00:00.000Z',
+              updatedAt: '2026-11-03T19:22:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000007',
+              title: 'Tue done 4',
+              description: '',
+              listId: null,
+              day: '2026-11-03',
+              completedAt: '2026-11-03T19:23:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-03T15:00:00.000Z',
+              updatedAt: '2026-11-03T19:23:00.000Z',
+              list: null,
+            },
+          ],
+          notDone: [
+            {
+              id: '01JBZ000000000000000000008',
+              title: 'Tue missed 1',
+              description: '',
+              listId: null,
+              day: null,
+              completedAt: null,
+              missedFrom: '2026-11-03',
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-03T15:00:00.000Z',
+              updatedAt: '2026-11-04T15:00:00.000Z',
+              list: null,
+              movedTo: 'backlog',
+            },
+          ],
+          planned: [],
+        },
+      },
+      {
+        day: '2026-11-04',
+        done: 4,
+        notDone: 1,
+        planned: 0,
+        groups: {
+          done: [
+            {
+              id: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
+              title: "Renew driver's license",
+              description: '',
+              listId: '01JBX0000000000000000PERSN',
+              day: '2026-11-04',
+              completedAt: '2026-11-04T19:20:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-04T15:00:00.000Z',
+              updatedAt: '2026-11-08T17:00:00.000Z',
+              list: {
+                id: '01JBX0000000000000000PERSN',
+                name: 'Personal',
+                color: '#E3686A',
+                position: 0,
+              },
+            },
+            {
+              id: '01JBZ000000000000000000009',
+              title: 'Wed done 2',
+              description: '',
+              listId: null,
+              day: '2026-11-04',
+              completedAt: '2026-11-04T19:21:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-04T15:00:00.000Z',
+              updatedAt: '2026-11-04T19:21:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000010',
+              title: 'Wed done 3',
+              description: '',
+              listId: null,
+              day: '2026-11-04',
+              completedAt: '2026-11-04T19:22:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-04T15:00:00.000Z',
+              updatedAt: '2026-11-04T19:22:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000011',
+              title: 'Wed done 4',
+              description: '',
+              listId: null,
+              day: '2026-11-04',
+              completedAt: '2026-11-04T19:23:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-04T15:00:00.000Z',
+              updatedAt: '2026-11-04T19:23:00.000Z',
+              list: null,
+            },
+          ],
+          notDone: [
+            {
+              id: '01JBZ000000000000000000012',
+              title: 'Call the dentist',
+              description: '',
+              listId: null,
+              day: null,
+              completedAt: null,
+              missedFrom: '2026-11-04',
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-04T15:00:00.000Z',
+              updatedAt: '2026-11-05T15:00:00.000Z',
+              list: null,
+              movedTo: 'backlog',
+            },
+          ],
+          planned: [],
+        },
+      },
+      {
+        day: '2026-11-05',
+        done: 3,
+        notDone: 1,
+        planned: 0,
+        groups: {
+          done: [
+            {
+              id: '01JBZ000000000000000000013',
+              title: 'Thu done 1',
+              description: '',
+              listId: null,
+              day: '2026-11-05',
+              completedAt: '2026-11-05T19:20:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-05T15:00:00.000Z',
+              updatedAt: '2026-11-05T19:20:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000014',
+              title: 'Thu done 2',
+              description: '',
+              listId: null,
+              day: '2026-11-05',
+              completedAt: '2026-11-05T19:21:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-05T15:00:00.000Z',
+              updatedAt: '2026-11-05T19:21:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000015',
+              title: 'Thu done 3',
+              description: '',
+              listId: null,
+              day: '2026-11-05',
+              completedAt: '2026-11-05T19:22:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-05T15:00:00.000Z',
+              updatedAt: '2026-11-05T19:22:00.000Z',
+              list: null,
+            },
+          ],
+          notDone: [
+            {
+              id: '01JBZ000000000000000000016',
+              title: 'Thu missed 1',
+              description: '',
+              listId: null,
+              day: null,
+              completedAt: null,
+              missedFrom: '2026-11-05',
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-05T15:00:00.000Z',
+              updatedAt: '2026-11-06T15:00:00.000Z',
+              list: null,
+              movedTo: 'backlog',
+            },
+          ],
+          planned: [],
+        },
+      },
+      {
+        day: '2026-11-06',
+        done: 2,
+        notDone: 0,
+        planned: 0,
+        groups: {
+          done: [
+            {
+              id: '01JBZ000000000000000000017',
+              title: 'Fri done 1',
+              description: '',
+              listId: null,
+              day: '2026-11-06',
+              completedAt: '2026-11-06T19:20:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-06T15:00:00.000Z',
+              updatedAt: '2026-11-06T19:20:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000018',
+              title: 'Fri done 2',
+              description: '',
+              listId: null,
+              day: '2026-11-06',
+              completedAt: '2026-11-06T19:21:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-06T15:00:00.000Z',
+              updatedAt: '2026-11-06T19:21:00.000Z',
+              list: null,
+            },
+          ],
+          notDone: [],
+          planned: [],
+        },
+      },
+      {
+        day: '2026-11-07',
+        done: 0,
+        notDone: 0,
+        planned: 0,
+        groups: {
+          done: [],
+          notDone: [],
+          planned: [],
+        },
+      },
+      {
+        day: '2026-11-08',
+        done: 1,
+        notDone: 0,
+        planned: 2,
+        groups: {
+          done: [
+            {
+              id: '01JBZ000000000000000000019',
+              title: 'Sun done 1',
+              description: '',
+              listId: null,
+              day: '2026-11-08',
+              completedAt: '2026-11-08T15:05:00.000Z',
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-08T15:00:00.000Z',
+              updatedAt: '2026-11-08T15:05:00.000Z',
+              list: null,
+            },
+          ],
+          notDone: [],
+          planned: [
+            {
+              id: '01JBZ000000000000000000020',
+              title: 'Sun open 2',
+              description: '',
+              listId: null,
+              day: '2026-11-08',
+              completedAt: null,
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-08T15:00:00.000Z',
+              updatedAt: '2026-11-08T15:00:00.000Z',
+              list: null,
+            },
+            {
+              id: '01JBZ000000000000000000021',
+              title: 'Sun open 1',
+              description: '',
+              listId: null,
+              day: '2026-11-08',
+              completedAt: null,
+              missedFrom: null,
+              subtaskCount: 0,
+              subtaskDoneCount: 0,
+              createdAt: '2026-11-08T15:00:00.000Z',
+              updatedAt: '2026-11-08T15:00:00.000Z',
+              list: null,
+            },
+          ],
+        },
+      },
+    ],
+  },
+  taskDetail: {
+    task: {
+      id: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
+      title: "Renew driver's license",
+      description: 'Bring identification and the renewal form.',
+      listId: '01JBX0000000000000000PERSN',
+      day: '2026-11-10',
+      completedAt: '2026-11-10T14:00:00.000Z',
+      missedFrom: null,
+      subtaskCount: 2,
+      subtaskDoneCount: 1,
+      createdAt: '2026-11-02T14:12:00.000Z',
+      updatedAt: '2026-11-10T14:00:00.000Z',
+    },
+    subtasks: [
+      {
+        id: '01JBX000000000000000000001',
+        taskId: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
+        title: 'Gather identification',
+        done: true,
+        position: 0,
+        createdAt: '2026-11-02T14:20:00.000Z',
+      },
+      {
+        id: '01JBX000000000000000000002',
+        taskId: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
+        title: 'Fill out renewal form',
+        done: false,
+        position: 1,
+        createdAt: '2026-11-02T14:21:00.000Z',
+      },
+    ],
+    activity: [
+      {
+        type: 'added_to_backlog',
+        at: '2026-11-02T14:12:00.000Z',
+        day: null,
+        text: 'added to backlog',
+      },
+      {
+        type: 'details_added',
+        at: '2026-11-02T14:15:00.000Z',
+        day: null,
+        text: 'description and list added',
+      },
+      {
+        type: 'planned',
+        at: '2026-11-09T14:00:00.000Z',
+        day: '2026-11-10',
+        text: 'planned for Nov 10',
+      },
+      {
+        type: 'completed',
+        at: '2026-11-10T14:00:00.000Z',
+        day: '2026-11-10',
+        text: 'completed',
+      },
+    ],
   },
 } as const;
 
@@ -112,6 +668,7 @@ export const taskTitleSchema = z.string().trim().min(1).max(200);
 export const createTaskRequestSchema = z.object({
   title: taskTitleSchema,
   target: z.enum(['backlog', 'today']),
+  day: z.iso.date().nullable().optional(),
   listId: z.ulid().optional(),
 });
 export const taskSchema = z.object({
@@ -146,21 +703,25 @@ export const patchTaskRequestSchema = z
   })
   .strict();
 export type PatchTaskRequest = z.infer<typeof patchTaskRequestSchema>;
+export const activityTypes = [
+  'added_to_backlog',
+  'added_to_today',
+  'details_added',
+  'planned',
+  'completed',
+  'reopened',
+  'moved_to_backlog',
+  'missed',
+] as const;
+export const activityTypeSchema = z.enum(activityTypes);
+export type ActivityType = z.infer<typeof activityTypeSchema>;
 export const activityItemSchema = z.object({
-  type: z.enum([
-    'added_to_backlog',
-    'added_to_today',
-    'details_added',
-    'planned',
-    'completed',
-    'reopened',
-    'moved_to_backlog',
-    'missed',
-  ]),
+  type: activityTypeSchema,
   at: z.iso.datetime(),
   day: z.iso.date().nullable(),
   text: z.string(),
 });
+/** Subtask responses include the stored position and UTC creation instant. */
 export const subtaskSchema = z.object({
   id: z.ulid(),
   taskId: z.ulid(),
@@ -210,6 +771,7 @@ export const searchResponseSchema = z.object({
 export const planTaskRequestSchema = z
   .object({ day: z.iso.date().nullable() })
   .strict();
+/** Duplicate taskIds are rejected with 400 invalid_request. */
 export const planTodayRequestSchema = z
   .object({
     taskIds: z
@@ -222,7 +784,19 @@ export const planTodayRequestSchema = z
       ),
   })
   .strict();
+/** Tasks follow the order of taskIds in the request. */
 export const planTodayResponseSchema = z.object({ tasks: z.array(taskSchema) });
+export const setTodayOrderRequestSchema = z
+  .object({
+    taskIds: z
+      .array(z.ulid())
+      .refine(
+        (ids) => new Set(ids).size === ids.length,
+        'Task ids must be unique.',
+      ),
+  })
+  .strict();
+export const setTodayOrderResponseSchema = setTodayOrderRequestSchema;
 export const dayLoadResponseSchema = z.object({
   days: z.record(z.iso.date(), z.number().int().nonnegative()),
 });
@@ -265,3 +839,8 @@ export const historyResponseSchema = z.object({
   ),
 });
 export type HistoryResponse = z.infer<typeof historyResponseSchema>;
+
+export const upcomingResponseSchema = z.object({
+  today: z.iso.date(),
+  days: z.array(z.object({ day: z.iso.date(), tasks: z.array(taskRowSchema) })),
+});

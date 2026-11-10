@@ -1,3 +1,4 @@
+import { invalidateTaskQueries } from './invalidate-task-queries';
 import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Subtask } from '../shared/contract';
@@ -25,13 +26,7 @@ export function Subtasks({
     pending.current.add(key);
     try {
       await work();
-      await Promise.all(
-        ['task', 'backlog', 'today', 'search'].map((key) =>
-          client.invalidateQueries({
-            queryKey: key === 'task' ? [key, taskId] : [key],
-          }),
-        ),
-      );
+      await invalidateTaskQueries(client, [taskId]);
       setError(undefined);
       return true;
     } catch (failure) {

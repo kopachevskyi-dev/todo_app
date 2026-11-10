@@ -1,0 +1,22 @@
+export const queryKeys = {
+  backlog: ['backlog'] as const,
+  backlogList: (list?: string) => ['backlog', list] as const,
+  backlogPicker: ['backlog', 'picker'] as const,
+  today: ['today'] as const,
+  todayList: (list?: string) => ['today', list] as const,
+  upcoming: ['upcoming'] as const,
+  history: ['history'] as const,
+  historyWeek: (
+    week: string | undefined,
+    list: string | undefined,
+    today: string | undefined,
+  ) => ['history', week, list, today] as const,
+  search: ['search'] as const,
+  searchQuery: (q?: string) => ['search', q] as const,
+  dayLoad: ['day-load'] as const,
+  dayLoadRange: (from: string, to: string) => ['day-load', from, to] as const,
+  counts: ['counts'] as const,
+  task: ['task'] as const,
+  taskDetail: (id?: string) => ['task', id] as const,
+  lists: ['lists'] as const,
+};

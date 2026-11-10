@@ -20,7 +20,7 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 ## 1. Principles
 
 1. **One task, three places.** A task is created in the Backlog, planned into a day (Today), and remembered in History. It is always the same object with the same detail view; only its state changes.
-2. **Capture is instant, detail is optional.** A title and Enter/Add is a complete task. Description, list, subtasks and day come later.
+2. **Capture is instant, detail is optional.** A title and Enter/Add is a complete task. List and day can be set during capture; description and subtasks come later.
 3. **Calm and light.** Soft sage ground, off-white surfaces, one warm yellow action, one blue for focus and selection. No gradients, no emoji, no decorative illustration.
 4. **Color is never the only signal.** Done = filled dark check. Selected = blue border or tinted row. Missed = dashed box. List color always comes with the list name.
 5. **Same components, two layouts.** Desktop shows list and detail side by side. Mobile shows them as pushed screens. Rows, fields, chips, sheets and menus share one visual language.
@@ -33,17 +33,40 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 |---|---|
 | **Backlog** | Open tasks with no day. Count in nav = number of these. |
 | **Planned** | A task with a day. It leaves the Backlog the moment a day is set. |
-| **Today** | Open tasks planned for today. Nav badge = open tasks left today (not total). Header shows "N of M done". |
-| **Done** | Has a completion timestamp. Stays in its day. |
-| **History** | Read-only-feeling review of past days, by week. Each day shows done and not-done tasks, with times. |
-| **Not done** | A task planned for a day that ended unfinished. **[decision]** It rolls over to the next day automatically and the old day shows "Moved to Thu, Nov 5". |
-| **Activity log** | Each task keeps timestamped events: added to backlog, description and subtasks added, planned for {date}, completed. Shown newest last in the detail view. |
+| **Today** | Tasks currently planned for today, grouped into open and done. Nav badge = open tasks left today (not total). Header shows "N of M done", counting the whole day even when lists are filtered; a separate "N shown" label counts the filtered results. |
+| **Done** | Completing a task sets its day to local today in the request's time zone; reopening keeps it on local today. In History, a day's done group contains tasks with a completed event carrying that stored day, minus later reopened events carrying the same day. Moving a task to the Backlog leaves its historical completion in that group. |
+| **History** | Review of days, by week. Today and past days use the same event-based done rule. Events belong to their stored day, regardless of the viewing time zone. |
+| **Not done** | A task planned for a day that ended unfinished. At local midnight it returns to the Backlog; History records it as "Missed" on its original day. Nothing moves into a new day automatically. Backlog rows show the previous date ("from Mon, Nov 9") until the task is planned again. |
+| **Activity log** | Each task keeps timestamped events using the wording below. Shown newest last in the detail view. |
+
+Activity event wording (exact text, lowercase):
+
+| Event | Text |
+|---|---|
+| Created in Backlog | `added to backlog` |
+| Created in Today | `added to today` |
+| Planned or rescheduled | `planned for {date}` |
+| Completed | `completed` |
+| Reopened | `reopened` |
+| Moved to Backlog | `moved to backlog` |
+| Missed a planned day | `missed {date}, moved to backlog` |
+| Description added | `description added` |
+| Subtasks added | `subtasks added` |
+| List set (only detail in the event, with a stored name) | `list set to {list name}` |
+| List detail without a stored name | `list added` |
+| Two details merged | `{first} and {second} added` |
+| Three details merged | `{first}, {second} and {third} added` |
+
+`{date}` is the event's stored day formatted as abbreviated month and day, without a weekday or year (for example, `Nov 9`). `{list name}` is the name stored with the event, for example `Personal`. Detail names are exactly `description`, `subtasks`, and `list`, in the order first edited. Edits within 15 minutes of the first detail event merge, keeping its timestamp and each detail name once. For example, `description and subtasks added`, `description and list added`, `subtasks and list added`, or `description, subtasks and list added`; other edit orders use the same two- or three-detail template. Merged list additions use `list` rather than its name.
 
 Quick-add rules:
 - In Backlog the field creates a task with no day. Placeholder: "Add to backlog".
 - In Today the field creates a task planned for today. Placeholder: "Add to today".
 - New tasks appear at the top of the list.
-- **From backlog** (Today screen) opens a picker of backlog tasks to pull into today **[decision]**; not drawn.
+- **Add from Backlog** (Today screen) opens the picker of the same name. Its scope is **All lists**, independent of the screen's filter. The commit button reads "Add {count} to Today" and is disabled at zero and while saving.
+- When the Backlog holds missed tasks that have not been planned again, Today shows a compact "Review {count} unfinished" entry across all lists, hidden at zero. It opens the same Add from Backlog picker at its Unfinished group, before the remaining Backlog tasks. Each unfinished row shows its original date ("was Mon, Nov 9"). Users choose which tasks to add; unselected tasks stay in the Backlog, and adding preserves task identity and list. The count refreshes after planning.
+- Saving from the picker is all-or-nothing. After saving, close it, refresh affected views and show "Added {count} to Today" in the main notification area.
+- On a conflict, keep the picker open, refetch the choices, remove ineligible tasks and retain the valid selection. Explain: "1 task was already planned elsewhere. Add the remaining 1?" (pluralize for more tasks). Other failures retain the full selection and show "Couldn't add tasks. Try again."; retry uses the same commit button.
 
 Lists: Personal, Work, Home. Lists are optional per task (a new task has none until set). A task row shows the list dot and name only when a list is set.
 
@@ -80,7 +103,7 @@ Rules:
 - Exactly one yellow `primary` button per view.
 - `focus` blue is for borders, rings and icons. Do not use it for small text.
 - List dots are decoration plus a text label. Never show a dot without its name.
-- New user lists **[decision]** pick from the same three hues plus: `#8E7CC3` (purple), `#6FBF8A` (green). Keep lightness similar to the existing dots.
+- Lists use eight named presets **[decision]**: Red `#E3686A`, Teal `#5FB4C6`, Yellow `#F0C24B`, Purple `#8E7CC3`, Green `#6FBF8A`, Blue `#6A93D4`, Orange `#E8975A`, Pink `#D985A8`. New lists default to Purple; existing colors stay unchanged.
 
 ### 3.2 Typography
 
@@ -185,7 +208,7 @@ Icons used: backlog (layered stack), today (calendar), history (clock), search, 
 
 ### 3.7 Touch and hit targets
 
-Minimum interactive size 44×44 everywhere. Mobile rows are 64 high, so a full row is a tap target. The 22px checkbox has a **44×44 hit area [decision]** (extend with padding; keep the visual at 22).
+Minimum interactive size 44×44 everywhere. Mobile rows are 64 high, so a full row is a tap target. The 22px checkbox has a **44×44 hit area [decision]**. Completion is a native button with checkbox semantics, beside the task link; their hit areas do not overlap.
 
 ---
 
@@ -195,10 +218,12 @@ For every component: anatomy, sizes, states. States marked **[decision]** are no
 
 ### 4.1 Task row
 
+Completion and opening use sibling controls: a checkbox button labeled `Complete "{title}"` or `Reopen "{title}"`, followed by the task link. Tab reaches each separately; Space toggles completion and Enter on the link opens the card. Subtask progress reads `done/total`. A missed History row has a non-interactive icon + "Missed" marker outside its link, with no checkbox role.
+
 Anatomy (left to right): checkbox, text block (title, meta line), optional trailing time (done rows) or chevron (open rows).
 
 - Height: min 60 desktop, 64 mobile. Padding 8/16. Gap 14. Bottom divider `divider-row`.
-- Title: 16, `text`. Meta: 13, `text-muted`, list dot (10×10, radius 3) + text. Meta text format: `{List} · {extra}`, extras: "3 subtasks", "from backlog, 2 days", "moved to Thu, Nov 5".
+- Title: 16, `text`. Meta: 13, `text-muted`, list dot (10×10, radius 3) + text. Meta text format: `{List} · {extra}`, extras: "1/2" (completed/total subtasks), "from backlog, 2 days", "moved to Thu, Nov 5".
 
 | State | Look |
 |---|---|
@@ -206,7 +231,7 @@ Anatomy (left to right): checkbox, text block (title, meta line), optional trail
 | Hover (desktop) **[decision]** | Background `row-selected` at 50% |
 | Pressed (mobile) **[decision]** | Background `row-selected` |
 | Selected | Background `row-selected`, radius 14, desktop backlog title weight 500. Detail panel shows this task |
-| Done | Filled checkbox, title `text-muted` (History: `text-2`), time on the right in 13 `text-muted`, no chevron |
+| Done | Filled checkbox, no title strike-through, title `text-muted` (History: `text-2`), time on the right in 13 `text-muted`, no chevron |
 | Missed (History) | Dashed checkbox, title `text-2`, meta carries "moved to {day}" |
 | Focus (keyboard) | Focus ring on the row |
 
@@ -223,7 +248,7 @@ Row opens the task: desktop = shows it in the right panel, mobile = pushes the t
 | Missed | `1.5px dashed #AEB5AB`, fill `#FFFFFF`, not interactive in History |
 | Pressed **[decision]** | Scale 0.92, 80ms |
 
-Checking a task moves it to the "DONE" group of the same screen with the time of completion.
+Checking a task sets its day to local today and moves it to Today's "DONE" group with the time of completion. History also includes it in the done group for the stored completion day.
 
 ### 4.3 Quick-add field
 
@@ -237,6 +262,8 @@ Height min 60 (desktop and mobile sheet: 56), radius 16, `surface-raised`, plus 
 
 Desktop: the Add button (44 high, `primary`, radius 12, padding 0 16, 14/500) sits inside the field on the right with an "Enter" key chip (13, radius 6, background `rgba(31,36,33,.1)`). Enter and the button do the same thing. Under the field, a hint line, 13 `text-muted`: "A title is enough. Add details, a list or a day later."
 
+Optional compact List and Day buttons show their current values beside the title on desktop and in the mobile sheet. Today defaults to Today; Backlog defaults to No day. A single active list filter supplies the list; no filter or several selected lists defaults to No list, with a note for several lists. Enter/Add creates the task with those values. If it is outside the current day or list filter, an Added to notification offers Open. Failed adds retain title, list and day. Dismissal retains each screen's draft in memory; success or clearing the title resets it. The task card's list picker offers New list using the shared name/color form and selects the saved list in the same card.
+
 Mobile: the field lives in the capture bottom sheet (4.11), opened by the FAB.
 
 ### 4.4 Buttons
@@ -244,7 +271,7 @@ Mobile: the field lives in the capture bottom sheet (4.11), opened by the FAB.
 | Variant | Look | Where |
 |---|---|---|
 | Primary | `primary` fill, no border, radius 12, label 15/500 `text`. Height 48 (panel footer, mobile action bar), 44 (inline Add, desktop), 48 (sheet Add) | Add, Plan for {day} |
-| Outline | `surface-raised` fill, `1px solid #E1E5DC`, radius 12, 15/500 `text`, height 44–48, padding 0 20 | Delete (desktop), From backlog |
+| Outline | `surface-raised` fill, `1px solid #E1E5DC`, radius 12, 15/500 `text`, height 44–48, padding 0 20 | Delete (desktop), Add from Backlog |
 | Outline strong | Transparent fill, `1px solid #AEB5AB`, radius 12, 15/500 | Reopen, Move to backlog (actions on a done task) |
 | Icon button | 44×44 (48×48 in mobile action bar), radius 12, `1px solid #E1E5DC`, `surface-raised` | Previous/Next week, mobile Delete |
 | Ghost icon | 44×44, no border, `text-muted` | Close (detail panel) |
@@ -281,28 +308,36 @@ Load counts: "N task(s)" is how many tasks are already planned that day; "Free" 
 
 Selected item: background `row-selected`, weight 500, blue check (16, stroke 2.6) at the far right after the count.
 
+Custom calendar **[decision]**: selection uses a 2px `focus` border and `aria-pressed`, without the suggested-item check; today is underlined. Day-load counts use the Meta type token (13px) in `text-muted`. The calendar was not drawn in the v1 mockups.
+
 | Shell | Desktop | Mobile |
 |---|---|---|
 | Container | Popover under the Day field, offset left 84px from field row, top 52px, width 300, padding 8, radius 18, `surface-raised`, `1px solid #E1E5DC`, popover shadow | Bottom sheet (4.11) titled "Choose a day" |
 | Item | Height 44, padding 0 12, radius 12, 15px | Height 52, padding 0 12, radius 14, 16px |
 
-Choosing an item sets the Day field and updates the primary button label. It does not commit: committing is the primary button **[decision]**. Escape or tap on the scrim closes without change.
+Named choices (Today, Tomorrow, Weekend, Keep in backlog) save immediately and close the picker. In the custom calendar, selecting or browsing dates only changes the draft selection; the internal "Save date" button saves it. Escape or tapping the scrim discards the draft. The Day field always displays the saved value ("Today" for the current day), shows "Saving…" while pending, and returns to the saved value with an error and Retry on failure. There is no separate footer planning action. Moving to Backlog clears the day through the same planning model and refreshes counts, rows, search and History.
+
+### Notifications
+
+One shared notification sits above the app content near the bottom of the viewport, above mobile navigation. It is a polite, atomic live region with a message and up to two keyboard-reachable action buttons. A new notification replaces the previous one. It dismisses after about six seconds; hovering or focusing it pauses dismissal, with six seconds available after leaving.
+
+A successful day save says "Moved to Wed, Nov 11", "Moved to Today", or "Moved to Backlog", with Undo and Open day. Undo saves the previous day or Backlog through the regular planning API and refreshes affected views. Open day navigates to Today, Backlog, or the selected day and week in History. Failed saves offer Retry. Bulk planning reuses the same notification for "Added {count} to Today".
 
 ### 4.7 Detail view (right panel on desktop, full screen on mobile)
 
 Order of blocks, top to bottom: header (label "Task" 14/500 `text-muted`, close button on desktop; back link on mobile), title, status pill (only if done), description, fields (List, Day), Subtasks, Activity, footer actions.
 
-- Title: editable text, in place. Description: editable multi-line, 15/1.55 `text-2`. Placeholder "Add a description" **[decision]**.
+- Title: editable text, in place. A labeled completion checkbox sits next to it (`Complete "{title}"` / `Reopen "{title}"`); completion and reopening keep the card open and refresh the row and day progress. Checking every subtask leaves the parent open. A secondary "⋯" button ("More task actions") opens a Delete menu item with the existing confirmation. Description: editable multi-line, 15/1.55 `text-2`. Placeholder "Add a description" **[decision]**.
 - Subtasks: heading H3 17/600; rows min-height 44, 15px, checkbox 20; last row "Add subtask" with plus icon in `text-muted`. Done subtask: filled check, text `text-muted`.
-- Activity: heading H3; each line 13 `text-muted` with an 8px dot (`check-border`; the "completed" event uses `text`). Format: `{Mon D}, {h:mm AM/PM} — {event}`.
+- Activity: an `Activity (N)` button in the H3 heading exposes `aria-expanded`; collapsed by default when opening an open task, expanded when opening a completed task; each line 13 `text-muted` with an 8px dot (`check-border`; the "completed" event uses `text`). Format: `{Mon D}, {h:mm AM/PM} — {event}`.
 - Status pill: height 32, padding 0 12, radius 10, fill `text`, white text 13/500, 14px white check. Text: "Completed at 2:20 PM" on Today, "Completed Nov 4, 2:20 PM" in History.
-- Footer: desktop = pinned to panel bottom (`margin-top: auto`), Delete (outline, 48 high, padding 0 20) + one flexible action. Mobile = sticky bar, padding 12/16/20, top border `divider-menu`, trash icon button 48×48 + flexible action.
+- Footer: desktop = pinned to panel bottom (`margin-top: auto`), the completed-task action when applicable. Mobile = sticky bar, padding 12/16/20, top border `divider-menu`, completed-task action when applicable. Delete lives in the title’s secondary More menu on both layouts.
 
 Footer action by context:
 
 | Task state | Context | Action |
 |---|---|---|
-| Open, no day | Backlog | Primary "Plan for {day}" (needs a day chosen; before that: "Choose a day" opening the picker) |
+| Open | Any | No footer action; use the Day field to plan |
 | Done | Today | Outline strong "Reopen" |
 | Done | History | Outline strong "Move to backlog" |
 
@@ -321,7 +356,8 @@ Width basis 248. Background `surface-side`. Top to bottom: app name, search fiel
 | Active | Background `nav-active`, label weight 600 `text`, `aria-current="page"` |
 | Hover **[decision]** | Background `nav-active` at 50% |
 
-- Lists section: label "LISTS" (section label style), items 40 high, 12×12 dot radius 4, 15px. "New list" row with plus, `text-muted`. Clicking a list filters the current screen to that list **[decision]**.
+- Selected list filters use weight 600 and `nav-active`; desktop hover uses `nav-active` at 50%, matching primary navigation **[decision]**.
+- Lists section: label "LISTS" (section label style), items 40 high, 12×12 dot radius 4, 15px. "New list" row with plus, `text-muted`. Clicking a list toggles its selection for the current screen; selected lists combine with OR and expose `aria-pressed`. Backlog, Today and History store selection in their own URL as `lists=<id>,<id>`. Navigation opens screens unfiltered; reload and browser Back retain the URL selection. With no selection, all lists and tasks without a list are included. There is no separate "No list" filter. Both layouts show "Showing: Work, Home" beside results and a "Show all" button to clear selection; the unfiltered scope reads "All lists".
 - Settings: 44 high, same as nav item without count.
 
 ### 4.9 Bottom tab bar (mobile)
@@ -344,22 +380,24 @@ The bar is hidden on pushed task screens (they have their own action bar). It st
 Anchored to the bottom edge, full width, `surface`, top radius 24, sheet shadow, padding 10 top / 16 sides / 24–28 bottom. A 40×4 `handle` bar centered at the top. Scrim `rgba(31,36,33,.38)` over everything else.
 
 Two sheets are drawn:
-- **Capture** ("New task"): label 14/500 `text-muted`, quick-add field (4.3), hint 13 "A title is enough. Add details later." on the left and `Add` primary button (48 high, padding 0 28) on the right. The keyboard is the real system keyboard (never drawn); the sheet rides above it.
+- **Capture** ("New task"): label 14/500 `text-muted`, quick-add field (4.3), hint 13 "A title is enough. Add details later." on the left and `Close` outline and `Add` primary buttons (48 high, padding 0 28) on the right. Dismissing the sheet keeps its unsent draft in memory for that screen; adding a task or clearing the field clears the draft. The keyboard is the real system keyboard (never drawn); the sheet rides above it.
 - **Choose a day**: H3 title, list of day items (4.6).
 
 Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 ### 4.12 Section label, count pill, progress
 
+- Today ordering: open tasks with a saved position come first in ascending order; unpositioned tasks follow newest-first. Each open row has visible 44px Move up / Move down buttons, operable by keyboard and touch, disabled at the visible ends. In a filtered view, moves swap visible neighbors while retaining hidden tasks in the full saved order. Order persists after reload; leaving Today by moving, completing, or rollover clears the position. Completed tasks remain a separate group; other days, lists, and Backlog keep their existing order.
+- Today: no total-count pill beside H1 on either layout; one date and day-progress summary (`2 of 5 done`), open rows first, then a "Completed" heading only when completed rows exist. Quick-add and task surfaces stay available.
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
-- Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = done/planned. Min width 180 on desktop. On mobile the bar sits left of the "From backlog" button.
+- Progress (Today): text "2 of 5 done" (14 `text-2`) above a bar 8 high, radius 4, track `nav-active`, fill `text`; fill width = completed tasks currently planned for today / all tasks currently planned for today. Min width 180 on desktop. On mobile the bar sits left of the "Add from Backlog" button.
 
 ### 4.13 Week strip (History)
 
 **Desktop**: CSS grid, `repeat(auto-fit, minmax(min(84px,100%),1fr))`, gap 10. Each day is a button: min-height 104, padding 12/14, radius 16, `surface-raised`, `1px solid #E1E5DC`. Content, top to bottom, gap 6: weekday (13 `text-muted`, "Sun · today" on the current day), number (24/600), bar (6 high, radius 3, track `nav-active`, fill `text`), ratio text (13 `text-2`: "3 of 3", "4 of 5", "No plan").
 
-**Mobile**: 7 equal columns, gap 4, side padding 12. Each day is a button, min-height 84, padding 10 0, radius 14, centered: weekday letter (12 `text-muted`), a 30×30 circle with the date (17/600), bar (28×5, radius 3). The ratio text is not shown on mobile; it appears in the day summary below ("4 of 5 done · 1 moved to Thursday").
+**Mobile**: 7 equal columns, gap 4, side padding 12. Each day is a button, min-height 84, padding 10 0, radius 14, centered: weekday letter (12 `text-muted`), a 30×30 circle with the date (17/600), bar (28×5, radius 3). The ratio text is not shown on mobile; it appears in the day summary below ("4 of 5 done · 1 missed").
 
 | State | Look |
 |---|---|
@@ -370,9 +408,25 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 Selecting a day updates the day heading, summary and groups. Week arrows move by 7 days. Header sub line: "Nov 2–8" (mobile) / "Nov 2–8 · what you planned and what you finished" (desktop). Selected day persists when switching weeks if possible, otherwise the first day with tasks **[decision]**.
 
-Day heading (H2): "Wednesday, November 4". Summary (15 desktop / 14 mobile, `text-muted`): "4 of 5 done · 1 moved to Thursday". Groups: "DONE · n" (sorted by completion time), "NOT DONE · n".
+Day heading (H2): "Wednesday, November 4". Summary (15 desktop / 14 mobile, `text-muted`): "4 of 5 done · 1 missed". Groups: "DONE · n" (sorted by completion time), "NOT DONE · n".
 
-### 4.14 Chips and meta
+### 4.14 Upcoming agenda
+
+Upcoming is a secondary screen at `/upcoming`, reached by a link in the Today header: "Upcoming · N" for the total number of open future tasks, or "Upcoming" when there are none. It does not add a primary navigation item.
+
+The screen uses the shared header and task rows on desktop and mobile. All open tasks planned after local today appear in date groups ascending, with short headings such as "Tue, Nov 17". Each group is an accessible region named by its heading. Rows show their list and open the usual task detail panel, drawer, or pushed screen. Saving a new day, completing, or deleting a task updates the agenda and Today entry count without a reload.
+
+With no future tasks, show "Nothing planned ahead", explain "Tasks you plan for a future day will appear here.", and provide a "Plan from Backlog" link to Backlog. Loading and retryable errors use the existing inline patterns. No quick-add or FAB appears on this screen; the three primary navigation items stay available.
+
+### List management **[decision]**
+
+New list and Manage lists are separate actions outside the scrolling filter controls. Desktop retains fast list filtering in the sidebar. Manage lists opens a scrollable list of all lists with New list, per-list Edit (name and color), and Delete. Deleting a list requires confirmation and leaves its tasks without a list.
+
+Create and edit share one form: labeled name field (1–40 characters), eight named color swatches, Save and Cancel. Purple is selected initially for creation; editing previews the current color. Each swatch includes its name and dot; selection adds a check, outline and accessible name such as "Blue, selected". Saving writes name and color together; errors keep the form open for retry.
+
+The form is a centered desktop dialog and a mobile bottom sheet. At 360 and 390 px the swatches use a four-column grid; fields and actions fit without horizontal scrolling. The sheet follows the visual viewport above the software keyboard, with vertical scrolling when needed. Focus enters the form, Tab stays inside the dialog, and Escape or Cancel closes it and returns focus to its opener.
+
+### 4.15 Chips and meta
 
 - List dot: 10×10 radius 3 in meta lines; 12×12 radius 4 in fields and nav.
 - Key chip (desktop Add button): "Enter", 13, padding 2/8, radius 6.
@@ -410,7 +464,7 @@ All three list screens use the same main-column structure: header, quick-add (Ba
 | Screen | Header | Content |
 |---|---|---|
 | Backlog | H1 "Backlog", count pill, sub line "Everything you need to do someday. No date until you plan it." | Quick-add, task rows |
-| Today | H1 "Today", date line "Wednesday, November 4"; progress block on the right | Quick-add + "From backlog" button on one line, open rows, then "DONE · n" group |
+| Today | H1 "Today", date line "Wednesday, November 4"; progress block on the right | Quick-add + "Add from Backlog" button on one line, open rows, then a "Completed" heading and completed rows |
 | History | H1 "History", sub line, prev/next week buttons | Week strip, day heading + summary, "DONE · n", "NOT DONE · n" |
 
 ---
@@ -423,7 +477,7 @@ Design size 390×844. Works from 360 wide up. No fake status bar and no fake key
 
 - **Three tabs** at the bottom: Backlog, Today, History. They replace the sidebar. Lists (Personal, Work, Home) become a filter on the Backlog and Today headers **[decision]**; Search and Settings live behind a header icon on each tab **[decision]**, not drawn.
 - **One + button** (FAB) for capture, reachable by the thumb at bottom right.
-- **Task opens as a full screen** pushed on top of the tab screen, with a "‹ {Previous screen}" back link at top left (44 high) and a sticky action bar at the bottom. The tab bar is hidden there.
+- **Task opens as a full screen** pushed on top of the tab screen, with a chevron-left icon and "{Previous screen}" back link at top left (44 high) and a sticky action bar at the bottom. The tab bar is hidden there.
 - **Choosers are bottom sheets**, never popovers: capture, day picker.
 - **The scrolling area** is the middle region; header scrolls with content, tab bar and action bar stay fixed.
 
@@ -449,7 +503,7 @@ Design size 390×844. Works from 360 wide up. No fake status bar and no fake key
 | Detail panel | Full-screen task screen |
 | Day popover | "Choose a day" bottom sheet |
 | Week strip with ratio text | Compact week strip; ratio in the day summary |
-| "Delete" outline button with label | 48×48 trash icon button with `aria-label` |
+| "⋯" More menu with Delete | Same More menu and confirmation |
 | Panel Close button | Back link |
 | Hover states | Pressed states |
 
@@ -462,10 +516,10 @@ One task, "Renew driver's license", across the four moments. This is also the te
 | # | Moment | User action | Result in the app |
 |---|---|---|---|
 | 1 | Mon, Nov 2, 9:12 AM | Types the title in the quick-add field and presses Enter (desktop) or taps + then Add (mobile) | Task is created in the Backlog at the top, no list, no day, no description. Backlog count 7 → 8. Activity: "added to backlog" |
-| 2 | Tue, Nov 3, 8:03 PM | Opens the task from the Backlog. Writes a description, adds 3 subtasks, sets the list to Personal | Activity: "description and subtasks added" |
+| 2 | Tue, Nov 3, 8:03 PM | Opens the task from the Backlog. Writes a description, adds 3 subtasks, sets the list to Personal | Activity: "description, subtasks and list added" |
 | 2b | Tue, Nov 3, 8:05 PM | Opens the Day field, sees "Tomorrow, Wed 4 — 4 tasks", picks it, presses "Plan for Wed, Nov 4" | Task leaves the Backlog (count 8 → 7), appears in Today on Wed. Activity: "planned for Nov 4" |
-| 3 | Wed, Nov 4, 2:20 PM | Checks the task off in Today | Task moves to "DONE · 2" with time 2:20 PM. Header "2 of 5 done". Status pill "Completed at 2:20 PM". Activity: "completed" |
-| 4 | Sun, Nov 8 | Opens History, taps Wed 4 in the week strip, taps the task | Day shows "4 of 5 done · 1 moved to Thursday". Task shows full activity from creation to completion. "Move to backlog" is available |
+| 3 | Wed, Nov 4, 2:20 PM | Checks the task off in Today | Task moves to "Completed" with time 2:20 PM. Header "2 of 5 done". Status pill "Completed at 2:20 PM". Activity: "completed" |
+| 4 | Sun, Nov 8 | Opens History, taps Wed 4 in the week strip, taps the task | Day shows "4 of 5 done · 1 missed". Task shows full activity from creation to completion. "Move to backlog" is available |
 
 Navigation links that connect these screens in the mockups:
 
@@ -495,7 +549,8 @@ Week strip data for Nov 2–8 (done of planned): Mon 3/3, Tue 4/5, Wed 4/5, Thu 
 - **Counts:** "1 task", "4 tasks", "Free" (zero), "3 subtasks". "2 of 5 done".
 - **Section labels:** uppercase via style, written "DONE · 2" with a middle dot.
 - **Placeholders:** "Search", "Add to backlog", "Add to today", "Add a description" **[decision]**.
-- **Empty states [decision]:** Backlog: "Nothing waiting. Add a task above." Today: "Nothing planned for today. Add a task or pull one from the backlog." History day: "Nothing planned this day."
+- **Empty states [decision]:** Backlog: "Nothing waiting. Add a task above." Today without a filter: "Nothing planned for today", with "Add from Backlog" when backlog tasks exist, otherwise "Add a task". A filter with no matches reads "No Work tasks planned for today" (using the selected list names) beside "Show all". When the whole day is complete, show "All done for today" and retain the Completed group. History day: "Nothing planned this day."
+- **Add from Backlog picker [decision]:** loading: "Loading tasks…"; load failure: "Could not load backlog tasks."; empty: "Nothing waiting in the backlog."
 - **Errors [decision]:** inline under the field, 13px, `text`, with an icon; no red-only signals.
 
 ---
@@ -523,4 +578,4 @@ Week strip data for Nov 2–8 (done of planned): Mon 3/3, Tue 4/5, Wed 4/5, Thu 
 6. Implement the model rules in section 2 and the counts in section 7.
 7. Run the flow in section 7 on both layouts as the acceptance test.
 
-Not designed yet (explicitly out of scope for v1): the date-picker calendar, "From backlog" picker, search results, list management, Settings, onboarding, empty states drawn as screens, dark theme.
+Not designed yet (explicitly out of scope for v1): the date-picker calendar, "Add from Backlog" picker, search results, Settings, onboarding, empty states drawn as screens, dark theme.

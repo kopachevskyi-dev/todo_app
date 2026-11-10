@@ -11,11 +11,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+      - uses: docker/setup-buildx-action@v4
+      - name: Resolve worktree image names
+        run: docker compose build --print app verify > /tmp/todo-images.json
+      - name: Build runtime and verification images
+        uses: docker/bake-action@v7
         with:
-          node-version-file: .nvmrc
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm browsers:install --with-deps
-      - run: pnpm verify
+          source: .
+          files: /tmp/todo-images.json
+          targets: |
+            app
+            verify
+          load: true
+          set: |
+            app.cache-from=type=gha,scope=runtime
+            app.cache-to=type=gha,scope=runtime,mode=max
+            verify.cache-from=type=gha,scope=verify
+            verify.cache-to=type=gha,scope=verify,mode=max
+      - name: Verify in containers
+        run: docker compose run --rm --no-deps verify
+      - name: Clean up project resources
+        if: always()
+        run: docker compose down --volumes --remove-orphans

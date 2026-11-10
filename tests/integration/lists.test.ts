@@ -106,3 +106,20 @@ it('filters the backlog by listId and creates a task in the given list', async (
   const { tasks } = (await response.json()) as { tasks: Task[] };
   expect(tasks.map((task) => task.id)).toEqual([shelf.id]);
 });
+
+it('accepts the Blue preset when creating a list and rejects a color outside the eight presets', async () => {
+  const app = start();
+  const created = await app.request(
+    '/api/lists',
+    send('POST', { name: 'Errands', color: '#6A93D4' }),
+  );
+  expect(created.status).toBe(201);
+  const { list } = (await created.json()) as { list: List };
+  expect(list).toMatchObject({ name: 'Errands', color: '#6A93D4' });
+
+  const outside = await app.request(
+    '/api/lists',
+    send('POST', { name: 'Outside', color: '#000000' }),
+  );
+  expect(outside.status).toBe(400);
+});

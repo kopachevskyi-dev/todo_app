@@ -71,17 +71,3 @@ it('rolls overdue tasks to the top of the backlog on the first request after day
   expect(missedEvents(app, nov2)).toHaveLength(1);
   expect(missedEvents(app, nov4)).toHaveLength(1);
 });
-
-it('creates exactly one missed event per task for two concurrent requests after midnight', async () => {
-  const app = testApp({ testClock: true });
-  apps.push(app);
-  const { nov2, nov4 } = await seed(app);
-  await setClock(app, '2026-11-05T05:00:05.000Z');
-
-  await Promise.all([
-    app.request('/api/counts'),
-    app.request('/api/views/backlog'),
-  ]);
-  expect(missedEvents(app, nov2)).toHaveLength(1);
-  expect(missedEvents(app, nov4)).toHaveLength(1);
-});

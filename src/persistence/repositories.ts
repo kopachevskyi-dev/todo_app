@@ -10,6 +10,7 @@ import {
   isNull,
   inArray,
   lt,
+  gt,
   sql,
 } from 'drizzle-orm';
 import type { AppDatabase } from './database';
@@ -23,6 +24,7 @@ import type {
   CreateTaskRequest,
   PatchTaskRequest,
   PatchSubtaskRequest,
+  TaskRow,
 } from '../shared/contract';
 import { matchesQuery } from '../domain/search';
 import { todayView } from '../domain/today';
@@ -30,6 +32,16 @@ import { localDate } from '../domain/time';
 import { rolloverTasks } from '../domain/rollover';
 
 export function createRepositories(db: AppDatabase) {
+  const transaction = <T>(
+    work: (tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0]) => T,
+    config?: Parameters<AppDatabase['transaction']>[1],
+  ) => db.transaction(work, config);
+  const listFields = {
+    id: lists.id,
+    name: lists.name,
+    color: lists.color,
+    position: lists.position,
+  };
   const taskFields = {
     id: tasks.id,
     title: tasks.title,
@@ -40,8 +52,14 @@ export function createRepositories(db: AppDatabase) {
     missedFrom: tasks.missedFrom,
     createdAt: tasks.createdAt,
     updatedAt: tasks.updatedAt,
-    subtaskCount: sql<number>`(SELECT count(*) FROM subtask WHERE subtask.task_id = task.id)`,
-    subtaskDoneCount: sql<number>`(SELECT count(*) FROM subtask WHERE subtask.task_id = task.id AND subtask.done = 1)`,
+    subtaskCount: sql<number>`${db
+      .select({ value: count() })
+      .from(subtasks)
+      .where(eq(subtasks.taskId, tasks.id))}`,
+    subtaskDoneCount: sql<number>`${db
+      .select({ value: count() })
+      .from(subtasks)
+      .where(and(eq(subtasks.taskId, tasks.id), eq(subtasks.done, true)))}`,
   };
   const total = (where: ReturnType<typeof and>) =>
     db.select({ value: count() }).from(tasks).where(where).get()!.value;
@@ -95,7 +113,7 @@ export function createRepositories(db: AppDatabase) {
   return {
     tasks: {
       rollover: (now: Date, timeZone: string) =>
-        db.transaction(
+        transaction(
           (tx) => {
             const candidates = tx
               .select({
@@ -115,6 +133,7 @@ export function createRepositories(db: AppDatabase) {
               tx.update(tasks)
                 .set({
                   day: change.day,
+                  position: null,
                   missedFrom: change.missedFrom,
                   placedAt: change.placedAt,
                   updatedAt: now.toISOString(),
@@ -133,11 +152,15 @@ export function createRepositories(db: AppDatabase) {
           { behavior: 'immediate' },
         ),
       create: (input: CreateTaskRequest, now: Date, timeZone: string) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const id = createId(now);
           const at = now.toISOString();
           const day =
-            input.target === 'today' ? localDate(now, timeZone) : null;
+            input.day !== undefined
+              ? input.day
+              : input.target === 'today'
+                ? localDate(now, timeZone)
+                : null;
           tx.insert(tasks)
             .values({
               id,
@@ -153,10 +176,11 @@ export function createRepositories(db: AppDatabase) {
             .values({
               id: createId(now),
               taskId: id,
-              type:
-                input.target === 'today'
+              type: !day
+                ? 'added_to_backlog'
+                : day === localDate(now, timeZone)
                   ? 'added_to_today'
-                  : 'added_to_backlog',
+                  : 'planned',
               at,
               day,
             })
@@ -168,10 +192,16 @@ export function createRepositories(db: AppDatabase) {
             .get()!;
         }),
       plan: (id: string, day: string | null, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const at = now.toISOString();
           tx.update(tasks)
-            .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
+            .set({
+              day,
+              position: null,
+              missedFrom: null,
+              placedAt: at,
+              updatedAt: at,
+            })
             .where(eq(tasks.id, id))
             .run();
           tx.insert(taskEvents)
@@ -190,7 +220,7 @@ export function createRepositories(db: AppDatabase) {
             .get()!;
         }),
       planToday: (ids: string[], day: string, now: Date) =>
-        db.transaction(
+        transaction(
           (tx) => {
             const selected = tx
               .select({
@@ -201,18 +231,26 @@ export function createRepositories(db: AppDatabase) {
               .from(tasks)
               .where(inArray(tasks.id, ids))
               .all();
-            if (
-              selected.length !== ids.length ||
-              selected.some(
-                (task) => task.day !== null || task.completedAt !== null,
-              )
-            )
-              return null;
+            const eligible = new Set(
+              selected
+                .filter(
+                  (task) => task.day === null && task.completedAt === null,
+                )
+                .map((task) => task.id),
+            );
+            const taskIds = ids.filter((id) => !eligible.has(id));
+            if (taskIds.length) return { taskIds };
 
             const at = now.toISOString();
             for (const id of ids) {
               tx.update(tasks)
-                .set({ day, missedFrom: null, placedAt: at, updatedAt: at })
+                .set({
+                  day,
+                  position: null,
+                  missedFrom: null,
+                  placedAt: at,
+                  updatedAt: at,
+                })
                 .where(eq(tasks.id, id))
                 .run();
               tx.insert(taskEvents)
@@ -225,20 +263,23 @@ export function createRepositories(db: AppDatabase) {
                 })
                 .run();
             }
-            return tx
+            const planned = tx
               .select(taskFields)
               .from(tasks)
               .where(inArray(tasks.id, ids))
               .all();
+            const byId = new Map(planned.map((task) => [task.id, task]));
+            return { tasks: ids.map((id) => byId.get(id)!) };
           },
           { behavior: 'immediate' },
         ),
       moveToBacklog: (id: string, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const at = now.toISOString();
           tx.update(tasks)
             .set({
               completedAt: null,
+              position: null,
               day: null,
               missedFrom: null,
               placedAt: at,
@@ -269,12 +310,7 @@ export function createRepositories(db: AppDatabase) {
         const rows = db
           .select({
             ...taskFields,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -288,6 +324,23 @@ export function createRepositories(db: AppDatabase) {
           .all();
         return historyView(rows, events, weekStart, now, zone);
       },
+      upcoming: (today: string) => {
+        const rows = db
+          .select({ ...taskFields, list: listFields })
+          .from(tasks)
+          .leftJoin(lists, eq(tasks.listId, lists.id))
+          .where(and(gt(tasks.day, today), isNull(tasks.completedAt)))
+          .orderBy(asc(tasks.day), desc(tasks.placedAt), desc(sql`task.rowid`))
+          .all();
+        const days: { day: string; tasks: TaskRow[] }[] = [];
+        for (const row of rows) {
+          const day = row.day!;
+          const previous = days.at(-1);
+          if (previous?.day === day) previous.tasks.push(row);
+          else days.push({ day, tasks: [row] });
+        }
+        return { today, days };
+      },
       dayLoad: (from: string, to: string) =>
         db
           .select({ day: tasks.day, count: count() })
@@ -299,12 +352,7 @@ export function createRepositories(db: AppDatabase) {
         db
           .select({
             ...taskFields,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -322,12 +370,8 @@ export function createRepositories(db: AppDatabase) {
           .select({
             ...taskFields,
             placedAt: tasks.placedAt,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            position: tasks.position,
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -341,24 +385,41 @@ export function createRepositories(db: AppDatabase) {
           .all();
         return { day, ...todayView(rows, day) };
       },
+      setTodayOrder: (ids: string[], day: string) =>
+        transaction(
+          (tx) => {
+            const open = tx
+              .select({ id: tasks.id })
+              .from(tasks)
+              .where(and(eq(tasks.day, day), isNull(tasks.completedAt)))
+              .all();
+            const eligible = new Set(open.map((task) => task.id));
+            if (
+              ids.length !== eligible.size ||
+              ids.some((id) => !eligible.has(id))
+            )
+              return false;
+            for (const [position, id] of ids.entries()) {
+              tx.update(tasks).set({ position }).where(eq(tasks.id, id)).run();
+            }
+            return true;
+          },
+          { behavior: 'immediate' },
+        ),
       setCompletion: (
         id: string,
         completed: boolean,
         now: Date,
         timeZone: string,
       ) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const at = now.toISOString();
           const day = localDate(now, timeZone);
-          const previous = tx
-            .select()
-            .from(tasks)
-            .where(eq(tasks.id, id))
-            .get()!;
           tx.update(tasks)
             .set({
               completedAt: completed ? at : null,
-              day: completed ? (previous.day ?? day) : day,
+              position: null,
+              day,
               updatedAt: at,
             })
             .where(eq(tasks.id, id))
@@ -382,12 +443,7 @@ export function createRepositories(db: AppDatabase) {
         db
           .select({
             ...taskFields,
-            list: {
-              id: lists.id,
-              name: lists.name,
-              color: lists.color,
-              position: lists.position,
-            },
+            list: listFields,
           })
           .from(tasks)
           .leftJoin(lists, eq(tasks.listId, lists.id))
@@ -413,7 +469,7 @@ export function createRepositories(db: AppDatabase) {
           .all(),
       delete: (id: string) => db.delete(tasks).where(eq(tasks.id, id)).run(),
       patch: (id: string, input: PatchTaskRequest, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const previous = tx
             .select()
             .from(tasks)
@@ -457,7 +513,7 @@ export function createRepositories(db: AppDatabase) {
       get: (id: string) =>
         db.select().from(subtasks).where(eq(subtasks.id, id)).get(),
       create: (taskId: string, title: string, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const last = tx
             .select({ position: subtasks.position })
             .from(subtasks)
@@ -484,7 +540,7 @@ export function createRepositories(db: AppDatabase) {
           return subtask;
         }),
       patch: (id: string, input: PatchSubtaskRequest, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const subtask = tx
             .update(subtasks)
             .set(input)
@@ -498,7 +554,7 @@ export function createRepositories(db: AppDatabase) {
           return subtask;
         }),
       delete: (id: string, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const subtask = tx
             .delete(subtasks)
             .where(eq(subtasks.id, id))
@@ -520,7 +576,7 @@ export function createRepositories(db: AppDatabase) {
           .where(sql`${lists.name} = ${name} COLLATE NOCASE`)
           .get(),
       create: (input: CreateListRequest, now: Date) =>
-        db.transaction((tx) => {
+        transaction((tx) => {
           const existing = tx
             .select()
             .from(lists)
@@ -554,19 +610,8 @@ export function createRepositories(db: AppDatabase) {
           : db.select().from(lists).where(eq(lists.id, id)).get()!,
       delete: (id: string) => db.delete(lists).where(eq(lists.id, id)).run(),
       all: () =>
-        db
-          .select({
-            id: lists.id,
-            name: lists.name,
-            color: lists.color,
-            position: lists.position,
-          })
-          .from(lists)
-          .orderBy(asc(lists.position))
-          .all(),
+        db.select(listFields).from(lists).orderBy(asc(lists.position)).all(),
     },
-    transaction: <T>(
-      work: (tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0]) => T,
-    ) => db.transaction(work),
+    transaction,
   };
 }

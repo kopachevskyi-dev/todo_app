@@ -1,3 +1,4 @@
+import { useEscape } from './useEscape';
 import {
   useEffect,
   useId,
@@ -9,7 +10,7 @@ import {
   type Ref,
 } from 'react';
 import { flushSync } from 'react-dom';
-import { completionTime } from './useCompletion';
+import { completionTime } from './dates';
 import { rowMetaText } from '../domain/row-meta';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
@@ -42,6 +43,7 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
       </>
     ),
     chevron: <path d="m9 6 6 6-6 6" />,
+    'chevron-left': <path d="m15 6-6 6 6 6" />,
     close: <path d="m6 6 12 12M6 18 18 6" />,
     error: (
       <>
@@ -58,7 +60,7 @@ export function Icon({ name, size = 20 }: { name: string; size?: number }) {
       viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
-      strokeWidth={name === 'plus' ? 2 : 1.7}
+      strokeWidth={name === 'plus' ? 2 : name.startsWith('chevron') ? 1.8 : 1.7}
       strokeLinecap="round"
       strokeLinejoin="round"
       aria-hidden="true"
@@ -120,30 +122,23 @@ export function Checkbox({
     }
   };
   return (
-    <span
+    <button
+      type="button"
       className="check-hit"
       role="checkbox"
       aria-checked={displayed}
-      aria-disabled={!onChange || disabled || optimistic !== undefined}
-      tabIndex={onChange ? 0 : undefined}
+      disabled={!onChange || disabled || optimistic !== undefined}
       onClick={(event) => {
         event.preventDefault();
         event.stopPropagation();
         void toggle();
-      }}
-      onKeyDown={(event) => {
-        if (event.key === ' ' || event.key === 'Enter') {
-          event.preventDefault();
-          event.stopPropagation();
-          void toggle();
-        }
       }}
       aria-label={label}
     >
       <span className={`checkbox ${displayed ? 'checked' : ''}`}>
         {displayed && <Icon name="check" size={14} />}
       </span>
-    </span>
+    </button>
   );
 }
 export function TaskRow({
@@ -154,9 +149,9 @@ export function TaskRow({
   location,
   onToggle,
   pending,
-  section,
+  orderControls,
 }: {
-  section?: string;
+  orderControls?: ReactNode;
   onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
@@ -165,12 +160,16 @@ export function TaskRow({
   href: string;
   onOpen: () => void;
 }) {
+  const creating = task.id.startsWith('optimistic-');
   const meta = [
     rowMetaText({
       listName: task.list?.name ?? null,
       missedFrom: task.missedFrom,
-      subtaskCount: task.subtaskCount,
+      subtaskCount: 0,
     }),
+    task.subtaskCount > 0
+      ? `${task.subtaskDoneCount}/${task.subtaskCount}`
+      : undefined,
     location,
   ]
     .filter(Boolean)
@@ -178,16 +177,25 @@ export function TaskRow({
   return (
     <li
       data-layout-id={task.id}
-      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''}`}
+      data-layout-group={task.completedAt ? 'done' : 'open'}
+      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''}`}
+      inert={creating}
+      aria-busy={creating || undefined}
     >
-      {section && (
-        <div className="done-section">
-          <SectionLabel>{section}</SectionLabel>
-        </div>
-      )}
+      <Checkbox
+        label={`${task.completedAt ? 'Reopen' : 'Complete'} "${task.title}"`}
+        checked={Boolean(task.completedAt)}
+        onChange={creating ? undefined : onToggle}
+        disabled={pending || creating}
+      />
       <a
-        href={href}
+        href={creating ? undefined : href}
+        tabIndex={creating ? -1 : undefined}
         onClick={(event) => {
+          if (creating) {
+            event.preventDefault();
+            return;
+          }
           if (
             !event.metaKey &&
             !event.ctrlKey &&
@@ -211,12 +219,6 @@ export function TaskRow({
         }}
         aria-current={selected ? 'true' : undefined}
       >
-        <Checkbox
-          label={`Completion of ${task.title}`}
-          checked={Boolean(task.completedAt)}
-          onChange={onToggle}
-          disabled={pending}
-        />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
           {meta && (
@@ -231,13 +233,15 @@ export function TaskRow({
             </span>
           )}
         </span>
+        {creating && <span className="row-meta">Saving…</span>}
         {task.completedAt && !location && (
           <time className="completion-time" dateTime={task.completedAt}>
             {completionTime(task.completedAt)}
           </time>
         )}
-        {!task.completedAt && <Icon name="chevron" size={18} />}
+        {!task.completedAt && !creating && <Icon name="chevron" size={18} />}
       </a>
+      {orderControls}
     </li>
   );
 }
@@ -251,7 +255,10 @@ export function QuickAdd({
   mobile = false,
   target = 'backlog',
   inputRef,
+  onClose,
+  children,
 }: {
+  children?: ReactNode;
   value: string;
   onChange: (value: string) => void;
   onSubmit: () => void;
@@ -260,6 +267,7 @@ export function QuickAdd({
   mobile?: boolean;
   target?: 'backlog' | 'today';
   inputRef: RefObject<HTMLInputElement | null>;
+  onClose?: () => void;
 }) {
   const id = useId();
   return (
@@ -293,6 +301,7 @@ export function QuickAdd({
           {error}
         </p>
       )}
+      {children}
       <div className="capture-footer">
         <p id={id} className="field-hint">
           {mobile
@@ -300,9 +309,16 @@ export function QuickAdd({
             : 'A title is enough. Add details, a list or a day later.'}
         </p>
         {mobile && (
-          <Button type="submit" disabled={pending}>
-            Add
-          </Button>
+          <div className="capture-actions">
+            {onClose && (
+              <Button type="button" variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            )}
+            <Button type="submit" disabled={pending}>
+              Add
+            </Button>
+          </div>
         )}
       </div>
     </form>
@@ -322,6 +338,7 @@ export function Modal({
   children: ReactNode;
   sheet?: boolean;
 }) {
+  useEscape(onClose, 10);
   const dialog = useRef<HTMLDialogElement>(null);
   const startY = useRef<number | null>(null);
   useEffect(() => {
@@ -428,6 +445,7 @@ export function Popover({
   onClose: () => void;
   children: ReactNode;
 }) {
+  useEscape(onClose, 20);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current!;
@@ -439,9 +457,6 @@ export function Popover({
       element.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - element.offsetWidth - 16))}px`;
       element.style.top = `${rect.bottom + 8}px`;
     }
-    (
-      element.querySelector<HTMLElement>('button:not(:disabled)') ?? element
-    ).focus();
     const outside = (event: PointerEvent) => {
       if (
         !element.contains(event.target as Node) &&
@@ -449,14 +464,9 @@ export function Popover({
       )
         onClose();
     };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
     document.addEventListener('pointerdown', outside);
-    document.addEventListener('keydown', escape);
     return () => {
       document.removeEventListener('pointerdown', outside);
-      document.removeEventListener('keydown', escape);
       previous?.focus();
     };
   }, [anchor, onClose]);
@@ -467,13 +477,6 @@ export function Popover({
       aria-label={label}
       tabIndex={-1}
       className="popover"
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          event.stopPropagation();
-          onClose();
-        }
-      }}
     >
       {children}
     </div>

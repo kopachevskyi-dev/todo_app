@@ -1,3 +1,4 @@
+import { browserTimeZone } from './dates';
 import { z } from 'zod';
 import {
   createListRequestSchema,
@@ -6,16 +7,18 @@ import {
   type CreateListRequest,
   type PatchListRequest,
   historyResponseSchema,
+  upcomingResponseSchema,
   createSubtaskRequestSchema,
   patchSubtaskRequestSchema,
   subtaskResponseSchema,
   type PatchSubtaskRequest,
-  clockSchema,
   dayLoadResponseSchema,
   planTaskRequestSchema,
   planTodayRequestSchema,
   planTodayResponseSchema,
   todayResponseSchema,
+  setTodayOrderRequestSchema,
+  setTodayOrderResponseSchema,
   patchTaskRequestSchema,
   type PatchTaskRequest,
   searchResponseSchema,
@@ -30,6 +33,15 @@ import {
   type CreateTaskRequest,
 } from '../shared/contract';
 
+export class ApiError extends Error {
+  constructor(
+    readonly status: number,
+    readonly details: z.infer<typeof errorResponseSchema>['error'],
+  ) {
+    super(details.message);
+  }
+}
+
 async function request<T>(
   path: string,
   schema: z.ZodType<T>,
@@ -39,17 +51,18 @@ async function request<T>(
     ...init,
     headers: {
       ...init?.headers,
-      'X-Timezone': Intl.DateTimeFormat().resolvedOptions().timeZone,
+      'X-Timezone': browserTimeZone(),
     },
   });
   const body: unknown =
     response.status === 204 ? undefined : await response.json();
   if (!response.ok)
-    throw new Error(errorResponseSchema.parse(body).error.message);
+    throw new ApiError(response.status, errorResponseSchema.parse(body).error);
   return schema.parse(body);
 }
 
 export const api = {
+  upcoming: () => request('/upcoming', upcomingResponseSchema),
   createList: (input: CreateListRequest) =>
     request('/lists', listResponseSchema, {
       method: 'POST',
@@ -98,7 +111,6 @@ export const api = {
       method: 'DELETE',
     }),
 
-  clock: () => request('/clock', clockSchema),
   dayLoad: (from: string, to: string) =>
     request(`/day-load?from=${from}&to=${to}`, dayLoadResponseSchema),
   planTask: (id: string, day: string | null) =>
@@ -112,6 +124,12 @@ export const api = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(planTodayRequestSchema.parse({ taskIds })),
+    }),
+  setTodayOrder: (taskIds: string[]) =>
+    request('/views/today/order', setTodayOrderResponseSchema, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(setTodayOrderRequestSchema.parse({ taskIds })),
     }),
   today: (listId?: string) =>
     request(
