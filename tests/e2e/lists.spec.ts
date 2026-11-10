@@ -62,35 +62,32 @@ test('desktop: create, rename, recolor and delete a list; its tasks stay without
       'rgb(142, 124, 195)',
     );
 
-    const menuButton = (name: string) =>
-      page.getByRole('button', {
-        name: new RegExp(
-          `${name}.*(menu|options)|(menu|options).*${name}`,
-          'i',
-        ),
-      });
-    await menuButton('Errands').click();
-    await page.getByRole('menuitem', { name: 'Rename' }).click();
-    const rename = page.getByRole('textbox', { name: /list name|rename/i });
-    await rename.fill('Shop');
-    await rename.press('Enter');
+    await page
+      .getByRole('button', { name: 'Manage lists', exact: true })
+      .click();
+    const manage = page.getByRole('dialog');
+    await manage
+      .getByRole('button', { name: 'Edit Errands', exact: true })
+      .click();
+    const form = page.getByRole('dialog').last();
+    await form.getByRole('textbox', { name: /list name/i }).fill('Shop');
+    await form.getByRole('button', { name: 'Green', exact: true }).click();
+    await form.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(lists.last()).toContainText('Shop');
-
-    await menuButton('Shop').click();
-    await page.getByRole('menuitem', { name: 'Color' }).click();
-    await page.getByRole('button', { name: 'Green' }).click();
     await expect(lists.last().locator('.list-dot')).toHaveCSS(
       'background-color',
       'rgb(111, 191, 138)',
     );
 
-    await menuButton('Work').click();
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
-    const dialog = page.getByRole('dialog');
+    await manage
+      .getByRole('button', { name: 'Delete Work', exact: true })
+      .click();
+    const dialog = page.getByRole('dialog').last();
     await expect(dialog).toContainText(
       'Delete list "Work"? Its tasks stay, without a list.',
     );
     await dialog.getByRole('button', { name: 'Delete' }).click();
+    await manage.getByRole('button', { name: 'Close', exact: true }).click();
     await expect(page.getByRole('navigation').getByText('Work')).toHaveCount(0);
     await expect(rows(page).first()).toContainText('Buy stamps');
     await expect(rows(page).first()).not.toContainText('Work');

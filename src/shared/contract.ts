@@ -6,6 +6,9 @@ export const listPalette = [
   { name: 'Yellow', hex: '#F0C24B' },
   { name: 'Purple', hex: '#8E7CC3' },
   { name: 'Green', hex: '#6FBF8A' },
+  { name: 'Blue', hex: '#6A93D4' },
+  { name: 'Orange', hex: '#E8975A' },
+  { name: 'Pink', hex: '#D985A8' },
 ] as const;
 export const listColors = listPalette.map(({ hex }) => hex) as [
   (typeof listPalette)[number]['hex'],
