@@ -256,7 +256,7 @@ test('while the server is slow to create, the pending row "C" cannot be opened b
     const pending = rows(page).filter({ hasText: /^C/ });
     await expect(pending).toHaveCount(1);
 
-    await pending.click({ force: true });
+    await pending.dispatchEvent('click');
     await expect(page).not.toHaveURL(/task=/);
     await page.locator('body').click({ position: { x: 1, y: 1 } });
     for (let step = 0; step < 40; step++) {
