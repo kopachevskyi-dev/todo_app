@@ -1,3 +1,4 @@
+import { queryKeys } from './query-keys';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { api } from './api';
 
@@ -8,23 +9,15 @@ export function useCompletion() {
     onSuccess: async (_result, { id }) => {
       await Promise.all(
         [
-          ['today'],
-          ['history'],
-          ['backlog'],
-          ['counts'],
-          ['search'],
-          ['day-load'],
-          ['task', id],
+          queryKeys.today,
+          queryKeys.history,
+          queryKeys.backlog,
+          queryKeys.counts,
+          queryKeys.search,
+          queryKeys.dayLoad,
+          queryKeys.taskDetail(id),
         ].map((queryKey) => client.invalidateQueries({ queryKey })),
       );
     },
   });
-}
-
-export function completionTime(at: string) {
-  return new Intl.DateTimeFormat('en-US', {
-    hour: 'numeric',
-    minute: '2-digit',
-    hour12: true,
-  }).format(new Date(at));
 }

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { listColors, type List } from '../shared/contract';
+import { listPalette, type List } from '../shared/contract';
 import { api } from './api';
 import {
   BottomSheet,
@@ -10,8 +10,6 @@ import {
   Popover,
   SectionLabel,
 } from './components';
-
-const colorNames = ['Red', 'Teal', 'Yellow', 'Purple', 'Green'];
 
 export function Lists({
   lists,
@@ -107,11 +105,11 @@ export function Lists({
       <h3 className="sheet-label">{menu.name}</h3>
       {colors ? (
         <div className="list-options">
-          {listColors.map((color, index) => (
+          {listPalette.map(({ hex: color, name }) => (
             <Button
               key={color}
               variant="ghost"
-              aria-label={colorNames[index]}
+              aria-label={name}
               aria-pressed={menu.color === color}
               disabled={mutation.isPending}
               onClick={() => {
@@ -122,7 +120,7 @@ export function Lists({
               }}
             >
               <span className="list-dot" style={{ background: color }} />
-              {colorNames[index]}
+              {name}
               {menu.color === color && <Icon name="check" size={16} />}
             </Button>
           ))}

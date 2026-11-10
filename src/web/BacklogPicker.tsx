@@ -1,0 +1,81 @@
+import { useBacklogPicker } from './useBacklogPicker';
+import { browserTimeZone } from './dates';
+import { formatShortDate } from './dates';
+import { Button, Icon } from './components';
+export function BacklogPicker({
+  mobile,
+  picker,
+}: {
+  mobile: boolean;
+  picker: ReturnType<typeof useBacklogPicker>;
+}) {
+  const { pickerBacklog, plannedSelection, setPlannedSelection, planToday } =
+    picker;
+  return (
+    <>
+      {mobile && <h2 className="planner-title">From backlog</h2>}
+      <div className="planner-rows">
+        {pickerBacklog.isPending && <p role="status">Loading tasks…</p>}
+        {pickerBacklog.isError && (
+          <p role="alert">Could not load backlog tasks.</p>
+        )}
+        {pickerBacklog.data?.tasks.length === 0 && (
+          <p className="planner-empty">Nothing waiting in the backlog.</p>
+        )}
+        {pickerBacklog.data?.tasks.map((task) => {
+          const checked = plannedSelection.includes(task.id);
+          return (
+            <button
+              key={task.id}
+              type="button"
+              role="checkbox"
+              aria-checked={checked}
+              className={`planner-row ${checked ? 'row-selected' : ''}`}
+              onClick={() =>
+                setPlannedSelection((current) =>
+                  checked
+                    ? current.filter((id) => id !== task.id)
+                    : [...current, task.id],
+                )
+              }
+            >
+              <span className={`planner-check ${checked ? 'checked' : ''}`}>
+                {checked && <Icon name="check" size={16} />}
+              </span>
+              <span className="planner-row-text">
+                <span>{task.title}</span>
+                {(task.list || task.missedFrom) && (
+                  <span className="row-meta">
+                    {task.list && (
+                      <>
+                        <span
+                          className="list-dot"
+                          style={{ background: task.list.color }}
+                        />
+                        {task.list.name}
+                      </>
+                    )}
+                    {task.missedFrom && (
+                      <>
+                        {task.list && ' · '}
+                        from{' '}
+                        {formatShortDate(task.missedFrom, browserTimeZone())}
+                      </>
+                    )}
+                  </span>
+                )}
+              </span>
+            </button>
+          );
+        })}
+      </div>
+      <Button
+        className="planner-submit"
+        disabled={plannedSelection.length === 0 || planToday.isPending}
+        onClick={() => planToday.mutate(plannedSelection)}
+      >
+        Plan for today ({plannedSelection.length})
+      </Button>
+    </>
+  );
+}

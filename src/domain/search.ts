@@ -1,3 +1,4 @@
+import { formatShortDate } from '../shared/dates';
 import { localDate } from './time';
 
 export type SearchableTask = { title: string; description: string };
@@ -33,25 +34,11 @@ export function searchLocation(
   };
 }
 
-/** "Backlog", "Today", "Thu, Nov 12" or "Done · Wed, Nov 4". */
-export function locationText(
-  task: LocatedTask,
-  today: string,
-  timeZone: string,
-): string {
-  return searchLocationText(searchLocation(task, today, timeZone));
-}
-
 export function searchLocationText(
   location: ReturnType<typeof searchLocation>,
 ): string {
   if (location.kind === 'backlog') return 'Backlog';
   if (location.kind === 'today') return 'Today';
-  const day = new Intl.DateTimeFormat('en-US', {
-    timeZone: 'UTC',
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric',
-  }).format(new Date(`${location.day}T00:00:00Z`));
+  const day = formatShortDate(location.day!, 'UTC');
   return location.kind === 'done' ? `Done · ${day}` : day;
 }

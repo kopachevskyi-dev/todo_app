@@ -1,12 +1,16 @@
 import { z } from 'zod';
 
-export const listColors = [
-  '#E3686A',
-  '#5FB4C6',
-  '#F0C24B',
-  '#8E7CC3',
-  '#6FBF8A',
+export const listPalette = [
+  { name: 'Red', hex: '#E3686A' },
+  { name: 'Teal', hex: '#5FB4C6' },
+  { name: 'Yellow', hex: '#F0C24B' },
+  { name: 'Purple', hex: '#8E7CC3' },
+  { name: 'Green', hex: '#6FBF8A' },
 ] as const;
+export const listColors = listPalette.map(({ hex }) => hex) as [
+  (typeof listPalette)[number]['hex'],
+  ...(typeof listPalette)[number]['hex'][],
+];
 export const listSchema = z.object({
   id: z.ulid(),
   name: z.string().trim().min(1).max(40),
@@ -146,17 +150,20 @@ export const patchTaskRequestSchema = z
   })
   .strict();
 export type PatchTaskRequest = z.infer<typeof patchTaskRequestSchema>;
+export const activityTypes = [
+  'added_to_backlog',
+  'added_to_today',
+  'details_added',
+  'planned',
+  'completed',
+  'reopened',
+  'moved_to_backlog',
+  'missed',
+] as const;
+export const activityTypeSchema = z.enum(activityTypes);
+export type ActivityType = z.infer<typeof activityTypeSchema>;
 export const activityItemSchema = z.object({
-  type: z.enum([
-    'added_to_backlog',
-    'added_to_today',
-    'details_added',
-    'planned',
-    'completed',
-    'reopened',
-    'moved_to_backlog',
-    'missed',
-  ]),
+  type: activityTypeSchema,
   at: z.iso.datetime(),
   day: z.iso.date().nullable(),
   text: z.string(),

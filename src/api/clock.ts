@@ -1,9 +1,5 @@
-export interface Clock {
-  now(): Date;
-}
-
-/** The only application boundary allowed to read the system clock. */
-export const systemClock: Clock = { now: () => new Date() };
+import type { Clock } from '../shared/clock';
+export { systemClock, type Clock } from '../shared/clock';
 
 export function createTestClock(base: Clock) {
   let instant: Date | undefined;

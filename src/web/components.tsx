@@ -1,3 +1,5 @@
+import { useEscape } from './useEscape';
+import { taskMeta } from '../domain/task-meta';
 import {
   useEffect,
   useId,
@@ -9,7 +11,7 @@ import {
   type Ref,
 } from 'react';
 import { flushSync } from 'react-dom';
-import { completionTime } from './useCompletion';
+import { completionTime } from './dates';
 import { rowMetaText } from '../domain/row-meta';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
@@ -166,11 +168,13 @@ export function TaskRow({
   onOpen: () => void;
 }) {
   const meta = [
-    rowMetaText({
-      listName: task.list?.name ?? null,
-      missedFrom: task.missedFrom,
-      subtaskCount: task.subtaskCount,
-    }),
+    task.missedFrom
+      ? rowMetaText({
+          listName: task.list?.name ?? null,
+          missedFrom: task.missedFrom,
+          subtaskCount: task.subtaskCount,
+        })
+      : taskMeta(task.list?.name ?? null, task.subtaskCount),
     location,
   ]
     .filter(Boolean)
@@ -322,6 +326,7 @@ export function Modal({
   children: ReactNode;
   sheet?: boolean;
 }) {
+  useEscape(onClose, 10);
   const dialog = useRef<HTMLDialogElement>(null);
   const startY = useRef<number | null>(null);
   useEffect(() => {
@@ -428,6 +433,7 @@ export function Popover({
   onClose: () => void;
   children: ReactNode;
 }) {
+  useEscape(onClose, 20);
   const ref = useRef<HTMLDivElement>(null);
   useEffect(() => {
     const element = ref.current!;
@@ -439,9 +445,6 @@ export function Popover({
       element.style.left = `${Math.max(16, Math.min(rect.left, window.innerWidth - element.offsetWidth - 16))}px`;
       element.style.top = `${rect.bottom + 8}px`;
     }
-    (
-      element.querySelector<HTMLElement>('button:not(:disabled)') ?? element
-    ).focus();
     const outside = (event: PointerEvent) => {
       if (
         !element.contains(event.target as Node) &&
@@ -449,14 +452,9 @@ export function Popover({
       )
         onClose();
     };
-    const escape = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') onClose();
-    };
     document.addEventListener('pointerdown', outside);
-    document.addEventListener('keydown', escape);
     return () => {
       document.removeEventListener('pointerdown', outside);
-      document.removeEventListener('keydown', escape);
       previous?.focus();
     };
   }, [anchor, onClose]);
@@ -467,13 +465,6 @@ export function Popover({
       aria-label={label}
       tabIndex={-1}
       className="popover"
-      onKeyDown={(event) => {
-        if (event.key === 'Escape') {
-          event.preventDefault();
-          event.stopPropagation();
-          onClose();
-        }
-      }}
     >
       {children}
     </div>

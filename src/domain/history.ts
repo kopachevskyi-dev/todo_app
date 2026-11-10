@@ -1,10 +1,11 @@
+import type { ActivityType } from '../shared/contract';
 import { localDate } from './time';
 import { addDays } from './day-picker';
 import type { TaskRow } from '../shared/contract';
 
 export interface HistoryEvent {
   taskId: string;
-  type: string;
+  type: ActivityType;
   at: string;
   day?: string | null;
 }

@@ -1,3 +1,4 @@
+import { queryKeys } from './query-keys';
 import { useRef, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import type { Subtask } from '../shared/contract';
@@ -26,11 +27,12 @@ export function Subtasks({
     try {
       await work();
       await Promise.all(
-        ['task', 'backlog', 'today', 'search'].map((key) =>
-          client.invalidateQueries({
-            queryKey: key === 'task' ? [key, taskId] : [key],
-          }),
-        ),
+        [
+          queryKeys.taskDetail(taskId),
+          queryKeys.backlog,
+          queryKeys.today,
+          queryKeys.search,
+        ].map((queryKey) => client.invalidateQueries({ queryKey })),
       );
       setError(undefined);
       return true;

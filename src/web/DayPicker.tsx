@@ -1,3 +1,5 @@
+import { browserTimeZone, dateLabel } from './dates';
+import { queryKeys } from './query-keys';
 import { useEffect, useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import {
@@ -19,7 +21,7 @@ export function DayPicker({
   selected: string | null;
   onChoose: (day: string | null) => void;
 }) {
-  const zone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+  const zone = browserTimeZone();
   const today = localDate(now, zone);
   const [calendar, setCalendar] = useState(false);
   const [month, setMonth] = useState(
@@ -48,7 +50,7 @@ export function DayPicker({
   const from = calendar ? monthStart : today;
   const to = calendar ? end : items[2]!.day;
   const load = useQuery({
-    queryKey: ['day-load', from, to],
+    queryKey: queryKeys.dayLoadRange(from, to),
     queryFn: () => api.dayLoad(from, to),
   });
   const count = (day: string) =>
@@ -92,11 +94,7 @@ export function DayPicker({
               ‹
             </Button>
             <span>
-              {new Intl.DateTimeFormat('en-US', {
-                timeZone: 'UTC',
-                month: 'long',
-                year: 'numeric',
-              }).format(new Date(`${monthStart}T12:00:00Z`))}
+              {dateLabel(monthStart, { month: 'long', year: 'numeric' })}
             </span>
             <Button
               variant="ghost"
