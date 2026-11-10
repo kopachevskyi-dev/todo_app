@@ -1,70 +1,47 @@
 import { expect, it } from 'vitest';
-import { historyResponseSchema } from '../../src/shared/contract';
+import { examples, historyResponseSchema } from '../../src/shared/contract';
 import { testApp } from '../helpers/app';
-import { seedHistoryWeek } from '../helpers/history-fixture';
-
-// The ticket's example (one of the 7 days), with a valid ULID for the
-// not-done task.
-const example = {
-  weekStart: '2026-11-02',
-  today: '2026-11-08',
-  days: [
-    {
-      day: '2026-11-04',
-      done: 4,
-      notDone: 1,
-      planned: 0,
-      groups: {
-        done: [
-          {
-            id: '01JBX7Q3M2V8R4K9T6N0P1S5WZ',
-            title: "Renew driver's license",
-            listId: '01JBX0000000000000000PERSN',
-            completedAt: '2026-11-04T19:20:00.000Z',
-          },
-        ],
-        notDone: [
-          {
-            id: '01JBY1000000000000000000AB',
-            title: 'Call the dentist',
-            listId: null,
-            movedTo: 'backlog',
-          },
-        ],
-        planned: [],
-      },
-    },
-  ],
-};
+import { jsonRequest } from '../helpers/contract-fixture';
+import { LICENSE, seedHistoryWeek } from '../helpers/history-fixture';
 
 it('parses the history example with the client schema', () => {
-  expect(historyResponseSchema.parse(example)).toEqual(example);
+  expect(historyResponseSchema.parse(examples.history)).toEqual(
+    examples.history,
+  );
 });
 
-it('returns history for the fixture week matching the schema', async () => {
+it('returns the full history example, including day groups, for the fixture week', async () => {
   const app = testApp({ testClock: true });
   try {
-    await seedHistoryWeek((method, path, body) =>
+    const ids = await seedHistoryWeek((method, path, body) =>
       app.request(
         path,
-        body === undefined
-          ? { method }
-          : {
-              method,
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(body),
-            },
+        body === undefined ? { method } : jsonRequest(method, body),
       ),
     );
+    const example = historyResponseSchema.parse(examples.history);
+    const exampleTasks = example.days.flatMap(({ groups }) =>
+      Object.values(groups).flat(),
+    );
+    const license = exampleTasks.find((task) => task.title === LICENSE);
+    const patched = await app.request(
+      `/api/tasks/${ids[LICENSE]}`,
+      jsonRequest('PATCH', { listId: license?.listId }),
+    );
+    expect(patched.status).toBe(200);
+
     const response = await app.request(
-      '/api/views/history?weekStart=2026-11-02',
+      `/api/views/history?weekStart=${example.weekStart}`,
     );
     expect(response.status).toBe(200);
-    const parsed = historyResponseSchema.parse(await response.json());
-    expect(parsed).toMatchObject({
-      weekStart: '2026-11-02',
-      today: '2026-11-08',
-    });
+    const body = historyResponseSchema.parse(await response.json());
+    // Task ids are generated per run: map them to the example's by title.
+    const idByTitle = new Map(exampleTasks.map((t) => [t.title, t.id]));
+    const fixed = JSON.parse(JSON.stringify(body)) as typeof body;
+    for (const { groups } of fixed.days)
+      for (const task of Object.values(groups).flat())
+        task.id = idByTitle.get(task.title) ?? task.id;
+    expect(fixed).toEqual(example);
   } finally {
     app.close();
   }
