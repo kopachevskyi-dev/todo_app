@@ -4,8 +4,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from './query-keys';
 import { invalidateTaskQueries } from './invalidate-task-queries';
 import { api, ApiError } from './api';
-export function useBacklogPicker() {
+export function useBacklogPicker(today = false) {
   const [planning, setPlanning] = useState(false);
+  const [reviewing, setReviewing] = useState(false);
   const client = useQueryClient();
   const [plannedSelection, setPlannedSelection] = useState<string[]>([]);
   const [error, setError] = useState<string>();
@@ -13,7 +14,7 @@ export function useBacklogPicker() {
   const pickerBacklog = useQuery({
     queryKey: queryKeys.backlogPicker,
     queryFn: () => api.backlog(),
-    enabled: planning,
+    enabled: today || planning,
   });
   const planToday = useMutation({
     mutationFn: api.planToday,
@@ -56,13 +57,15 @@ export function useBacklogPicker() {
     setPlannedSelection([]);
     setError(undefined);
   };
-  const openPlanner = () => {
+  const openPlanner = (unfinished = false) => {
+    setReviewing(unfinished);
     setPlannedSelection([]);
     setError(undefined);
     setPlanning(true);
   };
   return {
     planning,
+    reviewing,
     pickerBacklog,
     plannedSelection,
     setPlannedSelection,

@@ -22,6 +22,8 @@ import {
   planTodayResponseSchema,
   dayLoadResponseSchema,
   todayResponseSchema,
+  setTodayOrderRequestSchema,
+  setTodayOrderResponseSchema,
   searchResponseSchema,
   clockSchema,
   patchTaskRequestSchema,
@@ -187,6 +189,27 @@ export function createApp(options: {
       ),
     ),
   );
+  app.put('/api/views/today/order', async (c) => {
+    const parsed = setTodayOrderRequestSchema.safeParse(
+      await c.req.json().catch(() => null),
+    );
+    if (!parsed.success)
+      return apiError(
+        c,
+        'invalid_request',
+        'Choose each open Today task once.',
+        400,
+      );
+    const day = localDate(clock.now(), c.req.header('X-Timezone')!);
+    if (!repositories.tasks.setTodayOrder(parsed.data.taskIds, day))
+      return apiError(
+        c,
+        'invalid_request',
+        'Choose each open Today task once.',
+        400,
+      );
+    return c.json(setTodayOrderResponseSchema.parse(parsed.data));
+  });
   app.get('/api/upcoming', (c) =>
     c.json(
       upcomingResponseSchema.parse(

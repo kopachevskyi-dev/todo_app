@@ -1,9 +1,16 @@
-import type { UseQueryResult } from '@tanstack/react-query';
+import {
+  useMutation,
+  useQueryClient,
+  type UseQueryResult,
+} from '@tanstack/react-query';
 import { api } from './api';
 import { Button, EmptyPanel, Icon, TaskRow } from './components';
 import { Capture } from './Capture';
 import { Fragment, type RefObject } from 'react';
-import type { List } from '../shared/contract';
+import { queryKeys } from './query-keys';
+import { moveTodayTask } from './today-order';
+import { useNotification } from './notification-context';
+import type { TodayResponse, List } from '../shared/contract';
 import { useCompletion } from './useCompletion';
 
 export function Today({
@@ -12,6 +19,9 @@ export function Today({
   activeList,
   scope,
   backlogCount,
+  unfinishedCount,
+  reviewButton,
+  openReview,
   onCapture,
   planButton,
   openPlanner,
@@ -26,6 +36,9 @@ export function Today({
   activeList?: List;
   scope?: string;
   backlogCount: number;
+  unfinishedCount: number;
+  reviewButton: RefObject<HTMLButtonElement | null>;
+  openReview: () => void;
   onCapture: () => void;
   planButton: RefObject<HTMLButtonElement | null>;
   openPlanner: () => void;
@@ -35,6 +48,34 @@ export function Today({
   openTask: (id: string) => void;
   completion: ReturnType<typeof useCompletion>;
 }) {
+  const client = useQueryClient();
+  const notify = useNotification();
+  const order = useMutation({
+    mutationKey: ['today-order'],
+    scope: { id: 'today-order' },
+    mutationFn: api.setTodayOrder,
+    onError: () => notify({ message: 'Could not save task order. Try again.' }),
+    onSettled: () => {
+      if (client.isMutating({ mutationKey: ['today-order'] }) === 1)
+        return client.invalidateQueries({ queryKey: queryKeys.today });
+    },
+  });
+  const move = async (id: string, direction: -1 | 1) => {
+    // Finish cancellation before reading/updating the cache so a previous
+    // refetch cannot restore its snapshot over this optimistic move.
+    await client.cancelQueries({ queryKey: queryKeys.today });
+    const full = client.getQueryData<TodayResponse>(queryKeys.todayList());
+    if (!full) return;
+    const open = moveTodayTask(
+      full.open,
+      today.data?.open ?? [],
+      id,
+      direction,
+    );
+    if (!open) return;
+    client.setQueryData(queryKeys.todayList(), { ...full, open });
+    order.mutate(open.map((row) => row.id));
+  };
   return (
     <>
       {!mobile && (
@@ -47,6 +88,11 @@ export function Today({
             </Button>
           )}
         </div>
+      )}
+      {unfinishedCount > 0 && (
+        <Button ref={reviewButton} variant="ghost" onClick={openReview}>
+          Review {unfinishedCount} unfinished
+        </Button>
       )}
       {today.isPending && <p role="status">Loading tasks…</p>}
       {today.isError && (
@@ -109,6 +155,28 @@ export function Today({
                   })
                 }
                 pending={completion.isPending}
+                orderControls={
+                  !row.completedAt && (
+                    <span className="today-order-controls">
+                      <Button
+                        variant="icon"
+                        aria-label="Move up"
+                        disabled={index === 0}
+                        onClick={() => move(row.id, -1)}
+                      >
+                        <span aria-hidden="true">↑</span>
+                      </Button>
+                      <Button
+                        variant="icon"
+                        aria-label="Move down"
+                        disabled={index === today.data.open.length - 1}
+                        onClick={() => move(row.id, 1)}
+                      >
+                        <span aria-hidden="true">↓</span>
+                      </Button>
+                    </span>
+                  )
+                }
               />
             </Fragment>
           ))}

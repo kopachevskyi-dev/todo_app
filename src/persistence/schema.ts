@@ -41,6 +41,7 @@ export const tasks = sqliteTable(
       onDelete: 'set null',
     }),
     day: text('day'),
+    position: integer('position'),
     completedAt: text('completed_at'),
     missedFrom: text('missed_from'),
     placedAt: text('placed_at').notNull(),

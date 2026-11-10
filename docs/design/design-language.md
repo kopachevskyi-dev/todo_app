@@ -36,7 +36,7 @@ The `.dc.html` files are canvas sources (they load `support.js` from the design 
 | **Today** | Tasks currently planned for today, grouped into open and done. Nav badge = open tasks left today (not total). Header shows "N of M done", counting the whole day even when lists are filtered; a separate "N shown" label counts the filtered results. |
 | **Done** | Completing a task sets its day to local today in the request's time zone; reopening keeps it on local today. In History, a day's done group contains tasks with a completed event carrying that stored day, minus later reopened events carrying the same day. Moving a task to the Backlog leaves its historical completion in that group. |
 | **History** | Review of days, by week. Today and past days use the same event-based done rule. Events belong to their stored day, regardless of the viewing time zone. |
-| **Not done** | A task planned for a day that ended unfinished. **[decision]** It rolls over to the next day automatically and the old day shows "Moved to Thu, Nov 5". |
+| **Not done** | A task planned for a day that ended unfinished. At local midnight it returns to the Backlog; History records it as "Missed" on its original day. Nothing moves into a new day automatically. Backlog rows show the previous date ("from Mon, Nov 9") until the task is planned again. |
 | **Activity log** | Each task keeps timestamped events using the wording below. Shown newest last in the detail view. |
 
 Activity event wording (exact text, lowercase):
@@ -64,6 +64,7 @@ Quick-add rules:
 - In Today the field creates a task planned for today. Placeholder: "Add to today".
 - New tasks appear at the top of the list.
 - **Add from Backlog** (Today screen) opens the picker of the same name. Its scope is **All lists**, independent of the screen's filter. The commit button reads "Add {count} to Today" and is disabled at zero and while saving.
+- When the Backlog holds missed tasks that have not been planned again, Today shows a compact "Review {count} unfinished" entry across all lists, hidden at zero. It opens the same Add from Backlog picker at its Unfinished group, before the remaining Backlog tasks. Each unfinished row shows its original date ("was Mon, Nov 9"). Users choose which tasks to add; unselected tasks stay in the Backlog, and adding preserves task identity and list. The count refreshes after planning.
 - Saving from the picker is all-or-nothing. After saving, close it, refresh affected views and show "Added {count} to Today" in the main notification area.
 - On a conflict, keep the picker open, refetch the choices, remove ineligible tasks and retain the valid selection. Explain: "1 task was already planned elsewhere. Add the remaining 1?" (pluralize for more tasks). Other failures retain the full selection and show "Couldn't add tasks. Try again."; retry uses the same commit button.
 
@@ -381,6 +382,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 ### 4.12 Section label, count pill, progress
 
+- Today ordering: open tasks with a saved position come first in ascending order; unpositioned tasks follow newest-first. Each open row has visible 44px Move up / Move down buttons, operable by keyboard and touch, disabled at the visible ends. In a filtered view, moves swap visible neighbors while retaining hidden tasks in the full saved order. Order persists after reload; leaving Today by moving, completing, or rollover clears the position. Completed tasks remain a separate group; other days, lists, and Backlog keep their existing order.
 - Today: one date and day-progress summary (`2 of 5 done`), open rows first, then a "Completed" heading only when completed rows exist. Quick-add and task surfaces stay available.
 - Section label: 12/500, 0.08em, uppercase, `text-muted`, padding 0 16 8. Format `DONE · 2`.
 - Header count pill: next to H1, padding 4/14 desktop (3/12 mobile), radius 12 (11), `row-selected`, number 18/500 (16).
@@ -390,7 +392,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 **Desktop**: CSS grid, `repeat(auto-fit, minmax(min(84px,100%),1fr))`, gap 10. Each day is a button: min-height 104, padding 12/14, radius 16, `surface-raised`, `1px solid #E1E5DC`. Content, top to bottom, gap 6: weekday (13 `text-muted`, "Sun · today" on the current day), number (24/600), bar (6 high, radius 3, track `nav-active`, fill `text`), ratio text (13 `text-2`: "3 of 3", "4 of 5", "No plan").
 
-**Mobile**: 7 equal columns, gap 4, side padding 12. Each day is a button, min-height 84, padding 10 0, radius 14, centered: weekday letter (12 `text-muted`), a 30×30 circle with the date (17/600), bar (28×5, radius 3). The ratio text is not shown on mobile; it appears in the day summary below ("4 of 5 done · 1 moved to Thursday").
+**Mobile**: 7 equal columns, gap 4, side padding 12. Each day is a button, min-height 84, padding 10 0, radius 14, centered: weekday letter (12 `text-muted`), a 30×30 circle with the date (17/600), bar (28×5, radius 3). The ratio text is not shown on mobile; it appears in the day summary below ("4 of 5 done · 1 missed").
 
 | State | Look |
 |---|---|
@@ -401,7 +403,7 @@ Dismiss: tap scrim, swipe down, or Back **[decision]**.
 
 Selecting a day updates the day heading, summary and groups. Week arrows move by 7 days. Header sub line: "Nov 2–8" (mobile) / "Nov 2–8 · what you planned and what you finished" (desktop). Selected day persists when switching weeks if possible, otherwise the first day with tasks **[decision]**.
 
-Day heading (H2): "Wednesday, November 4". Summary (15 desktop / 14 mobile, `text-muted`): "4 of 5 done · 1 moved to Thursday". Groups: "DONE · n" (sorted by completion time), "NOT DONE · n".
+Day heading (H2): "Wednesday, November 4". Summary (15 desktop / 14 mobile, `text-muted`): "4 of 5 done · 1 missed". Groups: "DONE · n" (sorted by completion time), "NOT DONE · n".
 
 ### 4.14 Upcoming agenda
 
@@ -512,7 +514,7 @@ One task, "Renew driver's license", across the four moments. This is also the te
 | 2 | Tue, Nov 3, 8:03 PM | Opens the task from the Backlog. Writes a description, adds 3 subtasks, sets the list to Personal | Activity: "description, subtasks and list added" |
 | 2b | Tue, Nov 3, 8:05 PM | Opens the Day field, sees "Tomorrow, Wed 4 — 4 tasks", picks it, presses "Plan for Wed, Nov 4" | Task leaves the Backlog (count 8 → 7), appears in Today on Wed. Activity: "planned for Nov 4" |
 | 3 | Wed, Nov 4, 2:20 PM | Checks the task off in Today | Task moves to "Completed" with time 2:20 PM. Header "2 of 5 done". Status pill "Completed at 2:20 PM". Activity: "completed" |
-| 4 | Sun, Nov 8 | Opens History, taps Wed 4 in the week strip, taps the task | Day shows "4 of 5 done · 1 moved to Thursday". Task shows full activity from creation to completion. "Move to backlog" is available |
+| 4 | Sun, Nov 8 | Opens History, taps Wed 4 in the week strip, taps the task | Day shows "4 of 5 done · 1 missed". Task shows full activity from creation to completion. "Move to backlog" is available |
 
 Navigation links that connect these screens in the mockups:
 

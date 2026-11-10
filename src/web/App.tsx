@@ -59,9 +59,11 @@ export function App() {
     backlog: '',
     today: '',
   });
-  const picker = useBacklogPicker();
-  const { planning, closePlanner, openPlanner } = picker;
+  const picker = useBacklogPicker(path === '/today');
+  const { planning, closePlanner } = picker;
+  const openPlanner = () => picker.openPlanner();
   const planButton = useRef<HTMLButtonElement>(null);
+  const reviewButton = useRef<HTMLButtonElement>(null);
   const isBacklog = path === '/backlog';
   const isToday = path === '/today';
   const completion = useCompletion();
@@ -297,6 +299,12 @@ export function App() {
               mobile={mobile}
               today={today}
               scope={scope}
+              unfinishedCount={
+                picker.pickerBacklog.data?.tasks.filter((row) => row.missedFrom)
+                  .length ?? 0
+              }
+              reviewButton={reviewButton}
+              openReview={() => picker.openPlanner(true)}
               backlogCount={counts.data?.backlog ?? 0}
               onCapture={() => setCapturing(true)}
               activeList={activeList}
@@ -335,7 +343,7 @@ export function App() {
           </BottomSheet>
         ) : (
           <Popover
-            anchor={planButton}
+            anchor={picker.reviewing ? reviewButton : planButton}
             label="Add from Backlog"
             onClose={closePlanner}
           >

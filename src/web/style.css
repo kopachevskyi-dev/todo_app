@@ -1677,6 +1677,16 @@ button.check-hit:disabled {
   }
 }
 
+.today-order-controls {
+  display: flex;
+  flex-shrink: 0;
+  margin-right: 6px;
+}
+.today-order-controls > .button {
+  min-width: 44px;
+  min-height: 44px;
+}
+
 .list-management-actions {
   display: flex;
   flex-wrap: wrap;
