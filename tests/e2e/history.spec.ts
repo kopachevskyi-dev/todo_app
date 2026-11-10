@@ -1,17 +1,18 @@
-import { test, expect } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { test, expect, type Page } from '@playwright/test';
+import { startTestServer, setClock } from '../helpers/e2e-clock';
 import {
   LICENSE,
   seedHistoryWeek,
   type Send,
 } from '../helpers/history-fixture';
 
-const NOW = new Date('2026-11-08T17:00:00.000Z');
-
-async function startSeeded() {
-  const server = await startTestServer({ testClock: true });
-  const send: Send = (method, path, body) =>
-    fetch(`${server.url}${path}`, {
+async function startSeeded(page: Page) {
+  const server = await startTestServer(page);
+  const send: Send = async (method, path, body) => {
+    if (path === '/api/test/clock') {
+      return setClock(page, server.url, (body as { now: string }).now);
+    }
+    return fetch(`${server.url}${path}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
@@ -19,6 +20,7 @@ async function startSeeded() {
       },
       body: body === undefined ? undefined : JSON.stringify(body),
     });
+  };
   const ids = await seedHistoryWeek(send);
   return { server, send, ids };
 }
@@ -26,10 +28,12 @@ async function startSeeded() {
 test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task moves to the top of the Backlog', async ({
   page,
 }) => {
-  const { server } = await startSeeded();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const { server } = await startSeeded(page);
   try {
-    await page.clock.install({ time: NOW });
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/history`);
     const main = page.getByRole('main');
     await expect(main).toContainText('Nov 2â€“8');
@@ -62,7 +66,11 @@ test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task m
 test('mobile: next week keeps Thursday selected and a future day shows PLANNED Â· 1', async ({
   page,
 }) => {
-  const { server, send } = await startSeeded();
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const { server, send } = await startSeeded(page);
   try {
     const created = (await (
       await send('POST', '/api/tasks', {
@@ -73,8 +81,6 @@ test('mobile: next week keeps Thursday selected and a future day shows PLANNED Â
     await send('POST', `/api/tasks/${created.task.id}/plan`, {
       day: '2026-11-12',
     });
-    await page.clock.install({ time: NOW });
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${server.url}/history`);
     const main = page.getByRole('main');
 
@@ -94,10 +100,8 @@ test('mobile: next week keeps Thursday selected and a future day shows PLANNED Â
 test('keyboard: arrow right moves the selection to the next day and cells are labelled in full', async ({
   page,
 }) => {
-  const { server } = await startSeeded();
+  const { server } = await startSeeded(page);
   try {
-    await page.clock.install({ time: NOW });
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/history`);
     const main = page.getByRole('main');
 

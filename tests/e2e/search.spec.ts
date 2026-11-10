@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import Database from 'better-sqlite3';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer } from '../helpers/e2e-clock';
 
 const TITLE = "Renew driver's license";
 
@@ -38,10 +38,13 @@ function seed(databasePath: string) {
 test('desktop: typing in the sidebar search shows the result with its location; click opens it; Escape returns', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
     seed(server.databasePath);
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
 
     const field = page.getByRole('navigation').getByPlaceholder('Search');
@@ -68,10 +71,13 @@ test('desktop: typing in the sidebar search shows the result with its location; 
 test('mobile: Search on Backlog, typing "zzz" shows "No tasks match"', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
     seed(server.databasePath);
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${server.url}/backlog`);
     await page.getByRole('button', { name: 'Search' }).click();
     await page.getByRole('textbox').fill('zzz');
