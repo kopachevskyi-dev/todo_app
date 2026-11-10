@@ -33,7 +33,7 @@ async function seedToday(page: Page, url: string) {
   await setClock(page, url, '2026-11-04T19:20:00.000Z');
 }
 
-test('desktop: checking a task moves it under DONE · 2 with its time, updates progress, nav badge and detail; Reopen restores it', async ({
+test('desktop: checking a task moves it under Completed with its time, updates progress, nav badge and detail; Reopen restores it', async ({
   page,
 }) => {
   test.skip(
@@ -48,7 +48,15 @@ test('desktop: checking a task moves it under DONE · 2 with its time, updates p
     await expect(main).toContainText('1 of 5 done');
 
     await page.getByRole('checkbox', { name: LICENSE }).check();
-    await expect(main).toContainText('DONE · 2');
+    await expect(
+      main.getByRole('heading', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).filter({ hasText: LICENSE }).getByRole('checkbox'),
+    ).toBeChecked();
+    await expect(
+      rows(page).filter({ hasText: 'Pay rent' }).getByRole('checkbox'),
+    ).toBeChecked();
     await expect(rows(page).filter({ hasText: LICENSE })).toContainText(
       '2:20 PM',
     );
@@ -63,7 +71,15 @@ test('desktop: checking a task moves it under DONE · 2 with its time, updates p
     await panel.getByRole('button', { name: 'Reopen' }).click();
 
     await expect(main).toContainText('1 of 5 done');
-    await expect(main).toContainText('DONE · 1');
+    await expect(
+      main.getByRole('heading', { name: 'Completed' }),
+    ).toBeVisible();
+    await expect(
+      rows(page).filter({ hasText: LICENSE }).getByRole('checkbox'),
+    ).not.toBeChecked();
+    await expect(
+      rows(page).filter({ hasText: 'Pay rent' }).getByRole('checkbox'),
+    ).toBeChecked();
     await expect(rows(page).filter({ hasText: LICENSE })).not.toContainText(
       '2:20 PM',
     );

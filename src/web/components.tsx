@@ -174,6 +174,7 @@ export function TaskRow({
   return (
     <li
       data-layout-id={task.id}
+      data-layout-group={task.completedAt ? 'done' : 'open'}
       className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''}`}
       inert={creating}
       aria-busy={creating || undefined}

@@ -3,7 +3,6 @@ import { startTestServer } from '../helpers/e2e-clock';
 
 test('shows the Today heading in the browser with the client running', async ({
   page,
-  isMobile,
 }) => {
   const server = await startTestServer(page);
   try {
@@ -13,10 +12,11 @@ test('shows the Today heading in the browser with the client running', async ({
     // The main element is rendered by React, so this also checks that JS loaded.
     await expect(
       page.getByRole('main').getByRole('heading', {
-        name: isMobile ? 'Today 0' : 'Today',
+        name: 'Today',
         exact: true,
       }),
     ).toBeVisible();
+    await expect(page.getByRole('main')).toContainText('0 of 0 done');
     expect(errors).toEqual([]);
   } finally {
     await server.stop();

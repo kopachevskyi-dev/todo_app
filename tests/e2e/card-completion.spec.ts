@@ -98,10 +98,12 @@ test('checking both subtasks leaves the parent open and the row shows 2/2', asyn
     await card(page).getByRole('checkbox', { name: /Dial/ }).check();
     await card(page).getByRole('checkbox', { name: /Talk/ }).check();
 
-    await expect(rows(page).filter({ hasText: TITLE })).toContainText('2/2');
     await expect(
       card(page).getByRole('checkbox', { name: `Complete "${TITLE}"` }),
     ).not.toBeChecked();
+    if (test.info().project.name === 'mobile')
+      await page.getByRole('link', { name: 'Back to Today' }).click();
+    await expect(rows(page).filter({ hasText: TITLE })).toContainText('2/2');
     await expect(page.getByRole('main')).toContainText('0 of 1 done');
     await expect(
       page.getByRole('main').getByRole('heading', { name: 'Completed' }),
@@ -169,7 +171,11 @@ test('Delete from the card menu removes the task after confirming; cancelling ke
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('button', { name: 'Cancel' }).click();
     await expect(dialog).toBeHidden();
+    if (test.info().project.name === 'mobile')
+      await page.getByRole('link', { name: 'Back to Today' }).click();
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(1);
+    if (test.info().project.name === 'mobile')
+      await rows(page).filter({ hasText: TITLE }).getByRole('link').click();
 
     await openDelete();
     await page

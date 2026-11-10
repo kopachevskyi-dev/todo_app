@@ -141,7 +141,8 @@ test('deleting "Pay rent" planned for Wed, Nov 11 drops the Nov 11 day load in t
     await closeCard(page);
 
     await rows(page).filter({ hasText: 'Pay rent' }).click();
-    await page.getByRole('button', { name: /^Delete/ }).click();
+    await page.getByRole('button', { name: /more/i }).click();
+    await page.getByRole('menuitem', { name: 'Delete' }).click();
     await page
       .getByRole('dialog', { name: 'Delete task' })
       .getByRole('button', { name: 'Delete' })

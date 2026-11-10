@@ -14,7 +14,7 @@ async function seed(url: string, title: string) {
 }
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 
-test('desktop: Enter adds each of 3 subtasks and keeps the input open; the backlog row shows "3 subtasks"', async ({
+test('desktop: Enter adds each of 3 subtasks and keeps the input open; the backlog row shows "0/3"', async ({
   page,
 }) => {
   test.skip(
@@ -46,7 +46,7 @@ test('desktop: Enter adds each of 3 subtasks and keeps the input open; the backl
       }),
     ).toHaveCount(3);
     await expect(input).toBeVisible();
-    await expect(rows(page).first()).toContainText('3 subtasks');
+    await expect(rows(page).first()).toContainText('0/3');
   } finally {
     await server.stop();
   }
