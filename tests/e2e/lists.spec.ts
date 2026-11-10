@@ -1,5 +1,5 @@
 import { test, expect, type Page } from '@playwright/test';
-import { startTestServer } from '../../scripts/test-server.mjs';
+import { startTestServer } from '../helpers/e2e-clock';
 
 const headers = { 'Content-Type': 'application/json', 'X-Timezone': 'UTC' };
 
@@ -41,10 +41,13 @@ const sidebarItem = (page: Page, name: string) =>
 test('desktop: create, rename, recolor and delete a list; its tasks stay without a list', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, 'Buy stamps', 'Work');
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
 
     await page.getByText('New list', { exact: true }).click();
@@ -99,11 +102,14 @@ test('desktop: create, rename, recolor and delete a list; its tasks stay without
 test('desktop: clicking a list filters Backlog, quick-add joins that list, clicking again clears', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, sidebar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, 'Plan sprint', 'Work');
     await seed(server.url, 'Fix the shelf', 'Home');
-    await page.setViewportSize({ width: 1440, height: 900 });
     await page.goto(`${server.url}/backlog`);
 
     await sidebarItem(page, 'Work').click();
@@ -132,11 +138,14 @@ test('desktop: clicking a list filters Backlog, quick-add joins that list, click
 test('mobile: the Home chip filters Today and All clears it', async ({
   page,
 }) => {
-  const server = await startTestServer();
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
   try {
     await seed(server.url, 'Water plants', 'Home', 'today');
     await seed(server.url, 'Email boss', 'Work', 'today');
-    await page.setViewportSize({ width: 390, height: 844 });
     await page.goto(`${server.url}/today`);
     await expect(rows(page)).toHaveCount(2);
 
