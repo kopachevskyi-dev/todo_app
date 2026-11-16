@@ -220,7 +220,7 @@ export function TaskRow({
         aria-current={selected ? 'true' : undefined}
       >
         <span
-          className="row-list-bar"
+          className="list-dot row-list-bar"
           style={{ background: task.list?.color ?? 'var(--check-border)' }}
           aria-hidden="true"
         />

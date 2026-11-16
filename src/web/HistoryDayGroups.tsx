@@ -82,7 +82,7 @@ export function HistoryDayGroups({
                       </span>
                     )}
                     <span
-                      className="row-list-bar"
+                      className="list-dot row-list-bar"
                       style={{
                         background: row.list?.color ?? 'var(--check-border)',
                       }}
