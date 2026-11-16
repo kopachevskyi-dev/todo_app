@@ -260,7 +260,7 @@ export function App() {
       {!(mobile && task) && (
         <div className="content-grid">
           <main
-            className={`main-column ${hasWidgets && !(desktop && task) ? 'today-main' : ''} ${isBacklog ? 'backlog-main' : ''} ${isUpcoming ? 'upcoming-main' : ''}`}
+            className={`main-column ${(hasWidgets || path === '/history') && !(desktop && task) ? 'today-main' : ''} ${isBacklog ? 'backlog-main' : ''} ${isUpcoming ? 'upcoming-main' : ''}`}
           >
             <ScreenHeader
               mobile={mobile}

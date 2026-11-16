@@ -20,6 +20,19 @@ export function progressWidget(counts: {
   };
 }
 
+export function weekWidget(
+  days: { done: number; notDone: number; planned: number }[],
+): ProgressWidget {
+  const counts = days.reduce(
+    (sum, day) => ({
+      done: sum.done + day.done,
+      total: sum.total + day.done + day.notDone + day.planned,
+    }),
+    { done: 0, total: 0 },
+  );
+  return { ...progressWidget(counts), unit: '% done' };
+}
+
 export type ThisWeekWidget = {
   badge: string;
   number: number;

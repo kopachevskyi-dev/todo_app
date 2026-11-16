@@ -7,7 +7,7 @@ import {
   type Send,
 } from '../helpers/history-fixture';
 
-async function startSeeded(page: Page) {
+async function startBare(page: Page) {
   const server = await startTestServer(page);
   const send: Send = async (method, path, body) => {
     if (path === '/api/test/clock') {
@@ -22,6 +22,11 @@ async function startSeeded(page: Page) {
       body: body === undefined ? undefined : JSON.stringify(body),
     });
   };
+  return { server, send };
+}
+
+async function startSeeded(page: Page) {
+  const { server, send } = await startBare(page);
   const ids = await seedHistoryWeek(send);
   return { server, send, ids };
 }
@@ -158,6 +163,77 @@ test('keyboard: arrow right moves the selection to the next day and cells are la
         exact: true,
       }),
     ).toBeVisible();
+  } finally {
+    await server.stop();
+  }
+});
+
+async function seedThreeDoneDays(send: Send) {
+  const setClock = (now: string) => send('PUT', '/api/test/clock', { now });
+  const create = async (title: string) => {
+    const response = await send('POST', '/api/tasks', {
+      title,
+      target: 'today',
+    });
+    return ((await response.json()) as { task: { id: string } }).task.id;
+  };
+  const plan: [string, string][] = [
+    ['2026-11-02', 'Mon done'],
+    ['2026-11-04', 'Wed done'],
+    ['2026-11-06', 'Fri done'],
+  ];
+  for (const [day, title] of plan) {
+    await setClock(`${day}T15:00:00.000Z`);
+    const id = await create(title);
+    if (day === '2026-11-04') await create('Wed missed');
+    await setClock(`${day}T19:00:00.000Z`);
+    await send('POST', `/api/tasks/${id}/complete`);
+  }
+  await setClock('2026-11-08T17:00:00.000Z');
+}
+
+test('done tasks on 3 days: the strip marks those days, clicking a day shows its tasks, and Week reads 3 of 4 · 75% done', async ({
+  page,
+}) => {
+  const { server, send } = await startBare(page);
+  try {
+    await seedThreeDoneDays(send);
+    await page.goto(`${server.url}/history`);
+    const main = page.getByRole('main');
+    for (const name of [
+      /^Monday, November 2: 1 of 1 done/,
+      /^Wednesday, November 4: 1 of 2 done/,
+      /^Friday, November 6: 1 of 1 done/,
+    ])
+      await expect(main.getByRole('button', { name })).toBeVisible();
+
+    await main.getByRole('button', { name: /^Friday, November 6/ }).click();
+    await expect(
+      main.getByRole('listitem').filter({ hasText: 'Fri done' }),
+    ).toBeVisible();
+
+    const week = page.getByRole('region', { name: 'Week' });
+    await expect(week).toContainText('3 of 4');
+    await expect(week).toContainText('75');
+    await expect(week).toContainText('% done');
+  } finally {
+    await server.stop();
+  }
+});
+
+test('a missed row is not interactive', async ({ page }) => {
+  const { server, send } = await startBare(page);
+  try {
+    await seedThreeDoneDays(send);
+    await page.goto(`${server.url}/history`);
+    const main = page.getByRole('main');
+    await main.getByRole('button', { name: /^Wednesday, November 4/ }).click();
+    const row = main.getByRole('listitem').filter({ hasText: 'Wed missed' });
+    await expect(row).toBeVisible();
+    await expect(row.getByRole('link')).toHaveCount(0);
+    await expect(row.getByRole('button')).toHaveCount(0);
+    await row.click();
+    await expect(page).not.toHaveURL(/task=/);
   } finally {
     await server.stop();
   }

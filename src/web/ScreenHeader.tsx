@@ -87,6 +87,7 @@ export function ScreenHeader({
           {q.trim()}"
         </p>
       )}
+      {path === '/history' && <p>What you planned and what you finished.</p>}
       {path === '/upcoming' && <p>Tasks planned for the days ahead.</p>}
       {isBacklog && (
         <p>
