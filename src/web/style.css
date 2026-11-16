@@ -1,25 +1,44 @@
-@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap');
 
 :root {
-  --ground: #e6eadf;
-  --surface: #fcfcfa;
-  --surface-side: #f4f5f1;
-  --surface-raised: #fff;
-  --row-selected: #eef0ea;
-  --nav-active: #e7eae1;
-  --border: #e1e5dc;
-  --divider-row: #eef0ea;
-  --divider-menu: #e8ebe3;
-  --text: #1f2421;
-  --text-2: #3a423d;
-  --text-muted: #5b635e;
-  --check-border: #aeb5ab;
-  --handle: #d5dad0;
-  --primary: #f4c94a;
-  --primary-hover: #edbe34;
-  --primary-pressed: #e3ae22;
-  --focus: #2f6fde;
-  --scrim: rgba(31, 36, 33, 0.38);
+  --bg: #0b0b0c;
+  --panel: #f2f2ef;
+  --card: #fff;
+  --row: #f6f6f4;
+  --line: #ececea;
+  --ink: #141416;
+  --text-2: #55555c;
+  --muted: #6b6b73;
+  --meta: #7a7a82;
+  --done-text: #8a8a92;
+  --check-border: #c4c4ca;
+  --missed-border: #b5b5bb;
+  --lime: #d4f25c;
+  --lime-soft: #eef9c4;
+  --lime-ring: #c5e34a;
+  --sky-soft: #dcecff;
+  --warm-soft: #ffe9e2;
+  --warm-ink: #a33c1d;
+  --danger: #d8432f;
+  --danger-hover: #c23a27;
+  --focus: #4a86e8;
+  --scrim: rgba(0, 0, 0, 0.45);
+  /* Existing screens keep their layout while adopting the v3 surfaces. */
+  --ground: var(--bg);
+  --surface: var(--panel);
+  --surface-side: var(--card);
+  --surface-raised: var(--card);
+  --row-selected: var(--lime-soft);
+  --nav-active: var(--panel);
+  --border: var(--line);
+  --divider-row: var(--line);
+  --divider-menu: var(--line);
+  --text: var(--ink);
+  --text-muted: var(--muted);
+  --handle: var(--check-border);
+  --primary: var(--ink);
+  --primary-hover: #252528;
+  --primary-pressed: #353539;
   --list-personal: #e3686a;
   --list-work: #5fb4c6;
   --list-home: #f0c24b;
@@ -40,47 +59,57 @@
   --space-28: 28px;
   --space-36: 36px;
   --space-44: 44px;
-  --r-app: 22px;
+  --space-32: 32px;
+  --r-panel: 28px;
+  --r-card: 22px;
   --r-sheet: 24px;
-  --r-popover: 18px;
-  --r-card: 16px;
-  --r-cell-m: 14px;
-  --r-control: 12px;
-  --r-pill-status: 10px;
-  --r-check: 7px;
-  --r-dot: 4px;
+  --r-row: 14px;
+  --r-logo: 10px;
+  --r-pill: 999px;
+  --r-app: var(--r-panel);
+  --r-popover: var(--r-sheet);
+  --r-cell-m: var(--r-row);
+  --r-control: var(--r-pill);
+  --r-pill-status: var(--r-pill);
+  --r-check: 50%;
+  --r-dot: 50%;
   --r-bar: 4px;
-  --r-tab: 15px;
-  --r-fab: 18px;
-  --shadow-app: 0 10px 40px rgba(40, 50, 40, 0.12);
-  --shadow-popover: 0 14px 40px rgba(31, 36, 33, 0.18);
-  --shadow-quick-add: 0 6px 20px rgba(47, 111, 222, 0.12);
-  --shadow-selected-cell: 0 6px 20px rgba(47, 111, 222, 0.14);
-  --shadow-selected-cell-mobile: 0 6px 16px rgba(47, 111, 222, 0.14);
-  --shadow-fab: 0 8px 24px rgba(31, 36, 33, 0.2);
-  --shadow-sheet: 0 -10px 40px rgba(31, 36, 33, 0.18);
+  --r-tab: var(--r-pill);
+  --r-fab: 50%;
+  --shadow-app: 0 30px 80px rgba(0, 0, 0, 0.5);
+  --shadow-popover: 0 30px 80px rgba(0, 0, 0, 0.35);
+  --shadow-drawer: 0 20px 60px rgba(0, 0, 0, 0.35);
+  --shadow-quick-add: none;
+  --shadow-selected-cell: inset 0 0 0 1.5px var(--lime-ring);
+  --shadow-selected-cell-mobile: var(--shadow-selected-cell);
+  --shadow-fab: 0 10px 30px rgba(0, 0, 0, 0.18);
+  --shadow-sheet: var(--shadow-fab);
   --motion-color: 150ms ease-out;
-  --motion-slide: 220ms ease-out;
-  --motion-check: 120ms ease-out;
-  --font-app: 600 22px 'Lexend', system-ui, sans-serif;
-  --font-h1: 600 40px 'Lexend', system-ui, sans-serif;
-  --font-h1-mobile: 600 32px 'Lexend', system-ui, sans-serif;
-  --font-detail: 600 24px/1.25 'Lexend', system-ui, sans-serif;
-  --font-detail-mobile: 600 26px/1.25 'Lexend', system-ui, sans-serif;
-  --font-h2: 600 24px 'Lexend', system-ui, sans-serif;
-  --font-h2-mobile: 600 22px 'Lexend', system-ui, sans-serif;
-  --font-h3: 600 17px 'Lexend', system-ui, sans-serif;
-  --font-input: 400 17px 'Lexend', system-ui, sans-serif;
-  --font-row: 400 16px 'Lexend', system-ui, sans-serif;
-  --font-body: 400 15px/1.55 'Lexend', system-ui, sans-serif;
-  --font-button: 500 15px 'Lexend', system-ui, sans-serif;
-  --font-meta: 400 13px 'Lexend', system-ui, sans-serif;
-  --font-label: 500 14px 'Lexend', system-ui, sans-serif;
-  --font-section: 500 12px 'Lexend', system-ui, sans-serif;
-  --font-count: 500 18px 'Lexend', system-ui, sans-serif;
-  --font-count-mobile: 500 16px 'Lexend', system-ui, sans-serif;
-  --font-status: 500 13px 'Lexend', system-ui, sans-serif;
-  --font-tab: 400 12px 'Lexend', system-ui, sans-serif;
+  --motion-slide: 240ms ease-out;
+  --motion-sheet: 260ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  --motion-row: 250ms ease-out;
+  --motion-check: 150ms ease-out;
+  --motion-tick: 200ms cubic-bezier(0.3, 1.6, 0.5, 1);
+  --motion-progress: 400ms ease-out;
+  --font-app: 600 17px 'Lexend', system-ui, sans-serif;
+  --font-h1: 400 30px 'Lexend', system-ui, sans-serif;
+  --font-h1-mobile: 400 24px 'Lexend', system-ui, sans-serif;
+  --font-detail: 500 20px/1.3 'Lexend', system-ui, sans-serif;
+  --font-detail-mobile: var(--font-detail);
+  --font-h2: 500 16px 'Lexend', system-ui, sans-serif;
+  --font-h2-mobile: var(--font-h2);
+  --font-h3: 500 16px 'Lexend', system-ui, sans-serif;
+  --font-input: 400 13px 'Lexend', system-ui, sans-serif;
+  --font-row: 400 14px/1.4 'Lexend', system-ui, sans-serif;
+  --font-body: 400 13px/1.6 'Lexend', system-ui, sans-serif;
+  --font-button: 500 13px 'Lexend', system-ui, sans-serif;
+  --font-meta: 400 12px 'Lexend', system-ui, sans-serif;
+  --font-label: 400 13px 'Lexend', system-ui, sans-serif;
+  --font-section: var(--font-meta);
+  --font-count: 400 11px 'Lexend', system-ui, sans-serif;
+  --font-count-mobile: var(--font-count);
+  --font-status: var(--font-count);
+  --font-tab: 400 13px 'Lexend', system-ui, sans-serif;
   font-family: 'Lexend', system-ui, sans-serif;
   color: var(--text);
   background: var(--ground);
@@ -92,13 +121,17 @@
 body {
   margin: 0;
   padding: 24px;
+  font-size: 14px;
+  font-weight: 300;
+  background: var(--bg);
 }
 a {
   color: inherit;
   text-decoration: none;
 }
 button,
-input {
+input,
+textarea {
   font: inherit;
   color: inherit;
 }
@@ -108,7 +141,9 @@ a {
   transition:
     background-color var(--motion-color),
     color var(--motion-color),
-    border-color var(--motion-color);
+    border-color var(--motion-color),
+    box-shadow var(--motion-color),
+    transform var(--motion-color);
 }
 button {
   cursor: pointer;
@@ -178,7 +213,7 @@ h3 {
   min-width: 0;
   border: 0;
   background: transparent;
-  font-size: 15px;
+  font-size: 13px;
 }
 .sidebar nav {
   display: flex;
@@ -192,7 +227,7 @@ h3 {
   min-height: 44px;
   padding: 0 12px;
   border-radius: var(--r-control);
-  font-size: 16px;
+  font-size: 13px;
   color: var(--text-2);
 }
 .nav-link:hover,
@@ -220,8 +255,7 @@ h3 {
   padding: 0 12px 6px;
   font: var(--font-section);
   color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  text-transform: none;
 }
 .list-link,
 .new-list {
@@ -230,7 +264,7 @@ h3 {
   gap: 12px;
   min-height: 44px;
   padding: 0 12px;
-  font-size: 15px;
+  font-size: 13px;
   border-radius: var(--r-control);
   color: var(--text-2);
 }
@@ -270,7 +304,7 @@ h3 {
 .screen-header p {
   margin-top: 16px;
   color: var(--text-muted);
-  font-size: 15px;
+  font-size: 13px;
   line-height: 1.55;
 }
 .quick-add {
@@ -323,6 +357,7 @@ h3 {
 }
 .button-primary {
   background: var(--primary);
+  color: var(--card);
 }
 .button-primary:hover:not(:disabled) {
   background: var(--primary-hover);
@@ -362,8 +397,8 @@ h3 {
 .key-chip {
   font: var(--font-meta);
   padding: 2px 8px;
-  border-radius: 6px;
-  background: rgba(31, 36, 33, 0.1);
+  border-radius: var(--r-pill);
+  background: rgba(0, 0, 0, 0.07);
 }
 .field-hint {
   margin-left: 6px;
@@ -378,6 +413,7 @@ h3 {
   color: var(--text);
 }
 .task-list {
+  gap: 8px;
   display: flex;
   flex-direction: column;
   list-style: none;
@@ -385,23 +421,34 @@ h3 {
   margin: 0;
 }
 .task-row {
-  border-bottom: 1px solid var(--divider-row);
-  animation: row-enter var(--motion-slide);
+  background: var(--row);
+  border-radius: var(--r-row);
+  animation: row-enter var(--motion-row);
 }
 .task-row a {
   display: flex;
   align-items: center;
-  gap: 14px;
-  min-height: 60px;
-  padding: 8px 16px;
+  gap: 12px;
+  min-height: 56px;
+  padding: 10px 12px;
   border-radius: var(--r-cell-m);
 }
-.task-row a:hover {
-  background: color-mix(in srgb, var(--row-selected) 50%, transparent);
+.task-row:hover {
+  box-shadow: inset 0 0 0 100px rgba(0, 0, 0, 0.025);
 }
-.task-row a:active,
-.task-row.selected a {
-  background: var(--row-selected);
+.task-row:active,
+.task-row.selected {
+  background: var(--lime-soft);
+}
+.task-row.selected {
+  box-shadow: inset 0 0 0 1.5px var(--lime-ring);
+}
+.row-list-bar {
+  align-self: stretch;
+  flex: 0 0 3px;
+  width: 3px;
+  min-height: 32px;
+  border-radius: 2px;
 }
 .task-row.selected .row-title {
   font-weight: 500;
@@ -427,8 +474,8 @@ h3 {
   height: 44px;
 }
 .checkbox {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border: 1.5px solid var(--check-border);
   border-radius: var(--r-check);
   background: var(--surface-raised);
@@ -466,11 +513,6 @@ h3 {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-}
-.row-meta .list-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 3px;
 }
 .detail-panel {
   display: flex;
@@ -550,7 +592,7 @@ h3 {
   padding: 10px 16px max(28px, env(safe-area-inset-bottom));
   border-radius: var(--r-sheet) var(--r-sheet) 0 0;
   box-shadow: var(--shadow-sheet);
-  animation: sheet-in var(--motion-slide);
+  animation: sheet-in var(--motion-sheet);
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -616,6 +658,12 @@ h3 {
   gap: 20px;
   box-shadow: var(--shadow-popover);
 }
+.confirm-dialog .button-primary {
+  background: var(--danger);
+}
+.confirm-dialog .button-primary:hover:not(:disabled) {
+  background: var(--danger-hover);
+}
 .dialog-actions {
   display: flex;
   justify-content: flex-end;
@@ -633,7 +681,8 @@ h3 {
 }
 @keyframes push-in {
   from {
-    transform: translateX(100%);
+    transform: translateX(28px);
+    opacity: 0;
   }
   to {
     transform: none;
@@ -641,7 +690,8 @@ h3 {
 }
 @keyframes sheet-in {
   from {
-    transform: translateY(100%);
+    transform: translateY(28px);
+    opacity: 0;
   }
   to {
     transform: none;
@@ -682,7 +732,7 @@ h3 {
   .count-pill {
     font: var(--font-count-mobile);
     padding: 3px 12px;
-    border-radius: 11px;
+    border-radius: var(--r-pill);
   }
   .screen-header p {
     font-size: 14px;
@@ -690,9 +740,6 @@ h3 {
   }
   .desktop-subtitle {
     display: none;
-  }
-  .task-row a {
-    min-height: 64px;
   }
   .task-row.selected .row-title {
     font-weight: 400;
@@ -761,7 +808,7 @@ h3 {
     gap: var(--space-6);
     min-height: 44px;
     margin-bottom: 20px;
-    font-size: 15px;
+    font-size: 13px;
   }
   .detail-title {
     font: var(--font-detail-mobile);
@@ -944,7 +991,7 @@ h3 {
   margin-top: 16px;
 }
 .task-row.done .row-title {
-  color: var(--text-muted);
+  color: var(--done-text);
 }
 
 .day-option {
@@ -955,8 +1002,8 @@ h3 {
   align-items: center;
   gap: 8px;
   border: 0;
-  border-radius: var(--r-control);
-  background: transparent;
+  border-radius: var(--r-row);
+  background: var(--row);
   color: var(--text);
   font: var(--font-body);
   text-align: left;
@@ -1089,8 +1136,8 @@ h3 {
   background: var(--row-selected);
 }
 .planner-check {
-  width: 22px;
-  height: 22px;
+  width: 20px;
+  height: 20px;
   border: 1.5px solid var(--check-border);
   border-radius: var(--r-check);
   display: grid;
@@ -1177,7 +1224,7 @@ h3 {
   height: 100%;
   border-radius: inherit;
   background: var(--text);
-  transition: width var(--motion-slide);
+  transition: width var(--motion-progress);
 }
 @starting-style {
   .progress-fill {
@@ -1223,19 +1270,18 @@ h3 {
   flex: 1;
 }
 .checkbox.checked svg {
-  stroke-dasharray: 24;
-  animation: check-draw var(--motion-check);
+  animation: check-draw var(--motion-tick);
 }
 .check-hit:active .checkbox {
-  transform: scale(0.92);
+  transform: scale(0.86);
   transition: transform var(--motion-check);
 }
 @keyframes check-draw {
   from {
-    stroke-dashoffset: 24;
+    transform: scale(0.4);
   }
   to {
-    stroke-dashoffset: 0;
+    transform: scale(1);
   }
 }
 @media (max-width: 767px) {
@@ -1278,7 +1324,7 @@ h3 {
   justify-content: space-between;
   gap: 16px;
   color: var(--text-muted);
-  font-size: 15px;
+  font-size: 13px;
 }
 .week-arrows {
   display: flex;
@@ -1301,8 +1347,8 @@ h3 {
   flex-direction: column;
   gap: 6px;
   border: 1px solid var(--border);
-  border-radius: var(--r-card);
-  background: var(--surface-raised);
+  border-radius: var(--r-row);
+  background: var(--row);
   text-align: left;
 }
 .week-cell.empty-day {
@@ -1320,8 +1366,8 @@ h3 {
   white-space: nowrap;
 }
 .week-number {
-  font-size: 24px;
-  font-weight: 600;
+  font-size: 18px;
+  font-weight: 500;
 }
 .week-track {
   height: 6px;
@@ -1335,7 +1381,7 @@ h3 {
   height: 100%;
   border-radius: inherit;
   background: var(--text);
-  transition: width var(--motion-slide);
+  transition: width var(--motion-progress);
 }
 @starting-style {
   .week-fill {
@@ -1375,6 +1421,7 @@ h3 {
 }
 .history-row.missed .checkbox {
   border-style: dashed;
+  border-color: var(--missed-border);
 }
 @media (max-width: 767px) {
   .history-view {
@@ -1462,15 +1509,12 @@ h3 {
   align-items: center;
   gap: 12px;
   min-height: 44px;
-  font-size: 15px;
+  font-size: 13px;
 }
 .subtask-row .checkbox {
   width: 20px;
   height: 20px;
-  border-radius: 6px;
-}
-.subtask-row .checkbox.checked svg {
-  animation-duration: 120ms;
+  border-radius: var(--r-check);
 }
 .subtask-title,
 .subtask-add,
@@ -1656,9 +1700,11 @@ button.check-hit:disabled {
   max-width: calc(100vw - 32px);
   padding: 12px 16px;
   border: 1px solid var(--border);
-  border-radius: 16px;
-  background: var(--surface-raised);
-  box-shadow: 0 8px 30px #20271d26;
+  border-radius: var(--r-row);
+  background: var(--ink);
+  color: var(--card);
+  font: var(--font-body);
+  box-shadow: var(--shadow-fab);
 }
 
 @media (max-width: 767px) {
@@ -1796,4 +1842,28 @@ button.check-hit:disabled {
   align-items: center;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+.button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+.quick-field .button-primary,
+.fab {
+  background: var(--lime);
+  color: var(--ink);
+}
+.quick-field .button-primary:hover:not(:disabled),
+.fab:hover:not(:disabled) {
+  background: var(--lime);
+  box-shadow: 0 4px 14px rgba(140, 170, 20, 0.35);
+}
+.row-meta,
+.completion-time,
+.section-label {
+  color: var(--meta);
+}
+@media (prefers-reduced-motion: reduce) {
+  .button:active:not(:disabled) {
+    transform: none;
+  }
 }

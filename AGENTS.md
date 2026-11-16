@@ -1,6 +1,6 @@
 # Todo app
 
-A personal todo app. Designs live in `docs/design/`: desktop and mobile mockups (`.dc.html`, open in the design canvas) and `design-language.md`, the source of truth for the UI.
+A personal todo app. Designs live in `docs/design/`: v3 `Screens.dc.html` and interactive `App.dc.html` (open in the design canvas, with `support.js`) and `design-language.md`. When the document and mockup disagree, the mockup wins.
 
 ## Agent skills
 

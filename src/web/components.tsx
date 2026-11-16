@@ -219,19 +219,14 @@ export function TaskRow({
         }}
         aria-current={selected ? 'true' : undefined}
       >
+        <span
+          className="row-list-bar"
+          style={{ background: task.list?.color ?? 'var(--check-border)' }}
+          aria-hidden="true"
+        />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
-          {meta && (
-            <span className="row-meta">
-              {task.list && (
-                <span
-                  className="list-dot"
-                  style={{ background: task.list.color }}
-                />
-              )}
-              {meta}
-            </span>
-          )}
+          {meta && <span className="row-meta">{meta}</span>}
         </span>
         {creating && <span className="row-meta">Saving…</span>}
         {task.completedAt && !location && (

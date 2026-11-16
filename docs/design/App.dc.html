@@ -1,0 +1,412 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#0b0b0c}*{box-sizing:border-box}button{font:inherit;color:inherit}a{color:#141416;text-decoration:none}a:hover{color:#4a86e8}::-webkit-scrollbar{display:none}
+button:focus-visible,input:focus-visible{outline:2px solid #4a86e8;outline-offset:2px}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+@keyframes slideUp{from{transform:translateY(28px);opacity:0}to{transform:none;opacity:1}}
+@keyframes slideIn{from{transform:translateX(28px);opacity:0}to{transform:none;opacity:1}}
+@keyframes popIn{from{transform:translate(-50%,-48%) scale(.97);opacity:0}to{transform:translate(-50%,-50%) scale(1);opacity:1}}
+@keyframes rowIn{from{transform:translateY(-8px);opacity:0}to{transform:none;opacity:1}}
+@keyframes rise{from{transform:translateY(10px);opacity:0}to{transform:none;opacity:1}}
+@keyframes cardIn{from{transform:translateY(6px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</helmet>
+<div data-screen-label="App" style="--bg:#0b0b0c;--panel:#f2f2ef;--card:#fff;--row:#f6f6f4;--line:#ececea;--ink:#141416;--text-2:#55555c;--muted:#6b6b73;--meta:#7a7a82;--lime:#d4f25c;--lime-soft:#eef9c4;--sky-soft:#dcecff;--warm-soft:#ffe9e2;--warm-ink:#a33c1d;--r-panel:28px;--r-card:22px;--r-row:14px;--r-pill:999px;font-family:'Lexend',system-ui,sans-serif;color:var(--ink);font-size:14px;min-height:100vh;background:#0b0b0c">
+<div style="{{ pageStyle }}">
+<div style="{{ panelStyle }}">
+
+<sc-if value="{{ showTop }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;align-items:center;gap:16px">
+<div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0"><div style="width:32px;height:32px;border-radius:10px;background:var(--ink);display:grid;place-items:center;flex:none"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#d4f25c" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></div><span style="font-weight:600;font-size:17px">Tasks</span></div>
+<nav aria-label="Sections" style="display:flex;gap:2px;padding:4px;background:#fff;border-radius:999px;flex:none">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4">
+<button onClick="{{ t.go }}" aria-current="{{ t.current }}" style="{{ t.style }}" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.04)" style-active="transform:scale(.96)">{{ t.label }}<span style="{{ t.countStyle }}">{{ t.count }}</span></button>
+</sc-for>
+</nav>
+<div style="flex:1;display:flex;justify-content:flex-end;min-width:0"><label style="{{ searchStyle }}"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex:none"><circle cx="11" cy="11" r="6.5"></circle><path d="M16 16l4 4"></path></svg><input placeholder="Search tasks" aria-label="Search tasks" style="border:0;outline:0;background:transparent;min-width:0;width:100%;font-size:13px;color:var(--ink)"></label></div>
+</div>
+</sc-if>
+
+<div style="display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap">
+<div style="min-width:0"><h1 style="{{ h1Style }}">{{ head.title }}</h1><p style="margin:6px 0 0;color:var(--muted);font-size:13px">{{ head.sub }}</p></div>
+<div style="display:flex;gap:8px;flex-wrap:wrap">
+<sc-for list="{{ head.actions }}" as="a" hint-placeholder-count="2">
+<button onClick="{{ a.go }}" style="{{ a.style }}" style-hover="box-shadow:inset 0 0 0 100px rgba(255,255,255,.12),0 4px 14px rgba(0,0,0,.08)" style-active="transform:scale(.97)"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="{{ a.d }}"></path></svg>{{ a.label }}</button>
+</sc-for>
+</div>
+</div>
+
+<div style="{{ gridStyle }}">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+<sc-if value="{{ showHero }}" hint-placeholder-val="{{ true }}">
+<div style="border-radius:22px;padding:22px;background:linear-gradient(110deg,#ffffff 30%,#dcecff 75%,#eef9c4 100%);display:flex;flex-direction:column;gap:18px;animation:cardIn .3s ease-out">
+<div style="display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap"><span style="display:inline-flex;align-items:center;padding:5px 10px;border-radius:999px;background:#fff;font-size:12px;border:1px solid var(--line)">Up next</span><span style="display:inline-flex;align-items:center;gap:6px;padding:5px 10px;border-radius:999px;background:#fff;font-size:12px;border:1px solid var(--line)"><span style="{{ next.dot }}"></span>{{ next.list }}</span></div>
+<div style="min-width:0"><div style="{{ heroTitle }}">{{ next.title }}</div><div style="margin-top:6px;color:var(--text-2);font-size:13px">{{ next.meta }}</div></div>
+<div style="display:flex;justify-content:flex-end;gap:8px"><button onClick="{{ next.open }}" style="height:40px;padding:0 18px;border:0;border-radius:999px;background:#fff;font-size:13px;cursor:pointer;transition:transform .15s,box-shadow .15s" style-hover="box-shadow:0 4px 14px rgba(0,0,0,.08)" style-active="transform:scale(.97)">Open</button><button onClick="{{ next.done }}" style="height:40px;padding:0 18px;border:0;border-radius:999px;background:var(--lime);font-size:13px;font-weight:500;cursor:pointer;transition:transform .15s,box-shadow .15s" style-hover="box-shadow:0 4px 14px rgba(140,170,20,.35)" style-active="transform:scale(.97)">Mark done</button></div>
+</div>
+</sc-if>
+
+<sc-if value="{{ showWeek }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-size:16px;font-weight:500">{{ weekLabel }}</span><div style="display:flex;gap:6px"><button onClick="{{ prevWeek }}" aria-label="Previous week" style="width:36px;height:36px;border:0;border-radius:50%;background:var(--row);display:grid;place-items:center;cursor:pointer" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.05)" style-active="transform:scale(.92)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg></button><button onClick="{{ nextWeek }}" aria-label="Next week" style="width:36px;height:36px;border:0;border-radius:50%;background:var(--row);display:grid;place-items:center;cursor:pointer" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.05)" style-active="transform:scale(.92)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"></path></svg></button></div></div>
+<div role="group" aria-label="Week days" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:6px">
+<sc-for list="{{ weekDays }}" as="d" hint-placeholder-count="7">
+<button onClick="{{ d.go }}" aria-pressed="{{ d.on }}" aria-label="{{ d.aria }}" style="{{ d.style }}" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.03)" style-active="transform:scale(.96)"><span style="font-size:11px;color:var(--meta)">{{ d.wd }}</span><span style="font-size:18px;font-weight:500">{{ d.num }}</span><span style="display:block;width:100%;height:4px;border-radius:2px;background:rgba(0,0,0,.07);overflow:hidden"><span style="{{ d.fill }}"></span></span></button>
+</sc-for>
+</div>
+</div>
+</sc-if>
+
+<section aria-label="Tasks" style="background:#fff;border-radius:22px;padding:18px 18px 10px;min-width:0">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap"><span style="font-size:16px;font-weight:500">{{ cardTitle }}</span><span style="font-size:12px;color:var(--muted)">{{ cardMeta }}</span></div>
+<sc-if value="{{ showChips }}" hint-placeholder-val="{{ true }}">
+<div role="group" aria-label="Filter by list" style="display:flex;gap:6px;overflow-x:auto;margin:0 -18px 12px;padding:0 18px">
+<sc-for list="{{ chips }}" as="c" hint-placeholder-count="6"><button onClick="{{ c.go }}" aria-pressed="{{ c.on }}" style="{{ c.style }}" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.04)" style-active="transform:scale(.96)"><span style="{{ c.bar }}"></span>{{ c.label }}<span style="font-size:11px;opacity:.7">{{ c.count }}</span></button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ isEmpty }}" hint-placeholder-val="{{ false }}"><div style="padding:32px 16px 40px;text-align:center"><div style="font-size:15px;font-weight:500">{{ emptyTitle }}</div><div style="margin-top:6px;font-size:13px;color:var(--muted)">{{ emptyBody }}</div></div></sc-if>
+<sc-for list="{{ rows }}" as="r" hint-placeholder-count="6">
+<div style="{{ r.wrap }}">
+<sc-if value="{{ r.isLabel }}" hint-placeholder-val="{{ false }}"><div style="display:flex;align-items:center;gap:10px;padding:8px 2px 10px;font-size:12px;color:var(--meta)"><span style="white-space:nowrap">{{ r.label }}</span><span style="flex:1;height:1px;background:var(--line)"></span></div></sc-if>
+<sc-if value="{{ r.isTask }}" hint-placeholder-val="{{ true }}">
+<div style="{{ r.row }}" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.025)">
+<button role="checkbox" aria-checked="{{ r.done }}" aria-label="{{ r.checkLabel }}" onClick="{{ r.toggle }}" style="flex:none;width:40px;height:40px;margin:-10px -10px -10px -12px;padding:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer" style-active="transform:scale(.86)"><span style="{{ r.check }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="{{ r.tick }}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></button>
+<span style="{{ r.bar }}"></span>
+<button onClick="{{ r.open }}" style="flex:1;min-width:0;display:flex;align-items:center;gap:12px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;min-height:36px">
+<span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="{{ r.title }}">{{ r.t }}</span><span style="font-size:12px;color:var(--meta);overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.meta }}</span></span>
+<span style="{{ r.tag }}">{{ r.tagText }}</span>
+</button>
+</div>
+</sc-if>
+</div>
+</sc-for>
+</section>
+</div>
+
+<sc-if value="{{ showSide }}" hint-placeholder-val="{{ true }}">
+<div style="display:flex;flex-direction:column;gap:16px;min-width:0">
+
+<sc-if value="{{ showWidgets }}" hint-placeholder-val="{{ true }}">
+<div style="background:#fff;border-radius:22px;padding:18px;animation:cardIn .3s ease-out">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><span style="font-size:16px;font-weight:500">{{ stat.title }}</span><span style="{{ stat.badgeStyle }}">{{ stat.badge }}</span></div>
+<div style="display:flex;align-items:baseline;gap:6px;margin-top:14px"><span style="font-size:40px;font-weight:300;letter-spacing:-.03em;line-height:1">{{ stat.big }}</span><span style="color:var(--muted)">{{ stat.unit }}</span></div>
+<div style="height:8px;border-radius:999px;background:var(--panel);margin-top:14px;overflow:hidden"><div style="{{ stat.fill }}"></div></div>
+</div>
+
+<sc-if value="{{ showByList }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border-radius:22px;padding:18px;display:flex;flex-direction:column;gap:2px;animation:cardIn .3s ease-out">
+<div style="font-size:16px;font-weight:500;margin-bottom:8px">By list</div>
+<sc-for list="{{ byList }}" as="b" hint-placeholder-count="5"><button onClick="{{ b.go }}" style="display:flex;align-items:center;gap:10px;min-height:40px;padding:0 10px;margin:0 -10px;border:0;border-radius:12px;background:transparent;cursor:pointer;text-align:left;font-size:13px" style-hover="background:#f6f6f4"><span style="{{ b.bar }}"></span><span style="flex:1">{{ b.n }}</span><span style="color:var(--meta)">{{ b.count }}</span></button></sc-for>
+</div>
+</sc-if>
+
+<sc-if value="{{ showUnfinished }}" hint-placeholder-val="{{ false }}">
+<div style="background:#fff;border-radius:22px;padding:18px;display:flex;flex-direction:column;animation:cardIn .3s ease-out">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px"><span style="font-size:16px;font-weight:500">Unfinished</span><span style="font-size:12px;padding:3px 8px;border-radius:999px;background:var(--warm-soft);color:var(--warm-ink)">{{ unfinishedBadge }}</span></div>
+<sc-for list="{{ unfinishedRows }}" as="u" hint-placeholder-count="2"><div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid #f0f0ee"><span style="width:20px;height:20px;border-radius:50%;border:1.5px dashed #b5b5bb;flex:none"></span><span style="flex:1;min-width:0;font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ u.t }}</span><span style="font-size:11px;color:var(--meta);white-space:nowrap">{{ u.d }}</span></div></sc-for>
+<button onClick="{{ addUnfinished }}" style="margin-top:12px;height:38px;border:0;border-radius:999px;background:var(--panel);font-size:13px;cursor:pointer;transition:transform .15s" style-hover="background:#e9e9e5" style-active="transform:scale(.98)">{{ unfinishedAction }}</button>
+</div>
+</sc-if>
+
+<sc-if value="{{ showQuick }}" hint-placeholder-val="{{ true }}">
+<form onSubmit="{{ addTask }}" style="margin:0;border-radius:22px;padding:14px;background:linear-gradient(120deg,#ffffff 40%,#e3efff);display:flex;align-items:center;gap:10px">
+<input value="{{ draft }}" onChange="{{ setDraft }}" onFocus="{{ focusOn }}" onBlur="{{ focusOff }}" placeholder="{{ addPlaceholder }}" aria-label="{{ addPlaceholder }}" style="{{ quickInput }}">
+<button type="submit" aria-label="Add task" style="width:44px;height:44px;flex:none;border:0;border-radius:50%;background:var(--lime);display:grid;place-items:center;cursor:pointer;transition:transform .15s,box-shadow .15s" style-hover="box-shadow:0 4px 14px rgba(140,170,20,.35)" style-active="transform:scale(.92)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141416" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button>
+</form>
+</sc-if>
+</sc-if>
+
+<sc-if value="{{ showDetailInline }}" hint-placeholder-val="{{ false }}">
+<div style="{{ detailCard }}">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px"><button onClick="{{ closeTask }}" style="display:inline-flex;align-items:center;gap:4px;height:36px;padding:0 14px 0 8px;border:0;border-radius:999px;background:var(--row);font-size:13px;cursor:pointer" style-hover="background:#ededea" style-active="transform:scale(.96)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"></path></svg>{{ closeText }}</button><button onClick="{{ askDelete }}" aria-label="Delete task" style="width:36px;height:36px;border:0;border-radius:50%;background:var(--row);display:grid;place-items:center;cursor:pointer" style-hover="background:#ffe9e2;color:#a33c1d" style-active="transform:scale(.92)"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12"></path></svg></button></div>
+<div style="display:flex;gap:12px;align-items:flex-start;min-width:0"><button role="checkbox" aria-checked="{{ sel.done }}" aria-label="Mark as done" onClick="{{ toggleSel }}" style="flex:none;width:40px;height:40px;margin:-6px -6px -6px -10px;padding:0;border:0;background:transparent;display:grid;place-items:center;cursor:pointer" style-active="transform:scale(.86)"><span style="{{ selCheck }}"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="{{ selTick }}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span></button><div style="font-size:20px;font-weight:500;line-height:1.3;letter-spacing:-.01em;overflow-wrap:anywhere;min-width:0">{{ sel.title }}</div></div>
+<p style="margin:0;font-size:13px;line-height:1.6;color:var(--text-2);overflow-wrap:anywhere">{{ sel.note }}</p>
+<div style="display:flex;flex-direction:column">
+<button onClick="{{ openList }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0;border:0;border-bottom:1px solid #f0f0ee;background:transparent;cursor:pointer;text-align:left;font-size:13px" style-hover="color:#4a86e8"><span style="width:52px;color:var(--meta);flex:none">List</span><span style="{{ selBar }}"></span><span style="flex:1;min-width:0">{{ selListName }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--meta)"><path d="M9 6l6 6-6 6"></path></svg></button>
+<button onClick="{{ openDay }}" style="display:flex;align-items:center;gap:12px;min-height:44px;padding:0;border:0;background:transparent;cursor:pointer;text-align:left;font-size:13px" style-hover="color:#4a86e8"><span style="width:52px;color:var(--meta);flex:none">Day</span><span style="flex:1;min-width:0">{{ selDayLabel }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="color:var(--meta)"><path d="M9 6l6 6-6 6"></path></svg></button>
+</div>
+<sc-if value="{{ sel.hasSubs }}" hint-placeholder-val="{{ false }}">
+<div><div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="font-size:14px;font-weight:500">Subtasks</span><span style="font-size:12px;color:var(--meta)">{{ subProgress }}</span></div>
+<sc-for list="{{ subs }}" as="s" hint-placeholder-count="3"><button role="checkbox" aria-checked="{{ s.done }}" onClick="{{ s.toggle }}" style="display:flex;align-items:center;gap:10px;width:100%;min-height:40px;padding:0;border:0;background:transparent;text-align:left;cursor:pointer;font-size:13px"><span style="{{ s.check }}"><svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" style="{{ s.tick }}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="{{ s.text }}">{{ s.t }}</span></button></sc-for>
+</div>
+</sc-if>
+<div><button onClick="{{ toggleAct }}" aria-expanded="{{ actOpen }}" style="display:flex;align-items:center;gap:6px;min-height:40px;padding:0;border:0;background:transparent;cursor:pointer;font-size:14px;font-weight:500">Activity<span style="font-size:12px;font-weight:400;color:var(--meta)">· {{ actCount }}</span><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="{{ actChevron }}"><path d="M6 9l6 6 6-6"></path></svg></button>
+<sc-if value="{{ actOpen }}" hint-placeholder-val="{{ false }}"><div style="display:flex;flex-direction:column;gap:12px;margin-top:8px;animation:fadeIn .2s ease-out"><sc-for list="{{ activity }}" as="e" hint-placeholder-count="3"><div style="display:flex;gap:12px"><span style="{{ e.dot }}"></span><div style="font-size:13px"><div>{{ e.what }}</div><div style="color:var(--meta);font-size:12px;margin-top:2px">{{ e.when }}</div></div></div></sc-for></div></sc-if>
+</div>
+</div>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</div>
+</div>
+
+<sc-if value="{{ showScrim }}" hint-placeholder-val="{{ false }}"><div onClick="{{ closeTask }}" style="position:fixed;inset:0;z-index:20;background:rgba(0,0,0,.45);animation:fadeIn .2s ease-out"></div></sc-if>
+
+<sc-if value="{{ showTabBar }}" hint-placeholder-val="{{ false }}">
+<nav aria-label="Sections" style="position:fixed;left:12px;right:12px;bottom:max(12px,env(safe-area-inset-bottom));z-index:10;display:flex;gap:2px;padding:4px;background:#fff;border-radius:999px;box-shadow:0 10px 30px rgba(0,0,0,.18)">
+<sc-for list="{{ tabs }}" as="t" hint-placeholder-count="4"><button onClick="{{ t.go }}" aria-current="{{ t.current }}" style="{{ t.mStyle }}" style-active="transform:scale(.95)">{{ t.label }}</button></sc-for>
+</nav>
+<sc-if value="{{ showFab }}" hint-placeholder-val="{{ false }}"><button onClick="{{ openCapture }}" aria-label="Add task" style="position:fixed;right:16px;bottom:84px;z-index:11;width:56px;height:56px;border:0;border-radius:50%;background:var(--lime);box-shadow:0 10px 26px rgba(0,0,0,.22);display:grid;place-items:center;cursor:pointer;transition:transform .15s" style-active="transform:scale(.92)"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#141416" stroke-width="2.3" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg></button></sc-if>
+</sc-if>
+
+<sc-if value="{{ hasSheet }}" hint-placeholder-val="{{ false }}">
+<div style="position:fixed;inset:0;z-index:50">
+<div onClick="{{ closeSheet }}" style="position:absolute;inset:0;background:rgba(0,0,0,.45);animation:fadeIn .2s ease-out"></div>
+<section role="dialog" aria-label="{{ sheetTitle }}" style="{{ sheetStyle }}">
+<sc-if value="{{ isMobile }}" hint-placeholder-val="{{ false }}"><div style="width:36px;height:4px;border-radius:2px;background:#dcdcdf;align-self:center;flex:none"></div></sc-if>
+<div style="font-size:18px;font-weight:500;flex:none">{{ sheetTitle }}</div>
+<sc-if value="{{ isOptSheet }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:4px;overflow:auto">
+<sc-for list="{{ options }}" as="o" hint-placeholder-count="4"><button onClick="{{ o.go }}" style="{{ o.style }}" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.03)" style-active="transform:scale(.99)"><span style="{{ o.bar }}"></span><span style="flex:1;min-width:0">{{ o.label }}</span><span style="font-size:12px;color:var(--meta);white-space:nowrap">{{ o.load }}</span><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#141416" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" style="{{ o.tick }}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></button></sc-for>
+</div>
+</sc-if>
+<sc-if value="{{ isPickerSheet }}" hint-placeholder-val="{{ false }}">
+<div style="display:flex;flex-direction:column;gap:6px;overflow:auto;min-height:0">
+<sc-for list="{{ pickRows }}" as="p" hint-placeholder-count="5">
+<div>
+<sc-if value="{{ p.isLabel }}" hint-placeholder-val="{{ false }}"><div style="padding:8px 2px 2px;font-size:12px;color:var(--meta)">{{ p.label }}</div></sc-if>
+<sc-if value="{{ p.isTask }}" hint-placeholder-val="{{ true }}"><button role="checkbox" aria-checked="{{ p.on }}" onClick="{{ p.go }}" style="{{ p.style }}" style-hover="box-shadow:inset 0 0 0 100px rgba(0,0,0,.03)"><span style="{{ p.check }}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" style="{{ p.tick }}"><path d="M5 12.5l4.5 4.5L19 7.5"></path></svg></span><span style="{{ p.bar }}"></span><span style="flex:1;min-width:0;display:flex;flex-direction:column;gap:3px"><span style="font-size:14px;line-height:1.35;overflow-wrap:anywhere">{{ p.title }}</span><span style="font-size:12px;color:var(--meta)">{{ p.meta }}</span></span></button></sc-if>
+</div>
+</sc-for>
+</div>
+<button onClick="{{ planPicked }}" style="{{ pickBtn }}" style-active="transform:scale(.98)">{{ pickLabel }}</button>
+</sc-if>
+<sc-if value="{{ isCaptureSheet }}" hint-placeholder-val="{{ false }}">
+<form onSubmit="{{ addTask }}" style="margin:0;display:flex;flex-direction:column;gap:14px"><input value="{{ draft }}" onChange="{{ setDraft }}" placeholder="{{ addPlaceholder }}" aria-label="{{ addPlaceholder }}" style="height:52px;padding:0 18px;border:1px solid var(--line);border-radius:16px;background:var(--row);outline:0;font:400 16px 'Lexend',system-ui,sans-serif;color:var(--ink)"><div style="display:flex;justify-content:space-between;align-items:center;gap:12px"><span style="font-size:12px;color:var(--meta)">A title is enough. Add details later.</span><button type="submit" style="height:46px;padding:0 26px;border:0;border-radius:999px;background:var(--ink);color:#fff;font-size:14px;font-weight:500;cursor:pointer">Add</button></div></form>
+</sc-if>
+<sc-if value="{{ isDeleteSheet }}" hint-placeholder-val="{{ false }}">
+<p style="margin:0;font-size:14px;line-height:1.55;color:var(--text-2);overflow-wrap:anywhere">“{{ sel.title }}” will be deleted. This can't be undone.</p>
+<div style="display:flex;justify-content:flex-end;gap:8px"><button onClick="{{ closeSheet }}" style="height:44px;padding:0 20px;border:0;border-radius:999px;background:var(--row);font-size:14px;cursor:pointer" style-hover="background:#ededea">Cancel</button><button onClick="{{ doDelete }}" style="height:44px;padding:0 20px;border:0;border-radius:999px;background:#d8432f;color:#fff;font-size:14px;font-weight:500;cursor:pointer" style-hover="background:#c23a27">Delete</button></div>
+</sc-if>
+</section>
+</div>
+</sc-if>
+
+<sc-if value="{{ hasToast }}" hint-placeholder-val="{{ false }}"><div role="status" style="{{ toastStyle }}">{{ toast }}</div></sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;initialScreen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;today&quot;,&quot;backlog&quot;,&quot;upcoming&quot;,&quot;history&quot;],&quot;default&quot;:&quot;today&quot;,&quot;tsType&quot;:&quot;'today'|'backlog'|'upcoming'|'history'&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialSel&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialSheet&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;&quot;,&quot;day&quot;,&quot;list&quot;,&quot;picker&quot;,&quot;capture&quot;,&quot;del&quot;],&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialFilter&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialActivity&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialPick&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialToast&quot;:{&quot;editor&quot;:&quot;text&quot;,&quot;default&quot;:&quot;&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;State&quot;},&quot;initialWeek&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;State&quot;},&quot;forceWidth&quot;:{&quot;editor&quot;:&quot;int&quot;,&quot;default&quot;:0,&quot;tsType&quot;:&quot;number&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+class Component extends DCLogic {
+  state = {
+    w: this.props.forceWidth || (typeof window !== 'undefined' ? window.innerWidth : 1440),
+    screen: this.props.initialScreen || 'today', sel: this.props.initialSel || null, sheet: this.props.initialSheet || null, filter: this.props.initialFilter ? [this.props.initialFilter] : [], draft: '', focus: false, act: !!this.props.initialActivity,
+    week: this.props.initialWeek || 0, hday: '2026-11-16', pick: [], toast: this.props.initialToast || '', fresh: null,
+    tasks: [
+      { id: 't1', title: 'Renew driver’s license', list: 'Home', day: '2026-11-16', note: 'Bring passport, proof of address and the old license. The office closes at 5 PM.', subs: [{ t: 'Passport', d: true }, { t: 'Proof of address', d: false }, { t: 'Old license', d: false }], created: 'Nov 10, 9:12 AM' },
+      { id: 't2', title: 'Write the landing page outline for the spring campaign, including hero copy, three feature blocks and the pricing section', list: 'Work', day: '2026-11-16', note: 'First draft for review on Wednesday.', subs: [], created: 'Nov 12, 4:30 PM' },
+      { id: 't3', title: 'Book a dentist appointment', list: 'Health', day: '2026-11-16', note: 'Any weekday after 3 PM.', subs: [], created: 'Nov 13, 8:05 AM' },
+      { id: 't4', title: 'Read chapter 4: Distributed consensus and replicated state machines', list: 'Knowledge', day: '2026-11-16', note: 'Take notes on Raft leader election.', subs: [], created: 'Nov 9, 7:40 PM' },
+      { id: 't5', title: 'Submit the physics lab report', list: 'School', day: '2026-11-16', done: '9:40 AM', note: 'Upload the PDF to the course page.', subs: [], created: 'Nov 11, 6:00 PM' },
+      { id: 't6', title: 'Water the plants', list: 'Home', day: '2026-11-16', done: '8:15 AM', note: '', subs: [], created: 'Nov 15, 8:00 PM' },
+      { id: 'b1', title: 'Update the component library to v2', list: 'Work', day: null, missed: 'Nov 12', note: 'Replace ghost buttons first.', subs: [], created: 'Nov 8, 10:00 AM' },
+      { id: 'b2', title: 'Call the bank about the replacement card', list: 'Home', day: null, missed: 'Nov 13', note: '', subs: [], created: 'Nov 10, 1:15 PM' },
+      { id: 'b3', title: 'Plan the weekend trip to Lisbon', list: '', day: null, note: '', subs: [], created: 'Nov 14, 9:30 AM' },
+      { id: 'b4', title: 'Learn the basics of Rust ownership', list: 'Knowledge', day: null, note: '', subs: [], created: 'Nov 6, 8:20 PM' },
+      { id: 'b5', title: 'Renew gym membership', list: 'Health', day: null, note: '', subs: [], created: 'Nov 5, 7:10 AM' },
+      { id: 'b6', title: 'Review pull request #214 for the onboarding flow', list: 'Work', day: null, note: '', subs: [], created: 'Nov 15, 5:45 PM' },
+      { id: 'u1', title: 'Team retro', list: 'Work', day: '2026-11-17', note: '', subs: [], created: 'Nov 9, 9:00 AM' },
+      { id: 'u2', title: 'Pay the rent', list: 'Home', day: '2026-11-17', note: '', subs: [], created: 'Nov 1, 9:00 AM' },
+      { id: 'u3', title: 'Presentation rehearsal for the Friday demo', list: 'Work', day: '2026-11-18', note: '', subs: [], created: 'Nov 12, 11:00 AM' },
+      { id: 'u4', title: 'Math exam: chapters 5 to 7', list: 'School', day: '2026-11-18', note: '', subs: [], created: 'Nov 3, 6:30 PM' },
+      { id: 'u5', title: 'Birthday dinner with the family', list: 'Home', day: '2026-11-20', note: '', subs: [], created: 'Nov 7, 12:00 PM' },
+    ],
+  };
+  hist = {
+    '2026-11-09': [['Plan the sprint', 'Work', '9:10 AM'], ['Gym session', 'Health', '6:30 PM'], ['Groceries', 'Home', '5:20 PM']],
+    '2026-11-10': [['Write the API notes', 'Work', '11:30 AM'], ['Read two papers', 'Knowledge', '8:15 PM'], ['Laundry', 'Home', '7:00 PM'], ['Prepare slides', 'Work', null, 'Nov 10'], ['Call the landlord', 'Home', null, 'Nov 10']],
+    '2026-11-11': [['Physics problem set', 'School', '4:10 PM'], ['Fix the login bug', 'Work', '2:45 PM'], ['Meal prep', 'Health', '6:15 PM'], ['Pay the invoice', 'Home', '10:20 AM']],
+    '2026-11-12': [['Design review', 'Work', '3:00 PM'], ['Gym session', 'Health', '7:00 PM'], ['Update the component library to v2', 'Work', null, 'Nov 12']],
+    '2026-11-13': [['Write the changelog', 'Work', '10:00 AM'], ['Book flights', 'Home', '1:30 PM'], ['Yoga class', 'Health', '6:30 PM']],
+    '2026-11-14': [],
+    '2026-11-15': [['Clean the apartment', 'Home', '11:00 AM']],
+  };
+  componentDidMount() {
+    if (this.props.initialPick) this.setState({ pick: this.props.initialPick.split(',') });
+    this._r = () => { if (this.props.forceWidth) return; const w = window.innerWidth; if (w !== this._lastW || w !== this.state.w) this.setState({ w }); };
+    this._k = e => { if (e.key === 'Escape') { if (this.state.sheet) this.setState({ sheet: null }); else if (this.state.sel) this.setState({ sel: null }); } };
+    window.addEventListener('resize', this._r); window.addEventListener('keydown', this._k);
+    if (window.ResizeObserver) { this._ro = new ResizeObserver(this._r); this._ro.observe(document.documentElement); }
+    this._to = [50, 300, 1000].map(ms => setTimeout(this._r, ms)); this._r();
+  }
+  componentWillUnmount() { window.removeEventListener('resize', this._r); window.removeEventListener('keydown', this._k); this._ro && this._ro.disconnect(); (this._to || []).forEach(clearTimeout); clearTimeout(this._t); }
+  say(msg) { this.setState({ toast: msg }); clearTimeout(this._t); this._t = setTimeout(() => this.setState({ toast: '' }), 4000); }
+  short(d) { return new Date(d + 'T12:00').toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }); }
+  dayName(d) { if (!d) return 'Choose a day'; if (d === '2026-11-16') return 'Today, Mon Nov 16'; if (d === '2026-11-17') return 'Tomorrow, Tue Nov 17'; return this.short(d); }
+  update(id, fn) { this.setState(s => ({ tasks: s.tasks.map(t => t.id === id ? fn(t) : t) })); }
+  toggle(id) { this.update(id, t => ({ ...t, done: t.done ? undefined : new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }) })); }
+  renderVals() {
+    const S = this.state, w = this.props.forceWidth || (typeof window !== 'undefined' ? window.innerWidth : S.w);
+    const { tasks, screen, sel, sheet, filter, draft, focus, act, pick, fresh } = S;
+    this._lastW = w;
+    const mobile = w < 768, wide = w >= 1100, TODAY = '2026-11-16';
+    const C = { Health: '#3aa77a', Work: '#4a86e8', Home: '#e8a33c', School: '#e05a4f', Knowledge: '#8b6ad8' };
+    const names = Object.keys(C), col = l => C[l] || '#c4c4ca';
+    const bar = (l, h) => ({ width: 3, flex: 'none', alignSelf: h ? 'auto' : 'stretch', height: h || 'auto', borderRadius: 2, background: col(l) });
+    const TR = 'transform .15s ease-out,box-shadow .15s ease-out,background .15s ease-out';
+    const go = k => () => this.setState({ screen: k, sel: null, filter: [] });
+    const inList = t => !filter.length || filter.includes(t.list);
+    const backlog = tasks.filter(t => !t.day && !t.done), unfinished = backlog.filter(t => t.missed);
+    const todayAll = tasks.filter(t => t.day === TODAY), todayOpen = todayAll.filter(t => !t.done), todayDone = todayAll.filter(t => t.done);
+    const upcoming = tasks.filter(t => t.day && t.day > TODAY).sort((a, b) => a.day.localeCompare(b.day));
+    const pill = (dark, lime) => ({ display: 'inline-flex', alignItems: 'center', gap: 8, height: 40, padding: '0 18px', border: 0, borderRadius: 999, fontSize: 13, fontWeight: 500, cursor: 'pointer', whiteSpace: 'nowrap', transition: TR, background: dark ? '#141416' : lime ? '#d4f25c' : '#fff', color: dark ? '#fff' : '#141416' });
+    const IC = { plus: 'M12 5v14M5 12h14', stack: 'M12 3 3 8l9 5 9-5-9-5Z M3 13l9 5 9-5' };
+    const tabDefs = [['today', 'Today', todayOpen.length], ['backlog', 'Backlog', backlog.length], ['upcoming', 'Upcoming', upcoming.length], ['history', 'History', '']];
+    const tabs = tabDefs.map(([k, label, count]) => { const on = screen === k; return { label, count, go: go(k), current: on ? 'page' : undefined,
+      style: { display: 'inline-flex', alignItems: 'center', gap: 6, height: 36, padding: '0 16px', border: 0, borderRadius: 999, background: on ? '#141416' : 'transparent', color: on ? '#fff' : '#55555c', fontSize: 13, fontWeight: on ? 500 : 400, cursor: 'pointer', transition: TR },
+      countStyle: { display: count === '' || count === 0 ? 'none' : 'inline-block', fontSize: 11, padding: '0 6px', lineHeight: '18px', borderRadius: 999, background: on ? '#d4f25c' : '#f2f2ef', color: '#141416' },
+      mStyle: { flex: 1, minWidth: 0, height: 44, border: 0, borderRadius: 999, background: on ? '#141416' : 'transparent', color: on ? '#fff' : '#55555c', fontSize: 13, fontWeight: on ? 500 : 400, cursor: 'pointer', transition: TR } }; });
+
+    const mk = (t, o = {}) => { const done = !!t.done, missed = !!o.missed, selected = t.id === sel, hl = o.hl;
+      return { isTask: true, isLabel: false, t: t.title, done, checkLabel: `${done ? 'Reopen' : 'Complete'} "${t.title}"`,
+        meta: [t.list || 'No list', t.subs && t.subs.length ? `${t.subs.filter(s => s.d).length}/${t.subs.length} subtasks` : ''].filter(Boolean).join(' · '),
+        tagText: o.tag || '', tag: { display: o.tag ? 'inline-block' : 'none', flex: 'none', fontSize: 11, padding: '4px 10px', borderRadius: 999, background: o.warm ? '#ffe9e2' : hl || selected ? '#fff' : '#ececea', color: o.warm ? '#a33c1d' : '#55555c', whiteSpace: 'nowrap' },
+        wrap: { animation: t.id === fresh ? 'rowIn .25s ease-out' : 'none', marginBottom: 8 },
+        row: { display: 'flex', alignItems: 'center', gap: 12, padding: '10px 12px', minHeight: 56, borderRadius: 14, background: selected ? '#eef9c4' : hl ? '#f3f9dc' : '#f6f6f4', boxShadow: selected ? 'inset 0 0 0 1.5px #c5e34a' : 'none', transition: TR },
+        check: { width: 20, height: 20, borderRadius: '50%', border: missed ? '1.5px dashed #b5b5bb' : done ? '1.5px solid #141416' : '1.5px solid #c4c4ca', background: done ? '#141416' : '#fff', display: 'grid', placeItems: 'center', transition: TR },
+        tick: { opacity: done ? 1 : 0, transform: done ? 'scale(1)' : 'scale(.4)', transition: 'transform .2s cubic-bezier(.3,1.6,.5,1),opacity .12s' },
+        bar: bar(t.list),
+        title: { fontSize: 14, lineHeight: 1.4, color: done ? '#8a8a92' : '#141416', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflowWrap: 'anywhere' },
+        toggle: missed ? () => {} : () => this.toggle(t.id), open: missed ? () => {} : () => this.setState({ sel: t.id, act: !!t.done }) }; };
+    const lab = label => ({ isLabel: true, isTask: false, label, wrap: {}, row: {}, check: {}, tick: {}, bar: {}, title: {}, tag: {}, toggle() {}, open() {} });
+
+    let rows = [], head = {}, cardTitle = '', cardMeta = '', emptyTitle = '', emptyBody = '', stat = {}, addPlaceholder = 'Add to today';
+    let showHero = false, showChips = true, showQuick = true, showByList = false, showUnfinished = false;
+    const next = todayOpen[0];
+    let weekLabel = '', weekDays = [], prevWeek = () => {}, nextWeek = () => {};
+    const progress = (d, t) => ({ width: (t ? d / t * 100 : 0) + '%', height: '100%', background: '#141416', borderRadius: 999, transition: 'width .4s ease-out' });
+    if (screen === 'today') {
+      const o = todayOpen.filter(inList), d = todayDone.filter(inList);
+      rows = [...o.map((t, i) => mk(t, { hl: i === 0 && !filter.length && !sel, tag: i === 0 && !filter.length ? 'Up next' : '' })), ...(d.length ? [lab(`Completed · ${d.length}`)] : []), ...d.map(t => mk(t, { tag: t.done }))];
+      head = { title: 'Monday, November 16', sub: `${todayOpen.length} ${todayOpen.length === 1 ? 'task' : 'tasks'} left today` + (unfinished.length ? ` · ${unfinished.length} unfinished from last week` : ''),
+        actions: [{ label: 'Add from Backlog', d: IC.stack, go: () => this.setState({ sheet: 'picker', pick: [] }), style: pill() }, { label: 'New task', d: IC.plus, go: () => this.setState({ sheet: 'capture' }), style: pill(true) }] };
+      cardTitle = 'Today’s plan'; cardMeta = `${todayDone.length} of ${todayAll.length} done`;
+      showHero = !!next && !mobile; showUnfinished = unfinished.length > 0;
+      const pct = todayAll.length ? Math.round(todayDone.length / todayAll.length * 100) : 0;
+      stat = { title: 'Progress', badge: `${todayDone.length} of ${todayAll.length}`, badgeStyle: { fontSize: 12, padding: '3px 8px', borderRadius: 999, background: '#eef9c4' }, big: String(pct), unit: '% of today', fill: progress(todayDone.length, todayAll.length) };
+      if (!rows.length) { emptyTitle = filter.length ? 'No matching tasks today' : 'Nothing planned for today'; emptyBody = filter.length ? 'Other lists are hidden by the filter.' : `Your Backlog has ${backlog.length} tasks. Pick a few for today.`; }
+    } else if (screen === 'backlog') {
+      const b = backlog.filter(inList), un = b.filter(t => t.missed), rest = b.filter(t => !t.missed);
+      if (un.length) rows.push(lab(`Unfinished from earlier · ${un.length}`), ...un.map(t => mk(t, { tag: 'was ' + t.missed, warm: true })));
+      if (rest.length) rows.push(...(un.length ? [lab(`Waiting · ${rest.length}`)] : []), ...rest.map(t => mk(t)));
+      head = { title: 'Backlog', sub: 'Everything you need to do someday. No date until you plan it.', actions: [{ label: 'New task', d: IC.plus, go: () => this.setState({ sheet: 'capture' }), style: pill(true) }] };
+      cardTitle = 'All tasks'; cardMeta = `${b.length} of ${backlog.length}`; addPlaceholder = 'Add to backlog'; showByList = true;
+      stat = { title: 'Waiting', badge: unfinished.length ? `${unfinished.length} returned` : 'Clear', badgeStyle: { fontSize: 12, padding: '3px 8px', borderRadius: 999, background: unfinished.length ? '#ffe9e2' : '#eef9c4', color: unfinished.length ? '#a33c1d' : '#141416' }, big: String(backlog.length), unit: backlog.length === 1 ? 'task' : 'tasks', fill: progress(unfinished.length, backlog.length) };
+      if (!rows.length) { emptyTitle = filter.length ? 'No matching tasks' : 'Nothing waiting'; emptyBody = filter.length ? 'No Backlog tasks in the selected lists.' : 'Add a task to get started.'; }
+    } else if (screen === 'upcoming') {
+      const u = upcoming.filter(inList);
+      [...new Set(u.map(t => t.day))].forEach(d => { const g = u.filter(t => t.day === d); rows.push(lab(`${this.short(d)} · ${g.length}`)); g.forEach(t => rows.push(mk(t))); });
+      head = { title: 'Upcoming', sub: 'Tasks planned for the days ahead.', actions: [] };
+      cardTitle = 'Next days'; cardMeta = `${u.length} planned`; showQuick = false; showByList = true;
+      stat = { title: 'This week', badge: `${upcoming.filter(t => t.day <= '2026-11-22').length} planned`, badgeStyle: { fontSize: 12, padding: '3px 8px', borderRadius: 999, background: '#dcecff' }, big: String(upcoming.length), unit: 'ahead', fill: progress(upcoming.filter(t => t.day <= '2026-11-22').length, upcoming.length) };
+      if (!rows.length) { emptyTitle = 'Nothing planned ahead'; emptyBody = 'Tasks you plan for a future day will appear here.'; }
+    } else {
+      showChips = false; showQuick = false;
+      const base = new Date('2026-11-16T12:00'); base.setDate(base.getDate() + S.week * 7);
+      const days = [...Array(7)].map((_, i) => { const d = new Date(base); d.setDate(d.getDate() + i); return d.toISOString().slice(0, 10); });
+      const cur = days.includes(S.hday) ? S.hday : days[0];
+      const data = d => { if (d === TODAY) return { done: todayDone.map(t => [t.title, t.list, t.done]), miss: [], planned: todayOpen.length };
+        if (d > TODAY) return { done: [], miss: [], planned: tasks.filter(t => t.day === d).length };
+        const a = this.hist[d] || []; return { done: a.filter(x => x[2]), miss: a.filter(x => !x[2]), planned: 0 }; };
+      const dd = data(cur);
+      const toRow = (x, missed) => mk({ id: 'h' + x[0], title: x[0], list: x[1], subs: [], done: missed ? undefined : x[2] }, { missed, tag: missed ? 'was ' + x[3] : x[2], warm: missed });
+      if (dd.done.length) rows.push(lab(`Done · ${dd.done.length}`), ...dd.done.map(x => toRow(x, false)));
+      if (dd.miss.length) rows.push(lab(`Returned to Backlog · ${dd.miss.length}`), ...dd.miss.map(x => toRow(x, true)));
+      if (cur > TODAY) tasks.filter(t => t.day === cur).forEach(t => rows.push(mk(t)));
+      if (cur === TODAY) todayOpen.forEach(t => rows.push(mk(t)));
+      const wkDone = days.reduce((n, d) => n + data(d).done.length, 0), wkTot = days.reduce((n, d) => { const x = data(d); return n + x.done.length + x.miss.length + x.planned; }, 0);
+      const md = d => new Date(d + 'T12:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      head = { title: 'History', sub: 'What you planned and what you finished.', actions: [] };
+      weekLabel = `${md(days[0])} – ${md(days[6])}`; prevWeek = () => this.setState({ week: S.week - 1, hday: null, sel: null }); nextWeek = () => this.setState({ week: S.week + 1, hday: null, sel: null });
+      weekDays = days.map(d => { const x = data(d), total = x.done.length + x.miss.length + x.planned, on = d === cur, future = d > TODAY;
+        return { wd: d === TODAY ? 'Today' : new Date(d + 'T12:00').toLocaleDateString('en-US', { weekday: 'short' }), num: new Date(d + 'T12:00').getDate(), on, go: () => this.setState({ hday: d, sel: null }), aria: `${this.short(d)}: ${future ? x.planned + ' planned' : total ? x.done.length + ' of ' + total + ' done' : 'no plan'}`,
+          style: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6, padding: '10px 6px', minWidth: 0, border: 0, borderRadius: 14, background: on ? '#eef9c4' : '#f6f6f4', boxShadow: on ? 'inset 0 0 0 1.5px #c5e34a' : 'none', cursor: 'pointer', color: total || future ? '#141416' : '#9a9aa2', transition: TR },
+          fill: { display: 'block', height: '100%', width: (total && !future ? x.done.length / total * 100 : 0) + '%', background: '#141416', borderRadius: 2, transition: 'width .4s ease-out' } }; });
+      cardTitle = this.short(cur); cardMeta = cur > TODAY ? `${dd.planned} planned` : (dd.done.length + dd.miss.length) ? `${dd.done.length} of ${dd.done.length + dd.miss.length + (cur === TODAY ? todayOpen.length : 0)} done` : '';
+      stat = { title: 'Week', badge: `${wkDone} of ${wkTot}`, badgeStyle: { fontSize: 12, padding: '3px 8px', borderRadius: 999, background: '#eef9c4' }, big: String(wkTot ? Math.round(wkDone / wkTot * 100) : 0), unit: '% done', fill: progress(wkDone, wkTot) };
+      if (!rows.length) { emptyTitle = 'Nothing planned this day'; emptyBody = ''; }
+    }
+    const pool = screen === 'today' ? todayAll : screen === 'backlog' ? backlog : upcoming;
+    const chips = [{ label: 'All', n: null }, ...names.map(n => ({ label: n, n }))].map(c => { const on = c.n ? filter.includes(c.n) : !filter.length;
+      return { label: c.label, count: c.n ? pool.filter(t => t.list === c.n).length : pool.length, on, bar: c.n ? bar(c.n, 12) : { display: 'none' },
+        go: () => this.setState(s => ({ filter: !c.n ? [] : s.filter.includes(c.n) ? s.filter.filter(x => x !== c.n) : [...s.filter, c.n], sel: null })),
+        style: { display: 'inline-flex', alignItems: 'center', gap: 8, flex: 'none', height: 32, padding: '0 12px', border: 0, borderRadius: 999, background: on ? '#141416' : '#f6f6f4', color: on ? '#fff' : '#141416', fontSize: 12, cursor: 'pointer', whiteSpace: 'nowrap', transition: TR } }; });
+    const byList = names.map(n => ({ n, count: pool.filter(t => t.list === n).length, bar: bar(n, 14), go: () => this.setState({ filter: [n], sel: null }) }));
+
+    const s = tasks.find(t => t.id === sel) || null;
+    const selObj = s ? { ...s, done: !!s.done, hasSubs: s.subs.length > 0 } : { title: '', note: '', done: false, hasSubs: false };
+    const subs = s ? s.subs.map((x, i) => ({ t: x.t, done: x.d, toggle: () => this.update(s.id, t => ({ ...t, subs: t.subs.map((y, j) => j === i ? { ...y, d: !y.d } : y) })),
+      check: { width: 18, height: 18, flex: 'none', borderRadius: '50%', border: '1.5px solid ' + (x.d ? '#141416' : '#c4c4ca'), background: x.d ? '#141416' : '#fff', display: 'grid', placeItems: 'center', transition: TR },
+      tick: { opacity: x.d ? 1 : 0, transform: x.d ? 'scale(1)' : 'scale(.4)', transition: 'transform .2s cubic-bezier(.3,1.6,.5,1),opacity .12s' }, text: { color: x.d ? '#8a8a92' : '#141416', overflowWrap: 'anywhere' } })) : [];
+    const ev = s ? [['Added to Backlog', s.created, 0], ...(s.missed ? [['Returned to Backlog', `${s.missed}, 11:59 PM`, 0]] : []), ...(s.day ? [[`Planned for ${this.short(s.day)}`, s.day === TODAY ? 'Nov 15, 8:05 PM' : 'Nov 14, 8:05 PM', 0]] : []), ...(s.done ? [['Completed', `Nov 16, ${s.done}`, 1]] : [])] : [];
+    const activity = ev.map(([what, when, k]) => ({ what, when, dot: { width: 8, height: 8, marginTop: 5, flex: 'none', borderRadius: '50%', background: k ? '#141416' : '#c4c4ca' } }));
+    const hasSel = !!s;
+    const detailCard = { background: '#fff', borderRadius: 22, padding: mobile ? '16px 16px 32px' : 20, display: 'flex', flexDirection: 'column', gap: 16, minWidth: 0, animation: 'cardIn .25s ease-out',
+      ...(wide ? { position: 'sticky', top: 20 } : mobile ? { position: 'fixed', inset: 0, zIndex: 30, borderRadius: 0, overflowY: 'auto', animation: 'slideIn .24s cubic-bezier(.2,.8,.2,1)' } : { position: 'fixed', top: 12, right: 12, bottom: 12, width: 380, zIndex: 30, overflowY: 'auto', boxShadow: '0 20px 60px rgba(0,0,0,.35)', animation: 'slideIn .24s cubic-bezier(.2,.8,.2,1)' }) };
+
+    const optStyle = cur => ({ display: 'flex', alignItems: 'center', gap: 12, minHeight: 48, padding: '0 14px', border: 0, borderRadius: 14, background: cur ? '#eef9c4' : '#f6f6f4', fontSize: 14, cursor: 'pointer', textAlign: 'left', width: '100%', color: '#141416', transition: TR });
+    let options = [];
+    if (sheet === 'day') options = [[TODAY, 'Today, Mon 16'], ['2026-11-17', 'Tomorrow, Tue 17'], ['2026-11-21', 'Weekend, Sat 21'], [null, 'Move to Backlog']].map(([d, label]) => { const cur = s && s.day === d, n = d ? tasks.filter(t => t.day === d && !t.done).length : 0;
+      return { label, load: d ? (n ? `${n} ${n === 1 ? 'task' : 'tasks'}` : 'Free') : '', bar: { display: 'none' }, tick: { opacity: cur ? 1 : 0, flex: 'none' }, style: optStyle(cur),
+        go: () => { this.update(sel, t => ({ ...t, day: d, missed: undefined })); this.setState({ sheet: null }); this.say(d ? `Moved to ${this.short(d)}.` : 'Moved to Backlog.'); } }; });
+    if (sheet === 'list') options = [...names, ''].map(n => { const cur = s && s.list === n; return { label: n || 'No list', load: '', bar: n ? bar(n, 16) : { display: 'none' }, tick: { opacity: cur ? 1 : 0, flex: 'none' }, style: optStyle(cur), go: () => { this.update(sel, t => ({ ...t, list: n })); this.setState({ sheet: null }); } }; });
+    const pickRows = []; const pk = t => { const on = pick.includes(t.id); return { isLabel: false, isTask: true, title: t.title, meta: (t.list || 'No list') + (t.missed ? ' · was planned ' + t.missed : ''), on, bar: bar(t.list),
+      go: () => this.setState(st => ({ pick: st.pick.includes(t.id) ? st.pick.filter(x => x !== t.id) : [...st.pick, t.id] })),
+      style: { display: 'flex', alignItems: 'center', gap: 12, width: '100%', minHeight: 56, padding: '10px 12px', border: 0, borderRadius: 14, background: on ? '#eef9c4' : '#f6f6f4', textAlign: 'left', cursor: 'pointer', color: '#141416', transition: TR },
+      check: { width: 20, height: 20, flex: 'none', borderRadius: '50%', border: '1.5px solid ' + (on ? '#141416' : '#c4c4ca'), background: on ? '#141416' : '#fff', display: 'grid', placeItems: 'center', transition: TR }, tick: { opacity: on ? 1 : 0, transform: on ? 'scale(1)' : 'scale(.4)', transition: 'transform .2s cubic-bezier(.3,1.6,.5,1),opacity .12s' } }; };
+    const pl = label => ({ isLabel: true, isTask: false, label, title: '', meta: '', style: {}, check: {}, tick: {}, bar: {}, go() {} });
+    const un = backlog.filter(t => t.missed), rest = backlog.filter(t => !t.missed);
+    if (un.length) pickRows.push(pl(`Unfinished from earlier · ${un.length}`), ...un.map(pk));
+    if (rest.length) pickRows.push(pl(`Backlog · ${rest.length}`), ...rest.map(pk));
+    const titles = { day: 'Choose a day', list: 'Choose a list', picker: 'Add from Backlog', capture: 'New task', del: 'Delete this task?' };
+    const add = e => { e.preventDefault(); const v = draft.trim(); if (!v) return; const id = 'n' + Date.now(), toToday = screen !== 'backlog';
+      this.setState(st => ({ draft: '', sheet: null, fresh: id, screen: st.screen === 'today' || st.screen === 'backlog' ? st.screen : 'today', tasks: [{ id, title: v, list: filter.length === 1 ? filter[0] : '', day: toToday ? TODAY : null, note: '', subs: [], created: 'Nov 16, just now' }, ...st.tasks] }));
+      this.say(`Added to ${toToday ? 'Today' : 'Backlog'}.`); };
+    const addAll = ids => { this.setState(st => ({ tasks: st.tasks.map(t => ids.includes(t.id) ? { ...t, day: TODAY, missed: undefined } : t), sheet: null, pick: [] })); this.say(`Added ${ids.length} ${ids.length === 1 ? 'task' : 'tasks'} to Today.`); };
+    return {
+      pageStyle: { padding: mobile ? 0 : wide ? 32 : 16 },
+      panelStyle: { maxWidth: 1240, margin: '0 auto', background: '#f2f2ef', borderRadius: mobile ? 0 : 28, padding: mobile ? '20px 16px 120px' : '20px 24px 24px', display: 'flex', flexDirection: 'column', gap: 20, minHeight: mobile ? '100vh' : 'auto', boxShadow: mobile ? 'none' : '0 30px 80px rgba(0,0,0,.5)' },
+      showTop: !mobile, tabs, searchStyle: { display: 'flex', alignItems: 'center', gap: 8, height: 40, width: wide ? 240 : 180, padding: '0 14px', background: '#fff', borderRadius: 999, color: '#8a8a92' },
+      head, h1Style: { margin: 0, fontSize: mobile ? 24 : 30, fontWeight: 400, letterSpacing: '-.02em', lineHeight: 1.15 },
+      gridStyle: { display: 'grid', gridTemplateColumns: wide ? 'minmax(0,1.7fr) minmax(0,1fr)' : 'minmax(0,1fr)', gap: 16, alignItems: 'start' },
+      showHero, next: next ? { title: next.title, list: next.list || 'No list', dot: { width: 8, height: 8, borderRadius: '50%', background: col(next.list) }, meta: next.subs.length ? `${next.subs.filter(x => x.d).length} of ${next.subs.length} subtasks done` : (next.note || 'No details yet'), open: () => this.setState({ sel: next.id, act: false }), done: () => { this.toggle(next.id); this.say('Nice. Marked as done.'); } } : { title: '', list: '', dot: {}, meta: '', open() {}, done() {} },
+      heroTitle: { fontSize: mobile ? 20 : 24, fontWeight: 500, letterSpacing: '-.01em', lineHeight: 1.25, overflowWrap: 'anywhere' },
+      showWeek: screen === 'history', weekLabel, weekDays, prevWeek, nextWeek,
+      cardTitle, cardMeta, showChips, chips, rows, isEmpty: !rows.length, emptyTitle, emptyBody,
+      showSide: wide || mobile || true, showWidgets: !(wide && hasSel), stat, showByList, byList, showUnfinished,
+      unfinishedBadge: `${unfinished.length} returned`, unfinishedRows: unfinished.map(t => ({ t: t.title, d: t.missed })), unfinishedAction: unfinished.length === 1 ? 'Add it to today' : `Add ${unfinished.length === 2 ? 'both' : 'all ' + unfinished.length} to today`, addUnfinished: () => addAll(unfinished.map(t => t.id)),
+      showQuick: showQuick && !mobile, draft, addPlaceholder: screen === 'backlog' ? 'Add to backlog…' : 'Add to today…', setDraft: e => this.setState({ draft: e.target.value }), focusOn: () => this.setState({ focus: true }), focusOff: () => this.setState({ focus: false }), addTask: add,
+      quickInput: { flex: 1, minWidth: 0, height: 44, padding: '0 16px', borderRadius: 999, background: '#fff', border: focus ? '1.5px solid #141416' : '1px solid #ececea', outline: 0, font: "400 13px 'Lexend',system-ui,sans-serif", color: '#141416', transition: 'border-color .15s' },
+      showDetailInline: hasSel, detailCard, showScrim: hasSel && !wide && !mobile, sel: selObj, closeTask: () => this.setState({ sel: null }), closeText: mobile ? 'Back' : 'Close',
+      askDelete: () => this.setState({ sheet: 'del' }), doDelete: () => { const id = s.id; this.setState(st => ({ tasks: st.tasks.filter(x => x.id !== id), sel: null, sheet: null })); this.say('Task deleted.'); },
+      toggleSel: () => s && this.toggle(s.id), selCheck: { width: 24, height: 24, borderRadius: '50%', border: '1.5px solid ' + (s && s.done ? '#141416' : '#c4c4ca'), background: s && s.done ? '#141416' : '#fff', display: 'grid', placeItems: 'center', transition: TR }, selTick: { opacity: s && s.done ? 1 : 0, transform: s && s.done ? 'scale(1)' : 'scale(.4)', transition: 'transform .2s cubic-bezier(.3,1.6,.5,1),opacity .12s' },
+      selBar: bar(s ? s.list : '', 14), selListName: s && s.list ? s.list : 'No list', selDayLabel: s ? this.dayName(s.day) : '',
+      openList: () => this.setState({ sheet: 'list' }), openDay: () => this.setState({ sheet: 'day' }),
+      subs, subProgress: s && s.subs.length ? `${s.subs.filter(x => x.d).length}/${s.subs.length}` : '',
+      actOpen: act, toggleAct: () => this.setState({ act: !act }), actCount: activity.length, activity, actChevron: { transform: act ? 'rotate(180deg)' : 'none', transition: 'transform .2s' },
+      showTabBar: mobile && !hasSel, showFab: mobile && !hasSel && (screen === 'today' || screen === 'backlog'), openCapture: () => this.setState({ sheet: 'capture' }),
+      hasSheet: !!sheet, closeSheet: () => this.setState({ sheet: null }), sheetTitle: titles[sheet] || '', isMobile: mobile,
+      sheetStyle: { position: 'absolute', display: 'flex', flexDirection: 'column', gap: 14, background: '#fff', color: '#141416', maxHeight: mobile ? '86vh' : '80vh', ...(mobile ? { left: 0, right: 0, bottom: 0, padding: '10px 16px max(24px,env(safe-area-inset-bottom))', borderRadius: '24px 24px 0 0', animation: 'slideUp .26s cubic-bezier(.2,.8,.2,1)' } : { top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 'min(460px,calc(100% - 32px))', padding: 22, borderRadius: 24, boxShadow: '0 30px 80px rgba(0,0,0,.35)', animation: 'popIn .2s ease-out' }) },
+      isOptSheet: sheet === 'day' || sheet === 'list', options, isPickerSheet: sheet === 'picker', isCaptureSheet: sheet === 'capture', isDeleteSheet: sheet === 'del', pickRows,
+      pickLabel: pick.length ? `Add ${pick.length} to Today` : 'Select tasks to add', planPicked: () => pick.length && addAll(pick),
+      pickBtn: { height: 48, flex: 'none', border: 0, borderRadius: 999, background: pick.length ? '#141416' : '#f2f2ef', color: pick.length ? '#fff' : '#8a8a92', fontSize: 14, fontWeight: 500, cursor: pick.length ? 'pointer' : 'default', transition: TR },
+      hasToast: !!S.toast, toast: S.toast, toastStyle: { position: 'fixed', zIndex: 60, left: mobile ? 16 : 32, right: mobile ? 16 : 'auto', bottom: mobile ? 76 : 32, maxWidth: 380, padding: '12px 16px', borderRadius: 14, background: '#141416', color: '#fff', fontSize: 13, boxShadow: '0 12px 30px rgba(0,0,0,.3)', animation: 'rise .24s ease-out' },
+    };
+  }
+}
+</script>
+</body>
+</html>

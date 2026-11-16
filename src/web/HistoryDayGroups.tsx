@@ -81,19 +81,18 @@ export function HistoryDayGroups({
                         </span>
                       </span>
                     )}
+                    <span
+                      className="row-list-bar"
+                      style={{
+                        background: row.list?.color ?? 'var(--check-border)',
+                      }}
+                      aria-hidden="true"
+                    />
                     <span className="row-text">
                       <span className="row-title">{row.title}</span>
                       {(row.list || group === 'notDone') && (
                         <span className="row-meta">
-                          {row.list && (
-                            <>
-                              <span
-                                className="list-dot"
-                                style={{ background: row.list.color }}
-                              />
-                              {row.list.name}
-                            </>
-                          )}
+                          {row.list?.name}
                           {row.list && group === 'notDone' ? ' · ' : ''}
                           {group === 'notDone' ? 'moved to backlog' : ''}
                         </span>

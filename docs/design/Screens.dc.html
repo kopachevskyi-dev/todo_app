@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>body{margin:0;background:#1a1a1d}a{color:#d4f25c;text-decoration:none}a:hover{color:#fff}</style>
+</helmet>
+<section data-screen-label="Desktop" style="padding:64px;font-family:'Lexend',system-ui,sans-serif;color:#f4f4f5">
+<h2 style="margin:0 0 8px;font-size:28px;font-weight:500">Desktop · 1440 and tablet · 960</h2>
+<p style="margin:0 0 40px;color:#a1a1aa;font-size:15px">Every frame is the same component, design/todo_app/App.dc.html, mounted in a different starting state.</p>
+<div style="display:flex;flex-wrap:wrap;gap:56px">
+<sc-for list="{{ desktop }}" as="f" hint-placeholder-count="9">
+<div id="{{ f.id }}" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px"><span style="padding:4px 10px;border-radius:8px;background:#d4f25c;color:#141416;font-size:13px;font-weight:600">{{ f.id }}</span><span style="font-size:17px">{{ f.title }}</span></div>
+<div style="{{ f.frame }}">
+<dc-import name="App" force-width="{{ f.w }}" initial-screen="{{ f.screen }}" initial-sel="{{ f.sel }}" initial-sheet="{{ f.sheet }}" initial-pick="{{ f.pick }}" initial-activity="{{ f.act }}" hint-size="100%,100%"></dc-import>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+<section data-screen-label="Mobile" style="padding:64px;font-family:'Lexend',system-ui,sans-serif;color:#f4f4f5">
+<h2 style="margin:0 0 40px;font-size:28px;font-weight:500">Mobile · 390</h2>
+<div style="display:flex;flex-wrap:wrap;gap:40px">
+<sc-for list="{{ mobile }}" as="f" hint-placeholder-count="8">
+<div id="{{ f.id }}" style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:12px"><span style="padding:4px 10px;border-radius:8px;background:#d4f25c;color:#141416;font-size:13px;font-weight:600">{{ f.id }}</span><span style="font-size:17px">{{ f.title }}</span></div>
+<div style="{{ f.frame }}">
+<dc-import name="App" force-width="{{ f.w }}" initial-screen="{{ f.screen }}" initial-sel="{{ f.sel }}" initial-sheet="{{ f.sheet }}" initial-pick="{{ f.pick }}" initial-activity="{{ f.act }}" hint-size="100%,100%"></dc-import>
+</div>
+</div>
+</sc-for>
+</div>
+</section>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const mk = (w, h) => ([id, title, screen, sel = '', sheet = '', pick = '', act = false]) => ({ id, title, screen, sel, sheet, pick, act, w,
+      frame: { width: w, height: h, position: 'relative', overflow: 'hidden', transform: 'translateZ(0)', borderRadius: w < 500 ? 36 : 16, background: '#0b0b0c', boxShadow: '0 20px 60px rgba(0,0,0,.4)', overflowY: 'auto' } });
+    const D = mk(1440, 960), T = mk(960, 900), M = mk(390, 844);
+    return {
+      desktop: [
+        ['D1', 'Today', 'today'], ['D2', 'Today · task open', 'today', 't1'], ['D3', 'Add from Backlog', 'today', '', 'picker', 'b1,b2'],
+        ['D4', 'Choose a day', 'today', 't1', 'day'], ['D5', 'Backlog', 'backlog'], ['D6', 'Upcoming', 'upcoming'],
+        ['D7', 'History', 'history'], ['D8', 'Done task, activity open', 'today', 't5', '', '', true], ['D9', 'Delete confirm', 'today', 't2', 'del'],
+      ].map(D).concat([['T1', 'Tablet · task drawer', 'today', 't1']].map(T)),
+      mobile: [
+        ['M1', 'Today', 'today'], ['M2', 'Task', 'today', 't1'], ['M3', 'Choose a day', 'today', 't1', 'day'], ['M4', 'Add from Backlog', 'today', '', 'picker', 'b1'],
+        ['M5', 'New task', 'today', '', 'capture'], ['M6', 'Backlog', 'backlog'], ['M7', 'Upcoming', 'upcoming'], ['M8', 'History', 'history'],
+      ].map(M),
+    };
+  }
+}
+</script>
+</body>
+</html>
