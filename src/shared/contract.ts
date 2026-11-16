@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 export const listPalette = [
-  { name: 'Red', hex: '#E3686A' },
-  { name: 'Teal', hex: '#5FB4C6' },
-  { name: 'Yellow', hex: '#F0C24B' },
-  { name: 'Purple', hex: '#8E7CC3' },
-  { name: 'Green', hex: '#6FBF8A' },
-  { name: 'Blue', hex: '#6A93D4' },
-  { name: 'Orange', hex: '#E8975A' },
-  { name: 'Pink', hex: '#D985A8' },
+  { name: 'Mint', hex: '#3aa77a' },
+  { name: 'Sky', hex: '#4a86e8' },
+  { name: 'Sun', hex: '#e8a33c' },
+  { name: 'Coral', hex: '#e05a4f' },
+  { name: 'Lavender', hex: '#8b6ad8' },
+  { name: 'Tangerine', hex: '#ee7d3b' },
+  { name: 'Ocean', hex: '#2a9bb5' },
+  { name: 'Plum', hex: '#b25a9c' },
 ] as const;
 export const listColors = listPalette.map(({ hex }) => hex) as [
   (typeof listPalette)[number]['hex'],
@@ -41,6 +41,33 @@ export const errorResponseSchema = z.object({
 export const clockSchema = z.object({ now: z.iso.datetime() });
 export type ListsResponse = z.infer<typeof listsResponseSchema>;
 
+export const activityExamples = [
+  {
+    type: 'added',
+    at: '2026-11-02T14:12:00.000Z',
+    day: null,
+    text: 'Added to Backlog',
+  },
+  {
+    type: 'planned',
+    at: '2026-11-09T14:00:00.000Z',
+    day: '2026-11-10',
+    text: 'Planned for Nov 10',
+  },
+  {
+    type: 'returned',
+    at: '2026-11-10T23:59:00.000Z',
+    day: '2026-11-10',
+    text: 'Returned to Backlog',
+  },
+  {
+    type: 'completed',
+    at: '2026-11-10T14:00:00.000Z',
+    day: '2026-11-10',
+    text: 'Completed',
+  },
+] as const;
+
 export const examples = {
   createTaskRequest: { title: "Renew driver's license", target: 'backlog' },
   createTaskResponse: {
@@ -63,7 +90,7 @@ export const examples = {
       {
         id: '01JBX0000000000000000PERSN',
         name: 'Personal',
-        color: '#E3686A',
+        color: '#e05a4f',
         position: 0,
       },
     ],
@@ -103,7 +130,7 @@ export const examples = {
         list: {
           id: '01JBX0000000000000000PERSN',
           name: 'Personal',
-          color: '#E3686A',
+          color: '#e05a4f',
           position: 0,
         },
         day: '2026-11-10',
@@ -167,7 +194,7 @@ export const examples = {
             list: {
               id: '01JBX0000000000000000H0ME0',
               name: 'Home',
-              color: '#F0C24B',
+              color: '#e8a33c',
               position: 2,
             },
           },
@@ -358,7 +385,7 @@ export const examples = {
               list: {
                 id: '01JBX0000000000000000PERSN',
                 name: 'Personal',
-                color: '#E3686A',
+                color: '#e05a4f',
                 position: 0,
               },
             },
@@ -637,28 +664,22 @@ export const examples = {
     ],
     activity: [
       {
-        type: 'added_to_backlog',
+        type: 'added',
         at: '2026-11-02T14:12:00.000Z',
         day: null,
-        text: 'added to backlog',
-      },
-      {
-        type: 'details_added',
-        at: '2026-11-02T14:15:00.000Z',
-        day: null,
-        text: 'description and list added',
+        text: 'Added to Backlog',
       },
       {
         type: 'planned',
         at: '2026-11-09T14:00:00.000Z',
         day: '2026-11-10',
-        text: 'planned for Nov 10',
+        text: 'Planned for Nov 10',
       },
       {
         type: 'completed',
         at: '2026-11-10T14:00:00.000Z',
         day: '2026-11-10',
-        text: 'completed',
+        text: 'Completed',
       },
     ],
   },
@@ -716,7 +737,7 @@ export const activityTypes = [
 export const activityTypeSchema = z.enum(activityTypes);
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export const activityItemSchema = z.object({
-  type: activityTypeSchema,
+  type: z.enum(['added', 'planned', 'returned', 'completed']),
   at: z.iso.datetime(),
   day: z.iso.date().nullable(),
   text: z.string(),

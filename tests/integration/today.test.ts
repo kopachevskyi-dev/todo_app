@@ -31,7 +31,7 @@ type Detail = {
 const detail = async (app: App, id: string) =>
   (await (await app.request(`/api/tasks/${id}`)).json()) as Detail;
 
-it('completes at 2:20 PM New York with a completed event for 2026-11-04, rejects a second complete with 409 already_done, and reopens with a reopened event', async () => {
+it('completes at 2:20 PM New York with a completed event for 2026-11-04, rejects a second complete with 409 already_done, and reopening removes the completed activity line', async () => {
   const app = start();
   await send(app, 'PUT', '/api/test/clock', {
     now: '2026-11-04T19:20:00.000Z',
@@ -56,9 +56,10 @@ it('completes at 2:20 PM New York with a completed event for 2026-11-04, rejects
   expect(await reopened.json()).toMatchObject({
     task: { id, completedAt: null },
   });
-  expect((await detail(app, id)).activity).toContainEqual(
-    expect.objectContaining({ type: 'reopened', day: '2026-11-04' }),
-  );
+  expect((await detail(app, id)).activity.map((item) => item.type)).toEqual([
+    'added',
+    'planned',
+  ]);
 });
 
 it('completing a backlog task on Nov 4 sets day 2026-11-04, removes it from the backlog view and lists it in today done', async () => {

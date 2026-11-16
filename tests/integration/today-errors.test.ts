@@ -23,7 +23,7 @@ it('rejects reopening an open task without recording a reopened event', async ()
       (detail as { activity: { type: string }[] }).activity.map(
         (event) => event.type,
       ),
-    ).toEqual(['added_to_today']);
+    ).toEqual(['added', 'planned']);
   } finally {
     app.close();
   }
