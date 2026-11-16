@@ -69,7 +69,12 @@ export function Subtasks({
 
   return (
     <section className="subtasks" aria-label="Subtasks">
-      <h3>Subtasks</h3>
+      <div className="subtasks-heading">
+        <h3>Subtasks</h3>
+        <span>
+          {subtasks.filter((subtask) => subtask.done).length}/{subtasks.length}
+        </span>
+      </div>
       {subtasks.map((subtask) => (
         <div
           key={subtask.id}
