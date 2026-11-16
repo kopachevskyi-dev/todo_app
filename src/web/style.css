@@ -691,19 +691,49 @@ h3 {
   border-radius: 2px;
   align-self: center;
 }
-.sheet-label {
-  font: var(--font-label);
-  color: var(--text-muted);
+.capture-dialog .modal-content {
+  max-height: calc(86dvh - var(--keyboard-inset, 0px));
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+  gap: 14px;
+  background: var(--card);
+  box-shadow: none;
+}
+.capture-dialog .sheet-handle {
+  width: 36px;
+  flex: none;
+  background: #dcdcdf;
+}
+.capture-dialog .sheet-label {
+  margin: 0;
+  padding-right: 44px;
+  font-size: 18px;
+  font-weight: 500;
 }
 .capture-add {
-  gap: 16px;
+  margin: 0;
+  gap: 14px;
 }
 .capture-add .quick-field {
-  min-height: 56px;
-  padding: 0 16px;
+  min-height: 52px;
+  padding: 0 18px;
+  border-radius: 16px;
+  background: var(--row);
 }
 .capture-add .quick-field:focus-within {
-  padding: 0 15px;
+  padding: 0 18px;
+  border: 1px solid var(--line);
+  outline-offset: 2px;
+}
+.capture-add .quick-field input {
+  height: 50px;
+  font-size: 16px;
+}
+.capture-add .capture-close {
+  position: absolute;
+  top: 17px;
+  right: 6px;
+  padding: 0;
+  background: transparent;
 }
 .capture-footer {
   display: flex;
@@ -714,14 +744,18 @@ h3 {
 .capture-add .field-hint {
   margin: 0;
   line-height: 1.4;
+  color: var(--meta);
 }
-.capture-footer .button {
-  height: 48px;
-  padding: 0 28px;
+.capture-add .capture-footer > .button {
+  height: 46px;
+  padding: 0 26px;
+  font-size: 14px;
 }
-.capture-actions {
-  display: flex;
-  gap: 8px;
+.capture-add .capture-metadata > .button {
+  min-height: 44px;
+  padding: 0 14px;
+  background: var(--row);
+  font-weight: 400;
 }
 .popover {
   position: fixed;
@@ -1159,6 +1193,7 @@ h3 {
 }
 .day-dialog.bottom-sheet .modal-content {
   padding-bottom: max(24px, env(safe-area-inset-bottom));
+  background: var(--card);
 }
 .day-dialog .sheet-handle {
   width: 36px;
@@ -1849,6 +1884,13 @@ button.check-hit:disabled {
 }
 .list-dialog .sheet-handle {
   width: 36px;
+}
+.capture-list-dialog .modal-content {
+  gap: 14px;
+  background: var(--card);
+}
+.capture-list-dialog .list-options {
+  gap: 4px;
 }
 .list-option-row {
   display: flex;

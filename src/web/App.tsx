@@ -531,7 +531,11 @@ export function App() {
         </Modal>
       )}
       {capturing && mobile && !task && (
-        <BottomSheet label="New task" onClose={() => setCapturing(false)}>
+        <BottomSheet
+          label="New task"
+          className="capture-dialog"
+          onClose={() => setCapturing(false)}
+        >
           <h3 className="sheet-label">New task</h3>
           <Capture
             target={isBacklog ? 'backlog' : 'today'}
