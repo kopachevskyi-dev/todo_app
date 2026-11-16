@@ -28,7 +28,6 @@ async function openCapture(page: Page) {
   await page
     .getByRole('button', {
       name: mobile() ? 'Add task' : 'New task',
-      exact: true,
     })
     .click();
   return page.getByRole('dialog', { name: 'New task' });

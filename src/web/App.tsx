@@ -498,7 +498,7 @@ export function App() {
           {(isBacklog || path === '/today') && (
             <Button
               className="fab"
-              aria-label="Add task"
+              aria-label={isToday ? 'Add task to today' : 'Add task'}
               onClick={() => setCapturing(true)}
             >
               <Icon name="plus" size={22} />
