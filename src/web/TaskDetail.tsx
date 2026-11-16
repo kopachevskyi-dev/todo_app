@@ -13,7 +13,7 @@ import { ListForm } from './ListForm';
 import type { TaskDetailData } from './task-detail-types';
 import { formatActivityTimestamp } from './dates';
 import { api } from './api';
-import { DayPicker } from './DayPicker';
+import { DayPickerDialog } from './DayPicker';
 import { Subtasks } from './Subtasks';
 import { formatDay } from '../domain/day-picker';
 import { completionTime } from './dates';
@@ -54,7 +54,6 @@ export function TaskDetail({
   const [error, setError] = useState<string>();
   const [choosingDay, setChoosingDay] = useState(false);
   const [planning, setPlanning] = useState(false);
-  const dayAnchor = useRef<HTMLButtonElement>(null);
   const day = task.day;
   const currentDay = today();
   const dayLabel =
@@ -244,7 +243,6 @@ export function TaskDetail({
         <div className="field-row">
           <span>Day</span>
           <button
-            ref={dayAnchor}
             type="button"
             className={`field-value ${!day ? 'empty-value' : ''}`}
             aria-label={`Day ${planning ? 'Saving…' : dayLabel}`}
@@ -291,31 +289,18 @@ export function TaskDetail({
         onClose={onClose}
         completion={completion}
       />
-      {choosingDay &&
-        (mobile ? (
-          <BottomSheet label="Choose a day" onClose={dismissDay}>
-            <h3>Choose a day</h3>
-            <DayPicker
-              now={new Date()}
-              selected={day}
-              onChoose={(value) => {
-                setChoosingDay(false);
-                void plan(value);
-              }}
-            />
-          </BottomSheet>
-        ) : (
-          <Popover anchor={dayAnchor} label="Choose a day" onClose={dismissDay}>
-            <DayPicker
-              now={new Date()}
-              selected={day}
-              onChoose={(value) => {
-                setChoosingDay(false);
-                void plan(value);
-              }}
-            />
-          </Popover>
-        ))}
+      {choosingDay && (
+        <DayPickerDialog
+          mobile={mobile}
+          onClose={dismissDay}
+          now={new Date()}
+          selected={day}
+          onChoose={(value) => {
+            setChoosingDay(false);
+            void plan(value);
+          }}
+        />
+      )}
       {choosingList &&
         (mobile ? (
           <BottomSheet

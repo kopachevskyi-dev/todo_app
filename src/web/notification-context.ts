@@ -2,6 +2,7 @@ import { createContext, useContext } from 'react';
 
 export type Notification = {
   message: string;
+  duration?: number;
   actions?:
     [] | [NotificationAction] | [NotificationAction, NotificationAction];
 };

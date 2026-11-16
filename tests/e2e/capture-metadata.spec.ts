@@ -46,8 +46,6 @@ async function pickWed11(page: Page, area: ReturnType<Page['locator']>) {
     .getByRole('button', { name: /Wed,? (Nov )?11/ })
     .first()
     .click();
-  const save = page.getByRole('button', { name: 'Save date' });
-  if (await save.isVisible()) await save.click();
 }
 
 test('Today: Enter with default controls adds the task to Today with no list', async ({
