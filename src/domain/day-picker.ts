@@ -31,14 +31,6 @@ export function loadLabel(count: number): string {
   return count === 0 ? 'Free' : `${count} ${count === 1 ? 'task' : 'tasks'}`;
 }
 
-export function planButtonLabel(chosen: string | null, today: string): string {
-  return !chosen
-    ? 'Choose a day'
-    : chosen === today
-      ? 'Plan for today'
-      : `Plan for ${formatDay(chosen)}`;
-}
-
 export function addDays(day: string, amount: number): string {
   const date = new Date(`${day}T12:00:00Z`);
   date.setUTCDate(date.getUTCDate() + amount);
