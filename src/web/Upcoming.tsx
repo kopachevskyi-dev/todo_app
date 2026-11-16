@@ -49,13 +49,14 @@ export function Upcoming({
     <div className="upcoming-agenda">
       {days.map(({ day, tasks }) => (
         <section key={day} aria-labelledby={`upcoming-${day}`}>
-          <div className="history-day-heading">
+          <div className="upcoming-day-heading">
             <h2 id={`upcoming-${day}`}>
               {dateLabel(day, {
                 weekday: 'short',
                 month: 'short',
                 day: 'numeric',
-              })}
+              })}{' '}
+              · {tasks.length}
             </h2>
           </div>
           <ul className="task-list">

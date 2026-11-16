@@ -88,6 +88,7 @@ export function ScreenHeader({
         </p>
       )}
       {path === '/history' && <p>What you planned and what you finished.</p>}
+      {path === '/upcoming' && <p>Tasks planned for the days ahead.</p>}
       {isBacklog && (
         <p>
           Everything you need to do someday.

@@ -1701,7 +1701,7 @@ h3 {
 
 .upcoming-agenda {
   display: grid;
-  gap: 28px;
+  gap: 0;
 }
 
 /* Completion and navigation are separate, non-overlapping row targets. */
@@ -2274,6 +2274,62 @@ button.check-hit:disabled {
   }
 }
 
+/* Upcoming v3 uses the shared card and widget layout. */
+.upcoming-main .filter-scope {
+  display: none;
+}
+.upcoming-day-heading {
+  padding: 8px 2px 10px;
+}
+.upcoming-day-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--meta);
+  font-size: 12px;
+  font-weight: 400;
+}
+.upcoming-day-heading h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.upcoming-widgets .widget-badge {
+  background: var(--sky-soft);
+}
+@media (max-width: 767px) {
+  .upcoming-main .list-chips {
+    gap: 6px;
+    margin: 0 -18px;
+    padding: 0 18px;
+  }
+  .upcoming-main .list-chips > .list-link {
+    min-height: 32px;
+    gap: 8px;
+    padding: 0 12px;
+    border: 0;
+    background: var(--row);
+    color: var(--ink);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .upcoming-main .list-chips > .list-link[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--card);
+    font-weight: 400;
+  }
+  .upcoming-main .list-chips .list-dot {
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+  }
+  .upcoming-main .chip-count {
+    font-size: 11px;
+    opacity: 0.7;
+  }
+}
+
 /* Backlog v3 and the shared Add from Backlog chooser. */
 .backlog-main .list-chips {
   gap: 6px;
@@ -2332,6 +2388,7 @@ button.check-hit:disabled {
 }
 .by-list-widget > button > :nth-child(2) {
   flex: 1;
+  overflow-wrap: anywhere;
 }
 .by-list-widget > button > :last-child {
   color: var(--meta);
