@@ -1010,7 +1010,7 @@ h3 {
   gap: 12px;
   min-height: 44px;
   padding: 0;
-  border: 0;
+  border: 2px solid transparent;
   background: transparent;
   font: var(--font-label);
   text-align: left;
@@ -1029,6 +1029,9 @@ h3 {
 .field-value:hover:not(:disabled),
 .field-value[aria-expanded='true'] {
   color: var(--focus);
+}
+.field-value[aria-expanded='true'] {
+  border-color: var(--focus);
 }
 .empty-value {
   color: var(--text-muted);
