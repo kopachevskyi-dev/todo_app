@@ -5,7 +5,7 @@ import { BottomSheet, Button, Popover, QuickAdd } from './components';
 import { useCreateTask, type CaptureDraft } from './useCreateTask';
 import { api } from './api';
 import { queryKeys } from './query-keys';
-import { DayPicker } from './DayPicker';
+import { DayPickerDialog } from './DayPicker';
 import { formatDay } from '../domain/day-picker';
 import type { List } from '../shared/contract';
 
@@ -47,7 +47,6 @@ export function Capture({
     day === today && day ? 'Today' : day ? formatDay(day) : 'No day';
   const [picker, setPicker] = useState<'list' | 'day'>();
   const listAnchor = useRef<HTMLButtonElement>(null);
-  const dayAnchor = useRef<HTMLButtonElement>(null);
   const { title, setTitle, error, setError, input, mutation, submit } =
     useCreateTask({
       target,
@@ -81,15 +80,7 @@ export function Capture({
         ))}
         {lists.isError && <p role="alert">Could not load lists.</p>}
       </div>
-    ) : today ? (
-      <DayPicker
-        now={new Date(`${today}T12:00:00`)}
-        selected={day ?? null}
-        onChoose={(day) => update({ day })}
-      />
-    ) : (
-      <p role="status">Loading days…</p>
-    );
+    ) : null;
   return (
     <>
       <QuickAdd
@@ -118,7 +109,6 @@ export function Capture({
             List {selectedList?.name ?? 'No list'}
           </Button>
           <Button
-            ref={dayAnchor}
             variant="ghost"
             aria-label={`Day ${dayLabel}`}
             aria-expanded={picker === 'day'}
@@ -134,7 +124,16 @@ export function Capture({
           )}
         </div>
       </QuickAdd>
-      {picker &&
+      {picker === 'day' && today && (
+        <DayPickerDialog
+          mobile={mobile}
+          onClose={() => setPicker(undefined)}
+          now={new Date(`${today}T12:00:00`)}
+          selected={day ?? null}
+          onChoose={(day) => update({ day })}
+        />
+      )}
+      {picker === 'list' &&
         (mobile ? (
           <BottomSheet
             label={`Choose a ${picker}`}
@@ -144,7 +143,7 @@ export function Capture({
           </BottomSheet>
         ) : (
           <Popover
-            anchor={picker === 'list' ? listAnchor : dayAnchor}
+            anchor={listAnchor}
             label={`Choose a ${picker}`}
             onClose={() => setPicker(undefined)}
           >

@@ -1,13 +1,10 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { useNavigate } from '@tanstack/react-router';
 import { useEffect, useRef, useState, type RefObject } from 'react';
 import { queryKeys } from './query-keys';
 import { invalidateTaskQueries } from './invalidate-task-queries';
 import { api } from './api';
 import { useNotification } from './notification-context';
 import { formatDay } from '../domain/day-picker';
-import { historyWeekStart } from '../domain/history';
-import { today } from './useToday';
 import type { TaskDetailData } from './task-detail-types';
 
 export function usePlanTask(
@@ -18,7 +15,6 @@ export function usePlanTask(
   queue: RefObject<Promise<void>>,
 ) {
   const client = useQueryClient();
-  const navigate = useNavigate();
   const notify = useNotification();
   const busy = useRef(false);
   const mounted = useRef(true);
@@ -66,26 +62,9 @@ export function usePlanTask(
               .finished.catch(() => undefined);
         }
         await invalidateTaskQueries(client, [task.id]);
-        const currentDay = today();
         notify({
-          message: `Moved to ${target === null ? 'Backlog' : target === currentDay ? 'Today' : formatDay(target)}`,
-          actions: [
-            { label: 'Undo', onClick: () => void plan(previous) },
-            {
-              label: 'Open day',
-              onClick: () => {
-                if (target === null)
-                  void navigate({ to: '/backlog', search: {} });
-                else if (target === currentDay)
-                  void navigate({ to: '/today', search: {} });
-                else
-                  void navigate({
-                    to: '/history',
-                    search: { week: historyWeekStart(target), day: target },
-                  });
-              },
-            },
-          ],
+          message: `Moved to ${target === null ? 'Backlog' : formatDay(target)}.`,
+          duration: 4000,
         });
       } catch (failure) {
         const message =

@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  dayPickerItems,
-  loadLabel,
-  planButtonLabel,
-} from '../../src/domain/day-picker';
+import { dayPickerItems, loadLabel } from '../../src/domain/day-picker';
 
 const ZONE = 'America/New_York';
 const labels = (now: string) =>
@@ -36,20 +32,12 @@ describe('day picker items', () => {
   });
 });
 
-describe('load and primary labels', () => {
+describe('load labels', () => {
   it.each([
     [0, 'Free'],
     [1, '1 task'],
     [4, '4 tasks'],
   ])('load %i is "%s"', (count, expected) => {
     expect(loadLabel(count)).toBe(expected);
-  });
-
-  it.each([
-    ['2026-11-04', '2026-11-03', 'Plan for Wed, Nov 4'],
-    ['2026-11-03', '2026-11-03', 'Plan for today'],
-    [null, '2026-11-03', 'Choose a day'],
-  ])('chosen %s with today %s reads "%s"', (chosen, today, expected) => {
-    expect(planButtonLabel(chosen, today)).toBe(expected);
   });
 });
