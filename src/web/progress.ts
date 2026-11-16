@@ -17,3 +17,10 @@ export function progressWidget(counts: {
     fill,
   };
 }
+
+export function weekWidget(
+  days: { done: number; notDone: number; planned: number }[],
+): ProgressWidget {
+  void days;
+  throw new Error('not implemented');
+}
