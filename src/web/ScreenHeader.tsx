@@ -101,7 +101,7 @@ export function ScreenHeader({
           })}
         </p>
       )}
-      {isToday && (
+      {mobile && isToday && (
         <Link to="/upcoming" className="upcoming-link">
           Upcoming{upcomingCount > 0 ? ` · ${upcomingCount}` : ''}
         </Link>

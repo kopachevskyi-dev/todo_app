@@ -35,7 +35,7 @@ async function seed(
   }
 }
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
-const sidebarItem = (page: Page, name: string) =>
+const listChip = (page: Page, name: string) =>
   page
     .getByRole('main')
     .getByRole('button', { name: new RegExp(`^${name}\\b`) });
@@ -45,19 +45,31 @@ test('desktop: create, rename, recolor and delete a list; its tasks stay without
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(server.url, 'Buy stamps', 'Work');
     await page.goto(`${server.url}/backlog`);
 
-    await page.getByText('New list', { exact: true }).click();
+    await page
+      .getByRole('button', { name: 'Manage lists', exact: true })
+      .click();
+    await page
+      .getByRole('dialog', { name: 'Manage lists', exact: true })
+      .getByRole('button', { name: 'New list', exact: true })
+      .click();
     await page
       .getByRole('textbox', { name: /list name|new list/i })
       .fill('Errands');
     await page.keyboard.press('Enter');
-    const lists = page.locator('.lists .list-link, .lists [aria-pressed]');
+    await page
+      .getByRole('dialog', { name: 'Manage lists', exact: true })
+      .getByRole('button', { name: 'Close', exact: true })
+      .click();
+    const lists = page
+      .getByRole('group', { name: 'Filter by list', exact: true })
+      .getByRole('button');
     await expect(lists.last()).toContainText('Errands');
     await expect(lists.last().locator('.list-dot')).toHaveCSS(
       'background-color',
@@ -90,7 +102,7 @@ test('desktop: create, rename, recolor and delete a list; its tasks stay without
     );
     await dialog.getByRole('button', { name: 'Delete' }).click();
     await manage.getByRole('button', { name: 'Close', exact: true }).click();
-    await expect(page.getByRole('navigation').getByText('Work')).toHaveCount(0);
+    await expect(listChip(page, 'Work')).toHaveCount(0);
     await expect(rows(page).first()).toContainText('Buy stamps');
     await expect(rows(page).first()).not.toContainText('Work');
   } finally {
@@ -103,7 +115,7 @@ test('desktop: clicking a list filters Backlog, quick-add joins that list, click
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -111,9 +123,9 @@ test('desktop: clicking a list filters Backlog, quick-add joins that list, click
     await seed(server.url, 'Fix the shelf', 'Home');
     await page.goto(`${server.url}/backlog`);
 
-    await sidebarItem(page, 'Work').click();
+    await listChip(page, 'Work').click();
     await expect(page).toHaveURL(/[?&]lists=/);
-    await expect(sidebarItem(page, 'Work')).toHaveAttribute(
+    await expect(listChip(page, 'Work')).toHaveAttribute(
       'aria-pressed',
       'true',
     );
@@ -126,7 +138,7 @@ test('desktop: clicking a list filters Backlog, quick-add joins that list, click
     await expect(rows(page).first()).toContainText('Send report');
     await expect(rows(page).first()).toContainText('Work');
 
-    await sidebarItem(page, 'Work').click();
+    await listChip(page, 'Work').click();
     await expect(page).not.toHaveURL(/[?&]lists=/);
     await expect(rows(page)).toHaveCount(3);
   } finally {
@@ -167,25 +179,32 @@ test('desktop: a new list is created with its color in one form and keeps it aft
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/backlog`);
+    await page
+      .getByRole('button', { name: 'Manage lists', exact: true })
+      .click();
     await newListButton(page).click();
-    const dialog = page.getByRole('dialog');
+    const dialog = page.getByRole('dialog', { name: 'New list', exact: true });
     await dialog.getByRole('textbox', { name: /name/i }).fill('Errands');
     await dialog.getByRole('button', { name: /^Sky/ }).click();
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
 
-    const item = sidebarItem(page, 'Errands');
+    await page
+      .getByRole('dialog', { name: 'Manage lists', exact: true })
+      .getByRole('button', { name: 'Close', exact: true })
+      .click();
+    const item = listChip(page, 'Errands');
     await expect(item).toBeVisible();
     await expect(item.locator('.list-dot')).toHaveCSS(
       'background-color',
       'rgb(74, 134, 232)',
     );
     await page.reload();
-    await expect(sidebarItem(page, 'Errands').locator('.list-dot')).toHaveCSS(
+    await expect(listChip(page, 'Errands').locator('.list-dot')).toHaveCSS(
       'background-color',
       'rgb(74, 134, 232)',
     );
@@ -199,7 +218,7 @@ test('desktop: renaming and recoloring a list in Manage lists shows Shop in Tang
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -228,7 +247,7 @@ test('desktop: renaming and recoloring a list in Manage lists shows Shop in Tang
     await page.reload();
 
     const tangerine = 'rgb(238, 125, 59)';
-    await expect(sidebarItem(page, 'Shop').locator('.list-dot')).toHaveCSS(
+    await expect(listChip(page, 'Shop').locator('.list-dot')).toHaveCSS(
       'background-color',
       tangerine,
     );
@@ -316,12 +335,22 @@ test('Escape closes the list form and returns focus to the control that opened i
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/backlog`);
+    const desktop = test.info().project.name === 'desktop';
+    if (desktop)
+      await page
+        .getByRole('button', { name: 'Manage lists', exact: true })
+        .click();
     const opener = newListButton(page);
     await opener.focus();
     await opener.press('Enter');
-    await expect(page.getByRole('dialog')).toBeVisible();
+    const form = page.getByRole('dialog', { name: 'New list', exact: true });
+    await expect(form).toBeVisible();
     await page.keyboard.press('Escape');
-    await expect(page.getByRole('dialog')).toHaveCount(0);
+    await expect(form).toHaveCount(0);
+    if (desktop)
+      await expect(
+        page.getByRole('dialog', { name: 'Manage lists', exact: true }),
+      ).toBeVisible();
     await expect(opener).toBeFocused();
   } finally {
     await server.stop();

@@ -18,7 +18,7 @@ test('desktop: Enter saves a renamed title across reload; clearing it and blurri
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -88,14 +88,14 @@ test('desktop: Cancel keeps the task; confirming Delete removes the row, closes 
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(server.url, TITLE);
     await seed(server.url, 'Other');
     await page.goto(`${server.url}/backlog`);
-    const nav = page.getByRole('navigation');
+    const nav = page.getByRole('navigation', { name: 'Sections' });
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('2');
     await rows(page).filter({ hasText: TITLE }).click();
     const panel = page.getByRole('complementary');

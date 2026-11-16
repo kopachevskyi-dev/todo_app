@@ -6,7 +6,9 @@ test.use({ timezoneId: 'America/New_York' });
 const LICENSE = "Renew driver's license";
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 const navLink = (page: Page, name: RegExp) =>
-  page.getByRole('navigation').getByRole('link', { name });
+  page
+    .getByRole('navigation', { name: 'Sections' })
+    .getByRole('link', { name });
 
 async function api(url: string, method: string, path: string, body?: unknown) {
   const response = await fetch(`${url}${path}`, {
@@ -201,7 +203,7 @@ test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -257,7 +259,7 @@ test('desktop keyboard only: quick-add, rows, Day popover, Plan, Escape', async 
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -345,7 +347,7 @@ test('desktop: with the API unreachable, "Pay rent" stays in the field with an i
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {

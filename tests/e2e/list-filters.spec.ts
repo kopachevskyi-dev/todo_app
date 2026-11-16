@@ -54,7 +54,8 @@ const main = (page: Page) => page.getByRole('main');
 const rows = (page: Page) => main(page).getByRole('listitem');
 const listButton = (page: Page, name: string) =>
   main(page).getByRole('button', { name: new RegExp(`^${name}\\b`) });
-const sections = (page: Page) => page.getByRole('banner');
+const sections = (page: Page) =>
+  page.getByRole('navigation', { name: 'Sections' });
 
 test('Backlog: Work and Home combine with OR, tasks without a list are left out, scope is shown', async ({
   page,

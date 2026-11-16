@@ -30,14 +30,14 @@ test('desktop: Add from Backlog → select 2 → "Add 2 to Today" moves them int
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(page, server.url);
     await page.goto(server.url);
     const main = page.getByRole('main');
-    const nav = page.getByRole('navigation');
+    const nav = page.getByRole('navigation', { name: 'Sections' });
     await expect(main).toContainText('0 of 2 done');
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('3');
 
@@ -234,7 +234,11 @@ test('with Today filtered to Work, the picker shows All lists and offers backlog
     await page.goto(server.url);
     if (test.info().project.name === 'mobile')
       await page.getByRole('button', { name: 'Work', exact: true }).click();
-    else await page.getByRole('button', { name: /^Work$/ }).click();
+    else
+      await page
+        .getByRole('main')
+        .getByRole('button', { name: /^Work\b/ })
+        .click();
 
     const picker = await openPicker(page);
     await expect(picker.getByText('All lists')).toBeVisible();

@@ -47,7 +47,7 @@ test('tasks left open on Mon, Nov 9 are in the Backlog with their date, missed i
     ).toBeVisible();
 
     await page
-      .getByRole('navigation')
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /Backlog/ })
       .click();
     for (const title of ['A', 'B']) {
@@ -93,7 +93,7 @@ test('reviewing unfinished work: selecting "A" and "Add 1 to Today" plans it in 
     ).toBeVisible();
 
     await page
-      .getByRole('navigation')
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /Backlog/ })
       .click();
     await expect(

@@ -1,4 +1,5 @@
 import { dateLabel } from './dates';
+import { ListFilters } from './Lists';
 import { today as getToday } from './useToday';
 import { queryKeys } from './query-keys';
 import { HistoryDayGroups } from './HistoryDayGroups';
@@ -23,7 +24,15 @@ function weekLabel(start: string) {
   }`;
 }
 
-export function History({ onOpen }: { onOpen: (id: string) => void }) {
+export function History({
+  onOpen,
+  mobile,
+  onFilter,
+}: {
+  onOpen: (id: string) => void;
+  mobile: boolean;
+  onFilter: (id?: string) => void;
+}) {
   const { week, day, lists: list, task } = useSearch({ strict: false });
   const navigate = useNavigate();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
@@ -51,6 +60,11 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
         };
         return {
           ...item,
+          allTasks: [
+            ...item.groups.done,
+            ...item.groups.notDone,
+            ...item.groups.planned,
+          ],
           groups,
           done: groups.done.length,
           notDone: groups.notDone.length,
@@ -69,7 +83,7 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
   const focusDay = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!selected || !weekStart) return;
-    if (week !== weekStart || day !== selected.day)
+    if ((week || day) && (week !== weekStart || day !== selected.day))
       void navigate({
         to: '/history',
         search: (previous) => ({
@@ -265,6 +279,14 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
               : historySummary(selected, kind)}
           </p>
         </div>
+        {!mobile && (
+          <ListFilters
+            lists={lists.data?.lists ?? []}
+            active={list?.split(',') ?? []}
+            onFilter={onFilter}
+            tasks={selected.allTasks}
+          />
+        )}
         <HistoryDayGroups
           selected={selected}
           weekStart={history.data.weekStart}

@@ -10,7 +10,9 @@ export function Upcoming({
   task,
   onOpen,
   completion,
+  list,
 }: {
+  list?: string;
   upcoming: UseQueryResult<Awaited<ReturnType<typeof api.upcoming>>>;
   task?: string;
   onOpen: (id: string) => void;
@@ -26,7 +28,16 @@ export function Upcoming({
         </Button>
       </p>
     );
-  if (!upcoming.data.days.length)
+  const days = upcoming.data.days
+    .map((day) => ({
+      ...day,
+      tasks: day.tasks.filter(
+        (row) =>
+          !list || Boolean(row.listId && list.split(',').includes(row.listId)),
+      ),
+    }))
+    .filter((day) => day.tasks.length);
+  if (!days.length)
     return (
       <EmptyPanel>
         <h2>Nothing planned ahead</h2>
@@ -36,7 +47,7 @@ export function Upcoming({
     );
   return (
     <div className="upcoming-agenda">
-      {upcoming.data.days.map(({ day, tasks }) => (
+      {days.map(({ day, tasks }) => (
         <section key={day} aria-labelledby={`upcoming-${day}`}>
           <div className="history-day-heading">
             <h2 id={`upcoming-${day}`}>
@@ -53,7 +64,7 @@ export function Upcoming({
                 key={row.id}
                 task={row}
                 selected={task === row.id}
-                href={`/upcoming?task=${row.id}`}
+                href={`/upcoming?${new URLSearchParams({ ...(list ? { lists: list } : {}), task: row.id })}`}
                 onOpen={() => onOpen(row.id)}
                 onToggle={() =>
                   completion.mutateAsync({ id: row.id, completed: true })
