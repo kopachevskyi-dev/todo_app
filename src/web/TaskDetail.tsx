@@ -336,6 +336,7 @@ export function TaskDetail({
         ))}
       {creatingList && (
         <ListForm
+          lists={lists.data?.lists ?? []}
           mobile={mobile}
           pending={createList.isPending}
           error={createList.isError ? createList.error.message : undefined}

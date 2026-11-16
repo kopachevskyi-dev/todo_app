@@ -137,6 +137,7 @@ export function Lists({
       {editing && (
         <ListForm
           list={editing === 'new' ? undefined : editing}
+          lists={lists}
           mobile={mobile}
           pending={mutation.isPending}
           error={mutation.isError ? mutation.error.message : undefined}

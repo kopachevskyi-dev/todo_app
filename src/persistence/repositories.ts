@@ -592,7 +592,7 @@ export function createRepositories(db: AppDatabase) {
                 listColors.find(
                   (color) => !existing.some((list) => list.color === color),
                 ) ??
-                '#8E7CC3',
+                listColors[0],
               position: (existing.at(-1)?.position ?? -1) + 1,
               createdAt: now.toISOString(),
             })

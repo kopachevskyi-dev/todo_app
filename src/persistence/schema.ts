@@ -26,7 +26,7 @@ export const lists = sqliteTable(
     ),
     check(
       'list_color',
-      sql`${table.color} IN ('#E3686A', '#5FB4C6', '#F0C24B', '#8E7CC3', '#6FBF8A', '#6A93D4', '#E8975A', '#D985A8')`,
+      sql`${table.color} IN ('#3aa77a', '#4a86e8', '#e8a33c', '#e05a4f', '#8b6ad8', '#ee7d3b', '#2a9bb5', '#b25a9c')`,
     ),
   ],
 );

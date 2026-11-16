@@ -44,10 +44,10 @@ it('applies migrations only once and preserves changes across restart', () => {
 
 it('enforces list names, case-insensitive uniqueness, and the color palette', () => {
   for (const [name, color] of [
-    ['PERSONAL', '#E3686A'],
-    ['', '#E3686A'],
-    [' '.repeat(41), '#E3686A'],
-    ['a'.repeat(41), '#E3686A'],
+    ['PERSONAL', '#e05a4f'],
+    ['', '#e05a4f'],
+    [' '.repeat(41), '#e05a4f'],
+    ['a'.repeat(41), '#e05a4f'],
     ['Other', '#000000'],
   ]) {
     expect(() =>
