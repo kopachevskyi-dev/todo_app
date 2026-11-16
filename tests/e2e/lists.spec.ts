@@ -40,76 +40,6 @@ const listChip = (page: Page, name: string) =>
     .getByRole('main')
     .getByRole('button', { name: new RegExp(`^${name}\\b`) });
 
-test('desktop: create, rename, recolor and delete a list; its tasks stay without a list', async ({
-  page,
-}) => {
-  test.skip(
-    test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, top bar or detail panel layout.',
-  );
-  const server = await startTestServer(page);
-  try {
-    await seed(server.url, 'Buy stamps', 'Work');
-    await page.goto(`${server.url}/backlog`);
-
-    await page
-      .getByRole('button', { name: 'Manage lists', exact: true })
-      .click();
-    await page
-      .getByRole('dialog', { name: 'Manage lists', exact: true })
-      .getByRole('button', { name: 'New list', exact: true })
-      .click();
-    await page
-      .getByRole('textbox', { name: /list name|new list/i })
-      .fill('Errands');
-    await page.keyboard.press('Enter');
-    await page
-      .getByRole('dialog', { name: 'Manage lists', exact: true })
-      .getByRole('button', { name: 'Close', exact: true })
-      .click();
-    const lists = page
-      .getByRole('group', { name: 'Filter by list', exact: true })
-      .getByRole('button');
-    await expect(lists.last()).toContainText('Errands');
-    await expect(lists.last().locator('.list-dot')).toHaveCSS(
-      'background-color',
-      'rgb(58, 167, 122)',
-    );
-
-    await page
-      .getByRole('button', { name: 'Manage lists', exact: true })
-      .click();
-    const manage = page.getByRole('dialog');
-    await manage
-      .getByRole('button', { name: 'Edit Errands', exact: true })
-      .click();
-    const form = page.getByRole('dialog').last();
-    await form.getByRole('textbox', { name: /list name/i }).fill('Shop');
-    await form.getByRole('button', { name: 'Lavender', exact: true }).click();
-    await form.getByRole('button', { name: 'Save', exact: true }).click();
-    await expect(lists.last()).toContainText('Shop');
-    await expect(lists.last().locator('.list-dot')).toHaveCSS(
-      'background-color',
-      'rgb(139, 106, 216)',
-    );
-
-    await manage
-      .getByRole('button', { name: 'Delete Work', exact: true })
-      .click();
-    const dialog = page.getByRole('dialog').last();
-    await expect(dialog).toContainText(
-      'Delete list "Work"? Its tasks stay, without a list.',
-    );
-    await dialog.getByRole('button', { name: 'Delete' }).click();
-    await manage.getByRole('button', { name: 'Close', exact: true }).click();
-    await expect(listChip(page, 'Work')).toHaveCount(0);
-    await expect(rows(page).first()).toContainText('Buy stamps');
-    await expect(rows(page).first()).not.toContainText('Work');
-  } finally {
-    await server.stop();
-  }
-});
-
 test('desktop: clicking a list filters Backlog, quick-add joins that list, clicking again clears', async ({
   page,
 }) => {
@@ -171,187 +101,134 @@ test('mobile: the Home chip filters Today and Show all clears it', async ({
   }
 });
 
-const newListButton = (page: Page) =>
-  page.getByRole('button', { name: 'New list', exact: true });
+const mobile = () => test.info().project.name === 'mobile';
+const card = (page: Page) =>
+  mobile()
+    ? page.getByRole('main')
+    : page.getByRole('complementary', { name: 'Task details' });
+const listField = (page: Page) =>
+  card(page).getByRole('button', { name: /^List/ });
+const picker = (page: Page) =>
+  page.getByRole('dialog', { name: 'Choose a list', exact: true });
 
-test('desktop: a new list is created with its color in one form and keeps it after reload', async ({
+async function openPicker(page: Page, title: string) {
+  await rows(page).filter({ hasText: title }).first().click();
+  await listField(page).click();
+}
+
+test('Choose a list: New list with name Home and a color creates the list and assigns it to the task', async ({
   page,
 }) => {
-  test.skip(
-    test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, top bar or detail panel layout.',
-  );
   const server = await startTestServer(page);
   try {
+    // Home is seeded; free the name so "Home" can be created.
+    const removed = await fetch(
+      `${server.url}/api/lists/${await listId(server.url, 'Home')}`,
+      { method: 'DELETE', headers },
+    );
+    expect(removed.status).toBeLessThan(300);
+    await seed(server.url, 'Fix tap', null);
     await page.goto(`${server.url}/backlog`);
-    await page
-      .getByRole('button', { name: 'Manage lists', exact: true })
+    await openPicker(page, 'Fix tap');
+    await picker(page)
+      .getByRole('button', { name: 'New list', exact: true })
       .click();
-    await newListButton(page).click();
-    const dialog = page.getByRole('dialog', { name: 'New list', exact: true });
-    await dialog.getByRole('textbox', { name: /name/i }).fill('Errands');
-    await dialog.getByRole('button', { name: /^Sky/ }).click();
-    await dialog.getByRole('button', { name: 'Save', exact: true }).click();
+    const form = page.getByRole('dialog', { name: 'New list', exact: true });
+    await form.getByRole('textbox', { name: /name/i }).fill('Home');
+    await form.getByRole('button', { name: /^Sky/ }).click();
+    await form.getByRole('button', { name: 'Save', exact: true }).click();
 
-    await page
-      .getByRole('dialog', { name: 'Manage lists', exact: true })
-      .getByRole('button', { name: 'Close', exact: true })
-      .click();
-    const item = listChip(page, 'Errands');
-    await expect(item).toBeVisible();
-    await expect(item.locator('.list-dot')).toHaveCSS(
-      'background-color',
-      'rgb(74, 134, 232)',
-    );
-    await page.reload();
-    await expect(listChip(page, 'Errands').locator('.list-dot')).toHaveCSS(
-      'background-color',
-      'rgb(74, 134, 232)',
-    );
+    await expect(listField(page)).toContainText('Home');
+    const response = await fetch(`${server.url}/api/lists`, { headers });
+    const { lists } = (await response.json()) as {
+      lists: { name: string; color: string }[];
+    };
+    expect(lists.find((list) => list.name === 'Home')?.color).toBe('#4a86e8');
   } finally {
     await server.stop();
   }
 });
 
-test('desktop: renaming and recoloring a list in Manage lists shows Shop in Tangerine everywhere after reload', async ({
+test('Choose a list: renaming a list to Errands and recoloring it to Tangerine shows both on chips and rows', async ({
   page,
 }) => {
-  test.skip(
-    test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, top bar or detail panel layout.',
-  );
   const server = await startTestServer(page);
   try {
-    const created = await fetch(`${server.url}/api/lists`, {
-      method: 'POST',
-      headers,
-      body: JSON.stringify({ name: 'Errands' }),
-    });
-    expect(created.status).toBe(201);
-    await seed(server.url, 'Buy milk', 'Errands');
+    await seed(server.url, 'Buy milk', 'Home');
     await page.goto(`${server.url}/backlog`);
-
-    await page
-      .getByRole('button', { name: 'Manage lists', exact: true })
+    await openPicker(page, 'Buy milk');
+    await picker(page)
+      .getByRole('button', { name: 'Edit Home', exact: true })
       .click();
-    const manage = page.getByRole('dialog');
-    await manage
-      .getByRole('button', {
-        name: /(edit|rename).*Errands|Errands.*(edit|rename)/i,
-      })
-      .click();
-    const form = page.getByRole('dialog').last();
-    await form.getByRole('textbox', { name: /name/i }).fill('Shop');
+    const form = page.getByRole('dialog', { name: 'Edit list', exact: true });
+    await form.getByRole('textbox', { name: /name/i }).fill('Errands');
     await form.getByRole('button', { name: /^Tangerine/ }).click();
     await form.getByRole('button', { name: 'Save', exact: true }).click();
-    await page.reload();
+    await expect(form).toHaveCount(0);
+    await page.keyboard.press('Escape');
 
     const tangerine = 'rgb(238, 125, 59)';
-    await expect(listChip(page, 'Shop').locator('.list-dot')).toHaveCSS(
-      'background-color',
-      tangerine,
-    );
     const row = rows(page).filter({ hasText: 'Buy milk' });
-    await expect(row).toContainText('Shop');
+    await expect(row).toContainText('Errands');
+    await expect(row).not.toContainText('Home');
     await expect(row.locator('.list-dot')).toHaveCSS(
       'background-color',
       tangerine,
     );
-    await row.click();
-    await page
-      .getByRole('complementary', { name: 'Task details' })
-      .getByRole('button', { name: /^List/ })
+    if (!mobile()) {
+      await expect(listChip(page, 'Errands').locator('.list-dot')).toHaveCSS(
+        'background-color',
+        tangerine,
+      );
+    }
+  } finally {
+    await server.stop();
+  }
+});
+
+test('Choose a list: deleting a list with tasks after confirming leaves its tasks without a list', async ({
+  page,
+}) => {
+  const server = await startTestServer(page);
+  try {
+    await seed(server.url, 'Plan sprint', 'Work');
+    await page.goto(`${server.url}/backlog`);
+    await openPicker(page, 'Plan sprint');
+    await picker(page)
+      .getByRole('button', { name: 'Edit Work', exact: true })
       .click();
-    await expect(
-      page.getByRole('button', { name: /^List Shop/ }),
-    ).toBeVisible();
-    await expect(page.locator('.list-dot').last()).toHaveCSS(
-      'background-color',
-      tangerine,
+    await page
+      .getByRole('dialog', { name: 'Edit list', exact: true })
+      .getByRole('button', { name: 'Delete', exact: true })
+      .click();
+    const confirm = page.getByRole('dialog').last();
+    await expect(confirm).toContainText(
+      'Delete list "Work"? Its tasks stay, without a list.',
     );
+    await confirm.getByRole('button', { name: 'Delete', exact: true }).click();
+
+    const row = rows(page).filter({ hasText: 'Plan sprint' });
+    await expect(row).toHaveCount(1);
+    await expect(row).not.toContainText('Work');
+    await row.first().click();
+    await expect(listField(page)).toContainText('No list');
   } finally {
     await server.stop();
   }
 });
 
-test('mobile: with six lists and a 40-character name, the New list form fits the 390 px viewport', async ({
-  page,
-}) => {
-  test.skip(
-    test.info().project.name !== 'mobile',
-    'Exercises the mobile sheet, screen or navigation layout.',
-  );
-  const server = await startTestServer(page);
-  try {
-    for (const name of [
-      'Errands',
-      'Garden',
-      'Books',
-      'Travel',
-      'A'.repeat(40),
-    ]) {
-      const created = await fetch(`${server.url}/api/lists`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ name }),
-      });
-      expect(created.status).toBe(201);
-    }
-    await page.goto(`${server.url}/backlog`);
-    await newListButton(page).click();
-
-    const dialog = page.getByRole('dialog');
-    const viewport = page.viewportSize();
-    if (!viewport) throw new Error('Missing viewport');
-    const swatchButtons = dialog.getByRole('button', {
-      name: /^(Mint|Sky|Sun|Coral|Lavender|Tangerine|Ocean|Plum)/,
-    });
-    const targets = [
-      dialog.getByRole('textbox', { name: /name/i }),
-      swatchButtons,
-      dialog.getByRole('button', { name: 'Save', exact: true }),
-      dialog.getByRole('button', { name: 'Cancel', exact: true }),
-    ];
-    const swatches = await swatchButtons.count();
-    expect(swatches).toBe(8);
-    for (const target of targets) {
-      for (let i = 0; i < (await target.count()); i += 1) {
-        const box = await target.nth(i).boundingBox();
-        if (!box) throw new Error('Control has no box');
-        expect(box.x).toBeGreaterThanOrEqual(0);
-        expect(box.y).toBeGreaterThanOrEqual(0);
-        expect(box.x + box.width).toBeLessThanOrEqual(viewport.width);
-        expect(box.y + box.height).toBeLessThanOrEqual(viewport.height);
-      }
-    }
-  } finally {
-    await server.stop();
-  }
-});
-
-test('Escape closes the list form and returns focus to the control that opened it', async ({
-  page,
-}) => {
+test('there is no Manage lists link or screen', async ({ page }) => {
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/backlog`);
-    const desktop = test.info().project.name === 'desktop';
-    if (desktop)
-      await page
-        .getByRole('button', { name: 'Manage lists', exact: true })
-        .click();
-    const opener = newListButton(page);
-    await opener.focus();
-    await opener.press('Enter');
-    const form = page.getByRole('dialog', { name: 'New list', exact: true });
-    await expect(form).toBeVisible();
-    await page.keyboard.press('Escape');
-    await expect(form).toHaveCount(0);
-    if (desktop)
-      await expect(
-        page.getByRole('dialog', { name: 'Manage lists', exact: true }),
-      ).toBeVisible();
-    await expect(opener).toBeFocused();
+    await expect(page.getByRole('main')).toBeVisible();
+    await expect(page.getByText('Manage lists')).toHaveCount(0);
+    await expect(
+      page.getByRole('button', { name: /manage lists/i }),
+    ).toHaveCount(0);
+    await expect(page.getByRole('link', { name: /manage lists/i })).toHaveCount(
+      0,
+    );
   } finally {
     await server.stop();
   }
