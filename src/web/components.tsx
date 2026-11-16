@@ -277,13 +277,13 @@ export function QuickAdd({
       }}
     >
       <div className="quick-field">
-        <Icon name="plus" />
+        {!mobile && <Icon name="plus" />}
         <input
           ref={inputRef}
           aria-label="Task title"
           aria-describedby={id}
           aria-invalid={Boolean(error)}
-          placeholder={`Add to ${target}`}
+          placeholder={`Add to ${target}${mobile ? '…' : ''}`}
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -307,18 +307,21 @@ export function QuickAdd({
             : 'A title is enough. Add details, a list or a day later.'}
         </p>
         {mobile && (
-          <div className="capture-actions">
-            {onClose && (
-              <Button type="button" variant="outline" onClick={onClose}>
-                Close
-              </Button>
-            )}
-            <Button type="submit" disabled={pending}>
-              Add
-            </Button>
-          </div>
+          <Button type="submit" disabled={pending}>
+            Add
+          </Button>
         )}
       </div>
+      {mobile && onClose && (
+        <Button
+          className="capture-close"
+          variant="ghost"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <Icon name="close" size={18} />
+        </Button>
+      )}
     </form>
   );
 }
