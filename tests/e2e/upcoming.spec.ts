@@ -38,10 +38,10 @@ test('opening Upcoming from Today lists "Dentist" under Tue, Nov 17; changing it
     });
 
     await page.goto(`${server.url}/today`);
-    const upcoming = (
-      isMobile ? main(page) : page.getByRole('banner')
-    ).getByRole('link', { name: isMobile ? /^Upcoming · 1$/ : /^Upcoming\b/ });
-    await expect(upcoming).toContainText('1');
+    const upcoming = page
+      .getByRole('navigation', { name: 'Sections' })
+      .getByRole('link', { name: /^Upcoming\b/ });
+    if (!isMobile) await expect(upcoming).toContainText('1');
     await upcoming.click();
     await expect(page).toHaveURL(/\/upcoming$/);
     await expect(group(page, 'Tue, Nov 17')).toContainText('Dentist');
@@ -62,12 +62,12 @@ test('opening Upcoming from Today lists "Dentist" under Tue, Nov 17; changing it
 
 test('with no future tasks, Upcoming reads "Nothing planned ahead" with "Plan from Backlog"', async ({
   page,
-  isMobile,
 }) => {
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/today`);
-    await (isMobile ? main(page) : page.getByRole('banner'))
+    await page
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /^Upcoming$/ })
       .click();
     await expect(main(page)).toContainText('Nothing planned ahead');

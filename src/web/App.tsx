@@ -40,11 +40,6 @@ function useMedia(query: string) {
     () => window.matchMedia(query).matches,
   );
 }
-const mobileTabs = [
-  { to: '/backlog', label: 'Backlog', icon: 'backlog' },
-  { to: '/today', label: 'Today', icon: 'today' },
-  { to: '/history', label: 'History', icon: 'history' },
-] as const;
 const tabs = [
   { to: '/today', label: 'Today' },
   { to: '/backlog', label: 'Backlog' },
@@ -195,7 +190,7 @@ export function App() {
   };
   const nav = (
     <>
-      {mobileTabs.map((tab) => (
+      {tabs.map((tab) => (
         <Link
           key={tab.to}
           to={tab.to}
@@ -203,9 +198,6 @@ export function App() {
           aria-current={path === tab.to ? 'page' : undefined}
           className="nav-link"
         >
-          <span className="nav-icon">
-            <Icon name={tab.icon} size={22} />
-          </span>
           <span className="nav-label">{tab.label}</span>
         </Link>
       ))}
@@ -270,12 +262,6 @@ export function App() {
               title={title}
               isToday={isToday}
               today={today}
-              upcomingCount={
-                upcoming.data?.days.reduce(
-                  (count, day) => count + day.tasks.length,
-                  0,
-                ) ?? 0
-              }
               isBacklog={isBacklog}
               list={listFilter}
               rows={rows}
@@ -473,7 +459,7 @@ export function App() {
               aria-label={isToday ? 'Add task to today' : 'Add task'}
               onClick={() => setCapturing(true)}
             >
-              <Icon name="plus" size={24} />
+              <Icon name="plus" size={22} />
             </Button>
           )}
         </>
