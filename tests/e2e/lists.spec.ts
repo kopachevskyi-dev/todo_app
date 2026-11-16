@@ -37,7 +37,7 @@ async function seed(
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 const listChip = (page: Page, name: string) =>
   page
-    .getByRole('main')
+    .getByRole('group', { name: 'Filter by list', exact: true })
     .getByRole('button', { name: new RegExp(`^${name}\\b`) });
 
 test('desktop: clicking a list filters Backlog, quick-add joins that list, clicking again clears', async ({

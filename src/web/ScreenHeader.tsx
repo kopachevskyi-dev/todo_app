@@ -43,7 +43,9 @@ export function ScreenHeader({
   onCapture: () => void;
 }) {
   return (
-    <header className={`screen-header ${isToday ? 'today-header' : ''}`}>
+    <header
+      className={`screen-header ${isToday || isBacklog ? 'today-header' : ''}`}
+    >
       {mobile && isSearch && (
         <button className="back-link search-back" onClick={leaveSearch}>
           <Icon name="chevron-left" size={18} />
@@ -91,6 +93,14 @@ export function ScreenHeader({
           Everything you need to do someday.
           <span className="desktop-subtitle"> No date until you plan it.</span>
         </p>
+      )}
+      {isBacklog && !mobile && (
+        <div className="today-tools">
+          <Button onClick={onCapture}>
+            <Icon name="plus" size={16} />
+            New task
+          </Button>
+        </div>
       )}
       {isToday && today.data && (
         <p className="today-date">
