@@ -10,7 +10,7 @@ import {
   type Ref,
 } from 'react';
 import { flushSync } from 'react-dom';
-import { completionTime } from './dates';
+import { completionTime, dateLabel } from './dates';
 import { rowMetaText } from '../domain/row-meta';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
@@ -151,9 +151,11 @@ export function TaskRow({
   pending,
   orderControls,
   upNext = false,
+  showMissed = false,
 }: {
   orderControls?: ReactNode;
   upNext?: boolean;
+  showMissed?: boolean;
   onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
@@ -166,7 +168,7 @@ export function TaskRow({
   const meta = [
     rowMetaText({
       listName: task.list?.name ?? null,
-      missedFrom: task.missedFrom,
+      missedFrom: showMissed ? null : task.missedFrom,
       subtaskCount: 0,
     }),
     task.subtaskCount > 0
@@ -180,7 +182,7 @@ export function TaskRow({
     <li
       data-layout-id={task.id}
       data-layout-group={task.completedAt ? 'done' : 'open'}
-      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''} ${upNext ? 'up-next' : ''}`}
+      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''} ${upNext ? 'up-next' : ''} ${showMissed && task.missedFrom ? 'returned' : ''}`}
       inert={creating}
       aria-busy={creating || undefined}
     >
@@ -231,6 +233,11 @@ export function TaskRow({
           {meta && <span className="row-meta">{meta}</span>}
         </span>
         {upNext && <span className="up-next-tag">Up next</span>}
+        {showMissed && task.missedFrom && (
+          <span className="missed-tag">
+            was {dateLabel(task.missedFrom, { month: 'short', day: 'numeric' })}
+          </span>
+        )}
         {creating && <span className="row-meta">Saving…</span>}
         {task.completedAt && !location && (
           <time className="completion-time" dateTime={task.completedAt}>

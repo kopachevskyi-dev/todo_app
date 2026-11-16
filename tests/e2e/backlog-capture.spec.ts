@@ -71,7 +71,7 @@ test('mobile: Add task opens the capture sheet; Add closes it and shows the task
   }
 });
 
-test('desktop: opening a row sets ?task=<id>, survives reload, and the empty panel shows its prompt', async ({
+test('desktop: opening a row sets ?task=<id>, survives reload, and widgets return when details close', async ({
   page,
 }) => {
   test.skip(
@@ -82,17 +82,22 @@ test('desktop: opening a row sets ?task=<id>, survives reload, and the empty pan
   try {
     await seed(server.url, [TITLE]);
     await page.goto(`${server.url}/backlog`);
-    await expect(page.getByText('Select a task to add details')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeVisible();
 
     await rows(page).first().click();
     await expect(page).toHaveURL(/[?&]task=[0-9A-Z]{26}/);
     const detail = page.getByRole('complementary');
     await expect(detail).toContainText(TITLE);
-    await expect(page.getByText('Select a task to add details')).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeHidden();
 
     await page.reload();
     await expect(page).toHaveURL(/[?&]task=[0-9A-Z]{26}/);
     await expect(page.getByRole('complementary')).toContainText(TITLE);
+    await page
+      .getByRole('complementary')
+      .getByRole('button', { name: 'Close', exact: true })
+      .click();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeVisible();
   } finally {
     await server.stop();
   }

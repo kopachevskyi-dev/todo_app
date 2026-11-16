@@ -17,15 +17,23 @@ export type ByListRow = {
 export function waitingWidget(
   tasks: { missedFrom: string | null }[],
 ): WaitingWidget {
-  void tasks;
-  throw new Error('not implemented');
+  const returned = tasks.filter((task) => task.missedFrom !== null).length;
+  return {
+    badge: returned ? `${returned} returned` : 'Clear',
+    number: tasks.length,
+    unit: tasks.length === 1 ? 'task' : 'tasks',
+    fill: tasks.length ? (returned / tasks.length) * 100 : 0,
+  };
 }
 
 export function byListWidget(
   tasks: { listId: string | null }[],
   lists: List[],
 ): ByListRow[] {
-  void tasks;
-  void lists;
-  throw new Error('not implemented');
+  return lists.map(({ id, name, color }) => ({
+    id,
+    name,
+    color,
+    count: tasks.filter((task) => task.listId === id).length,
+  }));
 }

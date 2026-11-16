@@ -1,68 +1,10 @@
-import { useState } from 'react';
 import type { List, TodayResponse } from '../shared/contract';
-import { Button, Icon } from './components';
+import { Button } from './components';
 import { dateLabel } from './dates';
 import { progressWidget } from './progress';
 import { StatWidget } from './StatWidget';
 import { useBacklogPicker } from './useBacklogPicker';
-import { useCreateTask, type CaptureDraft } from './useCreateTask';
-
-function QuickAddWidget({
-  list,
-  today,
-  filteredIds,
-}: {
-  list?: List;
-  today?: string;
-  filteredIds: string[];
-}) {
-  const [draft, setDraft] = useState<CaptureDraft>({ title: '' });
-  const { title, setTitle, error, setError, input, mutation, submit } =
-    useCreateTask({
-      target: 'today',
-      list,
-      today,
-      filteredIds,
-      draft,
-      onDraftChange: setDraft,
-    });
-  return (
-    <form
-      className="quick-add-widget"
-      aria-label="Quick add"
-      onSubmit={(event) => {
-        event.preventDefault();
-        submit();
-      }}
-    >
-      <div className="quick-widget-field">
-        <input
-          ref={input}
-          aria-label="Task title"
-          aria-invalid={Boolean(error)}
-          placeholder="Add to today…"
-          value={title}
-          onChange={(event) => {
-            setTitle(event.target.value);
-            setError(undefined);
-          }}
-        />
-        <Button
-          type="submit"
-          aria-label="Add task"
-          disabled={mutation.isPending}
-        >
-          <Icon name="plus" size={16} />
-        </Button>
-      </div>
-      {error && (
-        <p role="alert" className="field-error">
-          {error}
-        </p>
-      )}
-    </form>
-  );
-}
+import { QuickAddWidget } from './QuickAddWidget';
 
 export function TodayWidgets({
   progress,

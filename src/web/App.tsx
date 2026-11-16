@@ -9,6 +9,7 @@ import { Today } from './Today';
 import { TodayHero } from './TodayHero';
 import { TodayWidgets } from './TodayWidgets';
 import { Backlog } from './Backlog';
+import { BacklogWidgets } from './BacklogWidgets';
 import { BacklogPicker } from './BacklogPicker';
 import { SearchField } from './SearchField';
 import { Capture } from './Capture';
@@ -26,7 +27,7 @@ import { useMutationState, useQuery } from '@tanstack/react-query';
 import { api } from './api';
 import { useCompletion } from './useCompletion';
 import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
-import { BottomSheet, Button, Icon, Modal, Popover } from './components';
+import { BottomSheet, Button, Icon, Modal } from './components';
 import { ListFilters, ListManagement } from './Lists';
 import { Upcoming } from './Upcoming';
 import { History } from './History';
@@ -71,6 +72,7 @@ export function App() {
   const planButton = useRef<HTMLButtonElement>(null);
   const isBacklog = path === '/backlog';
   const isToday = path === '/today';
+  const hasWidgets = isToday || isBacklog;
   const completion = useCompletion();
   const isSearch = path === '/search';
   const changeQuery = (value: string) => {
@@ -256,7 +258,7 @@ export function App() {
       {!(mobile && task) && (
         <div className="content-grid">
           <main
-            className={`main-column ${isToday && !(desktop && task) ? 'today-main' : ''}`}
+            className={`main-column ${hasWidgets && !(desktop && task) ? 'today-main' : ''} ${isBacklog ? 'backlog-main' : ''}`}
           >
             <ScreenHeader
               mobile={mobile}
@@ -287,12 +289,12 @@ export function App() {
             )}
             <div
               className={
-                isToday
+                hasWidgets
                   ? `today-body ${desktop && task ? 'task-open' : ''}`
                   : undefined
               }
             >
-              <div className={isToday ? 'today-primary' : undefined}>
+              <div className={hasWidgets ? 'today-primary' : undefined}>
                 {isToday && !mobile && !listFilter && (
                   <TodayHero
                     task={today.data?.open[0]}
@@ -307,7 +309,7 @@ export function App() {
                   className={mobile ? 'screen-content' : 'list-card'}
                   aria-label="Tasks"
                 >
-                  {(!mobile || isToday) && path !== '/history' && (
+                  {(!mobile || hasWidgets) && path !== '/history' && (
                     <div className="list-card-heading">
                       <h2 className="list-card-title">
                         {isToday
@@ -324,6 +326,12 @@ export function App() {
                           {today.data.progress.total} done
                         </span>
                       )}
+                      {isBacklog && backlog.data && (
+                        <span className="row-meta">
+                          {backlog.data.tasks.length} of{' '}
+                          {backlog.data.allTasks.length}
+                        </span>
+                      )}
                     </div>
                   )}
                   {path !== '/history' && (!mobile || isBacklog || isToday) && (
@@ -331,6 +339,7 @@ export function App() {
                       lists={lists.data?.lists ?? []}
                       active={selectedIds}
                       mobile={mobile}
+                      showCounts={!mobile || isBacklog}
                       onFilter={filterList}
                       tasks={
                         isToday
@@ -422,9 +431,7 @@ export function App() {
                   )}
                   {isBacklog && (
                     <Backlog
-                      mobile={mobile}
                       backlog={backlog}
-                      activeList={activeList}
                       rowContainer={rowContainer}
                       task={task}
                       list={listFilter}
@@ -443,9 +450,23 @@ export function App() {
                   picker={picker}
                 />
               )}
+              {isBacklog && !(desktop && task) && (
+                <BacklogWidgets
+                  tasks={backlog.data?.allTasks ?? []}
+                  lists={lists.data?.lists ?? []}
+                  activeList={activeList}
+                  filteredIds={selectedIds}
+                  onSelectList={(id) => {
+                    void navigate({
+                      to: '/backlog',
+                      search: { lists: id },
+                    });
+                  }}
+                />
+              )}
             </div>
           </main>
-          {!mobile && (!isToday || task) && (
+          {!mobile && (!hasWidgets || task) && (
             <TaskSurface
               desktop={desktop}
               mobile={mobile}
@@ -472,16 +493,16 @@ export function App() {
         !task &&
         (mobile ? (
           <BottomSheet label="Add from Backlog" onClose={closePlanner}>
-            <BacklogPicker mobile={mobile} picker={picker} />
+            <BacklogPicker picker={picker} />
           </BottomSheet>
         ) : (
-          <Popover
-            anchor={planButton}
+          <Modal
+            className="backlog-picker-dialog"
             label="Add from Backlog"
             onClose={closePlanner}
           >
-            <BacklogPicker mobile={mobile} picker={picker} />
-          </Popover>
+            <BacklogPicker picker={picker} />
+          </Modal>
         ))}
       {mobile && !task && (
         <>
@@ -499,15 +520,22 @@ export function App() {
           )}
         </>
       )}
-      {capturing && !mobile && isToday && (
-        <Modal label="New task" onClose={() => setCapturing(false)}>
+      {capturing && !mobile && hasWidgets && (
+        <Modal
+          label="New task"
+          className="capture-dialog"
+          onClose={() => setCapturing(false)}
+        >
           <h3>New task</h3>
           <Capture
-            target="today"
+            target={isBacklog ? 'backlog' : 'today'}
             list={activeList}
-            draft={captureDrafts.today}
+            draft={captureDrafts[isBacklog ? 'backlog' : 'today']}
             onDraftChange={(draft) =>
-              setCaptureDrafts((current) => ({ ...current, today: draft }))
+              setCaptureDrafts((current) => ({
+                ...current,
+                [isBacklog ? 'backlog' : 'today']: draft,
+              }))
             }
             onAdded={() => setCapturing(false)}
             onClose={() => setCapturing(false)}

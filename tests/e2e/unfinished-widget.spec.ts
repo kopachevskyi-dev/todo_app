@@ -49,7 +49,7 @@ test('tasks left open on Mon, Nov 9 are in the Backlog with their date, missed i
       .click();
     for (const title of ['A', 'B']) {
       const row = main.getByRole('listitem').filter({ hasText: title });
-      await expect(row).toContainText('from Mon, Nov 9');
+      await expect(row).toContainText('was Nov 9');
     }
 
     await page.goto(`${server.url}/history`);
