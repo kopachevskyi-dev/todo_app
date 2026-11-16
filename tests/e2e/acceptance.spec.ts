@@ -97,7 +97,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await expectBacklogCount('8');
     await rows(page).first().click();
     await detail.getByRole('button', { name: /^Activity/ }).click();
-    await expect(detail).toContainText('added to backlog');
+    await expect(detail).toContainText('Added to Backlog');
     for (const id of monday) await complete(server.url, id);
 
     // 2. Tue Nov 3, 8:03 PM: description, 3 subtasks, list Personal.
@@ -133,7 +133,9 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       .getByRole('button', { name: 'Personal' })
       .click();
     await detail.getByRole('button', { name: /^Activity/ }).click();
-    await expect(detail).toContainText('description, subtasks and list added');
+    await expect(detail.locator('.activity li')).toHaveText([
+      /Added to Backlog/,
+    ]);
 
     // 2b. 8:05 PM: plan for tomorrow.
     await at('2026-11-04T01:05:00.000Z');
@@ -142,7 +144,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       page.getByRole('button', { name: /Tomorrow, Wed 4/ }),
     ).toContainText('4 tasks');
     await page.getByRole('button', { name: /Tomorrow, Wed 4/ }).click();
-    await expect(detail).toContainText('planned for Nov 4');
+    await expect(detail).toContainText('Planned for Nov 4');
     if (mobile)
       await page.getByRole('link', { name: 'Back to Backlog' }).click();
     await expectBacklogCount('7');
@@ -182,10 +184,9 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await expect(main).toContainText('4 of 5 done · 1 moved to backlog');
     await main.getByRole('listitem').filter({ hasText: LICENSE }).click();
     await expect(detail.locator('.activity li')).toHaveText([
-      /added to backlog/,
-      /description, subtasks and list added/,
-      /planned for Nov 4/,
-      /completed/,
+      /Added to Backlog/,
+      /Planned for Nov 4/,
+      /Completed/,
     ]);
     await expect(
       page.getByRole('button', { name: 'Move to backlog' }),

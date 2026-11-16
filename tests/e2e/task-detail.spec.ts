@@ -77,7 +77,7 @@ test('mobile: description and list persist; the row shows Personal and the activ
       'Personal',
     );
     await page.getByRole('button', { name: /^Activity/ }).click();
-    await expect(page.getByText('description and list added')).toBeVisible();
+    await expect(page.locator('.activity li')).toHaveText([/Added to Backlog/]);
   } finally {
     await server.stop();
   }

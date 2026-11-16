@@ -68,7 +68,7 @@ it('lists 3 added subtasks in creation order with subtaskCount 3, and subtaskDon
   expect((await detail(app, id)).task.subtaskDoneCount).toBe(1);
 });
 
-it('merges a subtask added at 8:04 PM into the 8:03 PM "description added" event without a new event', async () => {
+it('keeps description and subtask edits out of activity', async () => {
   const app = start();
   await setClock(app, '2026-11-04T01:00:00.000Z');
   const id = await createTask(app);
@@ -82,15 +82,16 @@ it('merges a subtask added at 8:04 PM into the 8:03 PM "description added" event
   });
   expect(response.status).toBe(201);
 
-  const added = (await detail(app, id)).activity.filter(
-    (item) => item.type === 'details_added',
-  );
-  expect(added).toEqual([
+  const result = await detail(app, id);
+  expect(result.subtasks).toEqual([
+    expect.objectContaining({ title: 'Find the old license', done: false }),
+  ]);
+  expect(result.activity).toEqual([
     {
-      type: 'details_added',
-      at: '2026-11-04T01:03:00.000Z',
+      type: 'added',
+      at: '2026-11-04T01:00:00.000Z',
       day: null,
-      text: 'description and subtasks added',
+      text: 'Added to Backlog',
     },
   ]);
 });

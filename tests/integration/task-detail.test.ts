@@ -30,38 +30,32 @@ async function createTask(app: App) {
   return ((await response.json()) as { task: { id: string } }).task.id;
 }
 
-it('merges a description edit and a list edit 2 minutes later into one details_added event', async () => {
+it('returns activity in the four v3 kinds, hiding detail edits', async () => {
   const app = start();
   await setClock(app, '2026-11-04T01:00:00.000Z');
   const id = await createTask(app);
   await setClock(app, '2026-11-04T01:03:00.000Z');
-  expect(
-    (
-      await send(app, 'PATCH', `/api/tasks/${id}`, {
-        description: 'Bring the old license',
-      })
-    ).status,
-  ).toBe(200);
+  await send(app, 'PATCH', `/api/tasks/${id}`, { description: 'Bring it' });
   await setClock(app, '2026-11-04T01:05:00.000Z');
-  expect(
-    (await send(app, 'PATCH', `/api/tasks/${id}`, { listId: PERSONAL })).status,
-  ).toBe(200);
+  await send(app, 'PATCH', `/api/tasks/${id}`, { listId: PERSONAL });
+  await setClock(app, '2026-11-04T02:00:00.000Z');
+  await send(app, 'POST', `/api/tasks/${id}/plan`, { day: '2026-11-10' });
 
   const detail = (await (await app.request(`/api/tasks/${id}`)).json()) as {
-    task: { description: string; listId: string };
-    activity: { type: string; at: string; text: string }[];
+    activity: unknown[];
   };
-  expect(detail.task).toMatchObject({
-    description: 'Bring the old license',
-    listId: PERSONAL,
-  });
-  const added = detail.activity.filter((item) => item.type === 'details_added');
-  expect(added).toEqual([
+  expect(detail.activity).toEqual([
     {
-      type: 'details_added',
-      at: '2026-11-04T01:03:00.000Z',
+      type: 'added',
+      at: '2026-11-04T01:00:00.000Z',
       day: null,
-      text: 'description and list added',
+      text: 'Added to Backlog',
+    },
+    {
+      type: 'planned',
+      at: '2026-11-04T02:00:00.000Z',
+      day: '2026-11-10',
+      text: 'Planned for Nov 10',
     },
   ]);
 });
