@@ -29,6 +29,7 @@ import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
 import { BottomSheet, Button, Icon, Modal, Popover } from './components';
 import { ListFilters } from './Lists';
 import { Upcoming } from './Upcoming';
+import { UpcomingWidgets } from './UpcomingWidgets';
 import { History } from './History';
 import { captureLayout } from './layout-animation';
 
@@ -71,6 +72,7 @@ export function App() {
   const planButton = useRef<HTMLButtonElement>(null);
   const isBacklog = path === '/backlog';
   const isToday = path === '/today';
+  const isUpcoming = path === '/upcoming';
   const completion = useCompletion();
   const isSearch = path === '/search';
   const changeQuery = (value: string) => {
@@ -256,7 +258,7 @@ export function App() {
       {!(mobile && task) && (
         <div className="content-grid">
           <main
-            className={`main-column ${isToday && !(desktop && task) ? 'today-main' : ''}`}
+            className={`main-column ${isUpcoming ? 'upcoming-main' : ''} ${(isToday || isUpcoming) && !(desktop && task) ? 'today-main' : ''}`}
           >
             <ScreenHeader
               mobile={mobile}
@@ -279,12 +281,14 @@ export function App() {
             />
             <div
               className={
-                isToday
+                isToday || isUpcoming
                   ? `today-body ${desktop && task ? 'task-open' : ''}`
                   : undefined
               }
             >
-              <div className={isToday ? 'today-primary' : undefined}>
+              <div
+                className={isToday || isUpcoming ? 'today-primary' : undefined}
+              >
                 {isToday && !mobile && !listFilter && (
                   <TodayHero
                     task={today.data?.open[0]}
@@ -299,44 +303,56 @@ export function App() {
                   className={mobile ? 'screen-content' : 'list-card'}
                   aria-label="Tasks"
                 >
-                  {(!mobile || isToday) && path !== '/history' && (
-                    <div className="list-card-heading">
-                      <h2 className="list-card-title">
-                        {isToday
-                          ? 'Today’s plan'
-                          : isBacklog
-                            ? 'All tasks'
-                            : isSearch
-                              ? 'Results'
-                              : 'Next days'}
-                      </h2>
-                      {isToday && today.data && (
-                        <span className="row-meta">
-                          {today.data.progress.done} of{' '}
-                          {today.data.progress.total} done
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {path !== '/history' && (!mobile || isBacklog || isToday) && (
-                    <ListFilters
-                      lists={lists.data?.lists ?? []}
-                      active={selectedIds}
-                      mobile={mobile}
-                      onFilter={filterList}
-                      tasks={
-                        isToday
-                          ? (today.data?.allTasks ?? [])
-                          : isBacklog
-                            ? (backlog.data?.allTasks ?? [])
-                            : isSearch
-                              ? (search.data?.results ?? [])
-                              : (upcoming.data?.days.flatMap(
-                                  (day) => day.tasks,
-                                ) ?? [])
-                      }
-                    />
-                  )}
+                  {(!mobile || isToday || isUpcoming) &&
+                    path !== '/history' && (
+                      <div className="list-card-heading">
+                        <h2 className="list-card-title">
+                          {isToday
+                            ? 'Today’s plan'
+                            : isBacklog
+                              ? 'All tasks'
+                              : isSearch
+                                ? 'Results'
+                                : 'Next days'}
+                        </h2>
+                        {isUpcoming && upcoming.data && (
+                          <span className="row-meta">
+                            {
+                              upcoming.data.days
+                                .flatMap((day) => day.tasks)
+                                .filter(matchesList).length
+                            }{' '}
+                            planned
+                          </span>
+                        )}
+                        {isToday && today.data && (
+                          <span className="row-meta">
+                            {today.data.progress.done} of{' '}
+                            {today.data.progress.total} done
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  {path !== '/history' &&
+                    (!mobile || isBacklog || isToday || isUpcoming) && (
+                      <ListFilters
+                        lists={lists.data?.lists ?? []}
+                        active={selectedIds}
+                        mobile={mobile && !isUpcoming}
+                        onFilter={filterList}
+                        tasks={
+                          isToday
+                            ? (today.data?.allTasks ?? [])
+                            : isBacklog
+                              ? (backlog.data?.allTasks ?? [])
+                              : isSearch
+                                ? (search.data?.results ?? [])
+                                : (upcoming.data?.days.flatMap(
+                                    (day) => day.tasks,
+                                  ) ?? [])
+                        }
+                      />
+                    )}
                   {lists.isError && <p role="alert">Could not load lists.</p>}
                   {(isBacklog ||
                     isToday ||
@@ -418,6 +434,22 @@ export function App() {
                   )}
                 </section>
               </div>
+              {isUpcoming && !(desktop && task) && upcoming.data && (
+                <UpcomingWidgets
+                  upcoming={upcoming.data}
+                  lists={lists.data?.lists ?? []}
+                  onFilter={(id) => {
+                    void navigate({
+                      to: '/upcoming',
+                      search: (previous) => ({
+                        ...previous,
+                        lists: id,
+                        task: undefined,
+                      }),
+                    });
+                  }}
+                />
+              )}
               {isToday && !(desktop && task) && (
                 <TodayWidgets
                   progress={today.data?.progress}
@@ -429,7 +461,7 @@ export function App() {
               )}
             </div>
           </main>
-          {!mobile && (!isToday || task) && (
+          {!mobile && (!(isToday || isUpcoming) || task) && (
             <TaskSurface
               desktop={desktop}
               mobile={mobile}

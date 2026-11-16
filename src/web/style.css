@@ -1695,7 +1695,7 @@ h3 {
 
 .upcoming-agenda {
   display: grid;
-  gap: 28px;
+  gap: 0;
 }
 
 /* Completion and navigation are separate, non-overlapping row targets. */
@@ -2259,5 +2259,100 @@ button.check-hit:disabled {
   }
   .today-primary .task-list {
     margin: 0;
+  }
+}
+
+/* Upcoming v3 uses the shared card and widget layout. */
+.upcoming-main .filter-scope {
+  display: none;
+}
+.upcoming-day-heading {
+  padding: 8px 2px 10px;
+}
+.upcoming-day-heading h2 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--meta);
+  font-size: 12px;
+  font-weight: 400;
+}
+.upcoming-day-heading h2::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.upcoming-widgets .widget-badge {
+  background: var(--sky-soft);
+}
+.by-list-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.by-list-widget .widget-heading {
+  margin-bottom: 8px;
+}
+.by-list-widget > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+.by-list-widget > button:hover {
+  background: var(--row);
+}
+.by-list-bar {
+  flex: none;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+}
+.by-list-widget > button > span:nth-child(2) {
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+.by-list-widget > button > span:last-child {
+  color: var(--meta);
+}
+
+@media (max-width: 767px) {
+  .upcoming-main .list-chips {
+    gap: 6px;
+    margin: 0 -18px;
+    padding: 0 18px;
+  }
+  .upcoming-main .list-chips > .list-link {
+    min-height: 32px;
+    gap: 8px;
+    padding: 0 12px;
+    border: 0;
+    background: var(--row);
+    color: var(--ink);
+    font-size: 12px;
+    white-space: nowrap;
+  }
+  .upcoming-main .list-chips > .list-link[aria-pressed='true'] {
+    background: var(--ink);
+    color: var(--card);
+    font-weight: 400;
+  }
+  .upcoming-main .list-chips .list-dot {
+    width: 3px;
+    height: 12px;
+    border-radius: 2px;
+  }
+  .upcoming-main .chip-count {
+    font-size: 11px;
+    opacity: 0.7;
   }
 }
