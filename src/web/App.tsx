@@ -427,6 +427,7 @@ export function App() {
               </div>
               {isToday && !(desktop && task) && (
                 <TodayWidgets
+                  showQuickAdd={!mobile && !capturing}
                   progress={today.data?.progress}
                   day={today.data?.day}
                   list={activeList}
@@ -436,6 +437,7 @@ export function App() {
               )}
               {isBacklog && !(desktop && task) && (
                 <BacklogWidgets
+                  showQuickAdd={!mobile && !capturing}
                   tasks={backlog.data?.allTasks ?? []}
                   lists={lists.data?.lists ?? []}
                   activeList={activeList}
@@ -496,7 +498,7 @@ export function App() {
           {(isBacklog || path === '/today') && (
             <Button
               className="fab"
-              aria-label={isToday ? 'Add task to today' : 'Add task'}
+              aria-label="Add task"
               onClick={() => setCapturing(true)}
             >
               <Icon name="plus" size={22} />

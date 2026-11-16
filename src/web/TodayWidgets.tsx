@@ -7,12 +7,14 @@ import { useBacklogPicker } from './useBacklogPicker';
 import { QuickAddWidget } from './QuickAddWidget';
 
 export function TodayWidgets({
+  showQuickAdd,
   progress,
   day,
   list,
   picker,
   filteredIds,
 }: {
+  showQuickAdd: boolean;
   progress?: TodayResponse['progress'];
   day?: string;
   filteredIds: string[];
@@ -76,7 +78,9 @@ export function TodayWidgets({
           </Button>
         </section>
       )}
-      <QuickAddWidget list={list} today={day} filteredIds={filteredIds} />
+      {showQuickAdd && (
+        <QuickAddWidget list={list} today={day} filteredIds={filteredIds} />
+      )}
     </div>
   );
 }

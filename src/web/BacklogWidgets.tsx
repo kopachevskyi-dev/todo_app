@@ -4,12 +4,14 @@ import { QuickAddWidget } from './QuickAddWidget';
 import { StatWidget } from './StatWidget';
 
 export function BacklogWidgets({
+  showQuickAdd,
   tasks,
   lists,
   activeList,
   filteredIds,
   onSelectList,
 }: {
+  showQuickAdd: boolean;
   tasks: TaskRow[];
   lists: List[];
   activeList?: List;
@@ -38,11 +40,13 @@ export function BacklogWidgets({
           </button>
         ))}
       </section>
-      <QuickAddWidget
-        target="backlog"
-        list={activeList}
-        filteredIds={filteredIds}
-      />
+      {showQuickAdd && (
+        <QuickAddWidget
+          target="backlog"
+          list={activeList}
+          filteredIds={filteredIds}
+        />
+      )}
     </div>
   );
 }
