@@ -32,7 +32,7 @@ test('production clock powers History and the task Day label', async ({
 }) => {
   const server = await startProductionServer({ testClock: false });
   try {
-    await page.clock.install({ time: new Date('2026-11-10T14:00:00.000Z') });
+    await page.clock.install({ time: new Date() });
     const response = await fetch(`${server.url}/api/tasks`, {
       method: 'POST',
       headers: {
