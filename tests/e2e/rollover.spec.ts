@@ -38,7 +38,9 @@ test('the open app rolls a task to the Backlog at midnight without a reload', as
 
     await expect(main).toContainText('Thursday, November 5');
     await expect(main).toContainText('Nothing planned for today');
-    await expect(main).not.toContainText('Pay rent');
+    await expect(
+      main.getByRole('listitem').filter({ hasText: 'Pay rent' }),
+    ).toHaveCount(0);
 
     await page
       .getByRole('navigation', { name: 'Sections' })

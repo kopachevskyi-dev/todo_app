@@ -6,7 +6,6 @@ import { invalidateTaskQueries } from './invalidate-task-queries';
 import { api, ApiError } from './api';
 export function useBacklogPicker(today = false) {
   const [planning, setPlanning] = useState(false);
-  const [reviewing, setReviewing] = useState(false);
   const client = useQueryClient();
   const [plannedSelection, setPlannedSelection] = useState<string[]>([]);
   const [error, setError] = useState<string>();
@@ -57,15 +56,13 @@ export function useBacklogPicker(today = false) {
     setPlannedSelection([]);
     setError(undefined);
   };
-  const openPlanner = (unfinished = false) => {
-    setReviewing(unfinished);
+  const openPlanner = () => {
     setPlannedSelection([]);
     setError(undefined);
     setPlanning(true);
   };
   return {
     planning,
-    reviewing,
     pickerBacklog,
     plannedSelection,
     setPlannedSelection,
