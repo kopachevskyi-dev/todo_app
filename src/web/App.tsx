@@ -256,7 +256,7 @@ export function App() {
       {!(mobile && task) && (
         <div className="content-grid">
           <main
-            className={`main-column ${isToday && !(desktop && task) ? 'today-main' : ''}`}
+            className={`main-column ${(isToday || path === '/history') && !(desktop && task) ? 'today-main' : ''}`}
           >
             <ScreenHeader
               mobile={mobile}

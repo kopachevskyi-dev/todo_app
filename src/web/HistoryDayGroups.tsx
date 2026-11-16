@@ -1,5 +1,5 @@
 import { Icon, SectionLabel } from './components';
-import { completionTime } from './dates';
+import { completionTime, dateLabel } from './dates';
 import type { z } from 'zod';
 import type { historyResponseSchema } from '../shared/contract';
 type Day = z.infer<typeof historyResponseSchema>['days'][number];
@@ -33,43 +33,63 @@ export function HistoryDayGroups({
                   key={row.id}
                   className={`task-row history-row ${group === 'notDone' ? 'missed' : group} ${task === row.id ? 'selected' : ''}`}
                 >
-                  {group === 'notDone' && (
-                    <span className="missed-marker">
-                      <Icon name="close" size={18} />
-                      Missed
-                    </span>
-                  )}
-                  <a
-                    href={`/history?${new URLSearchParams({ week: weekStart, day: selected.day, ...(list ? { lists: list } : {}), task: row.id })}`}
-                    onClick={(event) => {
-                      if (
-                        !event.metaKey &&
-                        !event.ctrlKey &&
-                        !event.shiftKey &&
-                        !event.altKey
-                      ) {
-                        event.preventDefault();
-                        onOpen(row.id);
-                      }
-                    }}
-                    onKeyDown={(event) => {
-                      if (
-                        event.key === 'ArrowDown' ||
-                        event.key === 'ArrowUp'
-                      ) {
-                        event.preventDefault();
-                        const next =
-                          event.key === 'ArrowDown'
-                            ? event.currentTarget.parentElement
-                                ?.nextElementSibling
-                            : event.currentTarget.parentElement
-                                ?.previousElementSibling;
-                        next?.querySelector('a')?.focus();
-                      }
-                    }}
-                    aria-current={task === row.id ? 'true' : undefined}
-                  >
-                    {group !== 'notDone' && (
+                  {group === 'notDone' ? (
+                    <div className="history-missed-content">
+                      <span className="check-hit" aria-hidden="true">
+                        <span className="checkbox" />
+                      </span>
+                      <span
+                        className="list-dot row-list-bar"
+                        style={{
+                          background: row.list?.color ?? 'var(--check-border)',
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span className="row-text">
+                        <span className="row-title">{row.title}</span>
+                        <span className="row-meta">
+                          {row.list?.name ?? 'No list'} · moved to backlog
+                        </span>
+                      </span>
+                      <span className="history-missed-tag">
+                        was{' '}
+                        {dateLabel(selected.day, {
+                          month: 'short',
+                          day: 'numeric',
+                        })}
+                      </span>
+                    </div>
+                  ) : (
+                    <a
+                      href={`/history?${new URLSearchParams({ week: weekStart, day: selected.day, ...(list ? { lists: list } : {}), task: row.id })}`}
+                      onClick={(event) => {
+                        if (
+                          !event.metaKey &&
+                          !event.ctrlKey &&
+                          !event.shiftKey &&
+                          !event.altKey
+                        ) {
+                          event.preventDefault();
+                          onOpen(row.id);
+                        }
+                      }}
+                      onKeyDown={(event) => {
+                        if (
+                          event.key === 'ArrowDown' ||
+                          event.key === 'ArrowUp'
+                        ) {
+                          event.preventDefault();
+                          const next =
+                            event.key === 'ArrowDown'
+                              ? event.currentTarget.parentElement
+                                  ?.nextElementSibling
+                              : event.currentTarget.parentElement
+                                  ?.previousElementSibling;
+                          next?.querySelector('a')?.focus();
+                        }
+                      }}
+                      aria-current={task === row.id ? 'true' : undefined}
+                    >
                       <span
                         className="check-hit"
                         aria-label={group === 'done' ? 'Completed' : 'Planned'}
@@ -80,34 +100,30 @@ export function HistoryDayGroups({
                           {group === 'done' && <Icon name="check" size={14} />}
                         </span>
                       </span>
-                    )}
-                    <span
-                      className="list-dot row-list-bar"
-                      style={{
-                        background: row.list?.color ?? 'var(--check-border)',
-                      }}
-                      aria-hidden="true"
-                    />
-                    <span className="row-text">
-                      <span className="row-title">{row.title}</span>
-                      {(row.list || group === 'notDone') && (
-                        <span className="row-meta">
-                          {row.list?.name}
-                          {row.list && group === 'notDone' ? ' · ' : ''}
-                          {group === 'notDone' ? 'moved to backlog' : ''}
-                        </span>
+                      <span
+                        className="list-dot row-list-bar"
+                        style={{
+                          background: row.list?.color ?? 'var(--check-border)',
+                        }}
+                        aria-hidden="true"
+                      />
+                      <span className="row-text">
+                        <span className="row-title">{row.title}</span>
+                        {row.list && (
+                          <span className="row-meta">{row.list?.name}</span>
+                        )}
+                      </span>
+                      {group === 'done' && row.completedAt && (
+                        <time
+                          className="completion-time"
+                          dateTime={row.completedAt}
+                        >
+                          {completionTime(row.completedAt)}
+                        </time>
                       )}
-                    </span>
-                    {group === 'done' && row.completedAt && (
-                      <time
-                        className="completion-time"
-                        dateTime={row.completedAt}
-                      >
-                        {completionTime(row.completedAt)}
-                      </time>
-                    )}
-                    {group === 'planned' && <Icon name="chevron" size={18} />}
-                  </a>
+                      {group === 'planned' && <Icon name="chevron" size={18} />}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>
