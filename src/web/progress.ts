@@ -17,3 +17,19 @@ export function progressWidget(counts: {
     fill,
   };
 }
+
+export type ThisWeekWidget = {
+  badge: string;
+  number: number;
+  unit: string;
+  fill: number;
+};
+
+export function thisWeekWidget(
+  tasks: { day: string }[],
+  today: string,
+): ThisWeekWidget {
+  void tasks;
+  void today;
+  throw new Error('not implemented');
+}
