@@ -155,7 +155,7 @@ test('Tab moves from the row checkbox to the row link; Space completes without o
   }
 });
 
-test('Delete from the card menu removes the task after confirming; cancelling keeps it', async ({
+test('Delete from the card icon removes the task after confirming; cancelling keeps it', async ({
   page,
 }) => {
   const server = await startTestServer(page);
@@ -163,8 +163,7 @@ test('Delete from the card menu removes the task after confirming; cancelling ke
     const [id] = await seedToday(server.url, [TITLE]);
     await page.goto(`${server.url}/today?task=${id}`);
     const openDelete = async () => {
-      await card(page).getByRole('button', { name: /more/i }).click();
-      await page.getByRole('menuitem', { name: 'Delete' }).click();
+      await card(page).getByRole('button', { name: 'Delete task' }).click();
     };
 
     await openDelete();

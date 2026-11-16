@@ -84,12 +84,6 @@ export const api = {
       `/views/history?${new URLSearchParams({ weekStart, ...(listId ? { listId } : {}) })}`,
       historyResponseSchema,
     ),
-  moveToBacklog: (id: string) =>
-    request(
-      `/tasks/${encodeURIComponent(id)}/move-to-backlog`,
-      createTaskResponseSchema,
-      { method: 'POST' },
-    ),
   createSubtask: (taskId: string, title: string) =>
     request(
       `/tasks/${encodeURIComponent(taskId)}/subtasks`,
