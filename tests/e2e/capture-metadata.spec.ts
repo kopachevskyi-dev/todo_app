@@ -40,29 +40,23 @@ const add = async (area: ReturnType<Page['locator']>) => {
     await field(area).press('Enter');
   }
 };
-async function pickWed11(page: Page, area: ReturnType<Page['locator']>) {
-  await area.getByRole('button', { name: /^Day/ }).click();
-  await page
-    .getByRole('button', { name: /Wed,? (Nov )?11/ })
-    .first()
-    .click();
+async function openTodayCapture(page: Page) {
+  return mobile()
+    ? openCapture(page)
+    : page.getByRole('form', { name: 'Quick add', exact: true });
 }
 
-test('Today: Enter with default controls adds the task to Today with no list', async ({
-  page,
-}) => {
+test('Today: Enter adds the task to Today with no list', async ({ page }) => {
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/today`);
-    const area = await openCapture(page);
-    await expect(
-      area.getByRole('button', { name: /^List No list/ }),
-    ).toBeVisible();
-    await expect(area.getByRole('button', { name: /^Day/ })).toContainText(
-      'Today',
-    );
+    const area = await openTodayCapture(page);
+    if (!mobile()) {
+      await expect(area.getByRole('button', { name: /^List/ })).toHaveCount(0);
+      await expect(area.getByRole('button', { name: /^Day/ })).toHaveCount(0);
+    }
     await field(area).fill('Pay rent');
-    await add(area);
+    await field(area).press('Enter');
 
     await expect(rows(page).filter({ hasText: 'Pay rent' })).toHaveCount(1);
     await expect(rows(page).filter({ hasText: 'Pay rent' })).not.toContainText(
@@ -113,29 +107,6 @@ test('Backlog filtered to Home and Work: capture starts at No list and says seve
   }
 });
 
-test('Today: Dentist with Day Wed, Nov 11 leaves Today, announces Added to Wed, Nov 11 and Open shows it', async ({
-  page,
-}) => {
-  const server = await startTestServer(page);
-  try {
-    await page.goto(`${server.url}/today`);
-    const area = await openCapture(page);
-    await field(area).fill('Dentist');
-    await pickWed11(page, area);
-    await add(area);
-
-    await expect(rows(page).filter({ hasText: 'Dentist' })).toHaveCount(0);
-    const note = page.getByRole('status').filter({
-      hasText: 'Added to Wed, Nov 11',
-    });
-    await expect(note).toBeVisible();
-    await note.getByRole('button', { name: 'Open' }).click();
-    await expect(page.getByText('Dentist').first()).toBeVisible();
-  } finally {
-    await server.stop();
-  }
-});
-
 test('the task list picker creates a list via New list and the card shows it', async ({
   page,
 }) => {
@@ -165,23 +136,19 @@ test('the task list picker creates a list via New list and the card shows it', a
   }
 });
 
-test('a failed add with the server stopped shows the error and keeps title and Day', async ({
+test('Today: a failed add with the server stopped shows the error and keeps the title', async ({
   page,
 }) => {
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/today`);
-    const area = await openCapture(page);
+    const area = await openTodayCapture(page);
     await field(area).fill('Dentist');
-    await pickWed11(page, area);
     await server.stop();
     await add(area);
 
     await expect(area.getByRole('alert')).toBeVisible();
     await expect(field(area)).toHaveValue('Dentist');
-    await expect(area.getByRole('button', { name: /^Day/ })).toContainText(
-      'Wed, Nov 11',
-    );
   } finally {
     await server.stop();
   }
