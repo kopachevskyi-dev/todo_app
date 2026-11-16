@@ -1,4 +1,5 @@
 import type { List } from '../shared/contract';
+import { byListWidget } from './backlog-widgets';
 
 export function ByListWidget({
   lists,
@@ -14,7 +15,7 @@ export function ByListWidget({
       <div className="widget-heading">
         <h2>By list</h2>
       </div>
-      {lists.map((list) => (
+      {byListWidget(tasks, lists).map((list) => (
         <button key={list.id} onClick={() => onFilter(list.id)}>
           <span
             className="by-list-bar"
@@ -22,7 +23,7 @@ export function ByListWidget({
             aria-hidden="true"
           />
           <span>{list.name}</span>
-          <span>{tasks.filter((task) => task.listId === list.id).length}</span>
+          <span>{list.count}</span>
         </button>
       ))}
     </section>

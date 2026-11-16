@@ -76,7 +76,7 @@ test('mobile: Add from Backlog opens a sheet; nothing selected disables the butt
     await open();
     await expect(sheet).toBeVisible();
     await expect(
-      sheet.getByRole('button', { name: /^Add \d+ to Today/ }),
+      sheet.getByRole('button', { name: 'Select tasks to add' }),
     ).toBeDisabled();
 
     await page.keyboard.press('Escape');

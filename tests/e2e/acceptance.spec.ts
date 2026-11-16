@@ -195,7 +195,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
   }
 });
 
-test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once planned again through the day picker', async ({
+test('desktop: a task that rolled over shows "was Nov 4" and loses it once planned again through the day picker', async ({
   page,
 }) => {
   test.skip(
@@ -210,7 +210,7 @@ test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once
     await setClock(page, server.url, '2026-11-05T15:00:00.000Z');
     await page.goto(`${server.url}/backlog`);
     await expect(rows(page).first()).toContainText('Pay rent');
-    await expect(rows(page).first()).toContainText('from Wed, Nov 4');
+    await expect(rows(page).first()).toContainText('was Nov 4');
 
     await rows(page).first().click();
     const panel = page.getByRole('complementary');
@@ -220,7 +220,7 @@ test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once
     await page.goto(`${server.url}/today`);
     const row = rows(page).filter({ hasText: 'Pay rent' });
     await expect(row).toHaveCount(1);
-    await expect(row).not.toContainText('from');
+    await expect(row).not.toContainText('was Nov 4');
   } finally {
     await server.stop();
   }
@@ -279,17 +279,17 @@ test('desktop keyboard only: quick-add, rows, Day popover, Plan, Escape', async 
     await expect(rows(page).first()).toContainText('Keyboard task');
     await expect(rows(page)).toHaveCount(3);
 
-    // Tab into the rows, arrow between them, Enter opens the detail.
+    // Quick add follows the rows; tab backwards to their first link.
     for (let i = 0; i < 30; i++) {
-      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
       await expectFocusRing(page);
-      const inRows = await page.evaluate(() =>
-        Boolean(
-          document.activeElement?.closest('main li') &&
-          document.activeElement.tagName === 'A',
-        ),
-      );
-      if (inRows) break;
+      if (
+        await rows(page)
+          .first()
+          .getByRole('link')
+          .evaluate((element) => element === document.activeElement)
+      )
+        break;
     }
     await expect(rows(page).first().getByRole('link')).toBeFocused();
     await expectRowFocusRing(page);
