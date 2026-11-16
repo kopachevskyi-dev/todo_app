@@ -41,6 +41,33 @@ export const errorResponseSchema = z.object({
 export const clockSchema = z.object({ now: z.iso.datetime() });
 export type ListsResponse = z.infer<typeof listsResponseSchema>;
 
+export const activityExamples = [
+  {
+    type: 'added',
+    at: '2026-11-02T14:12:00.000Z',
+    day: null,
+    text: 'Added to Backlog',
+  },
+  {
+    type: 'planned',
+    at: '2026-11-09T14:00:00.000Z',
+    day: '2026-11-10',
+    text: 'Planned for Nov 10',
+  },
+  {
+    type: 'returned',
+    at: '2026-11-10T23:59:00.000Z',
+    day: '2026-11-10',
+    text: 'Returned to Backlog',
+  },
+  {
+    type: 'completed',
+    at: '2026-11-10T14:00:00.000Z',
+    day: '2026-11-10',
+    text: 'Completed',
+  },
+] as const;
+
 export const examples = {
   createTaskRequest: { title: "Renew driver's license", target: 'backlog' },
   createTaskResponse: {
@@ -637,28 +664,22 @@ export const examples = {
     ],
     activity: [
       {
-        type: 'added_to_backlog',
+        type: 'added',
         at: '2026-11-02T14:12:00.000Z',
         day: null,
-        text: 'added to backlog',
-      },
-      {
-        type: 'details_added',
-        at: '2026-11-02T14:15:00.000Z',
-        day: null,
-        text: 'description and list added',
+        text: 'Added to Backlog',
       },
       {
         type: 'planned',
         at: '2026-11-09T14:00:00.000Z',
         day: '2026-11-10',
-        text: 'planned for Nov 10',
+        text: 'Planned for Nov 10',
       },
       {
         type: 'completed',
         at: '2026-11-10T14:00:00.000Z',
         day: '2026-11-10',
-        text: 'completed',
+        text: 'Completed',
       },
     ],
   },
@@ -716,7 +737,7 @@ export const activityTypes = [
 export const activityTypeSchema = z.enum(activityTypes);
 export type ActivityType = z.infer<typeof activityTypeSchema>;
 export const activityItemSchema = z.object({
-  type: activityTypeSchema,
+  type: z.enum(['added', 'planned', 'returned', 'completed']),
   at: z.iso.datetime(),
   day: z.iso.date().nullable(),
   text: z.string(),

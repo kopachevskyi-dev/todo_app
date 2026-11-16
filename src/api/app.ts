@@ -2,7 +2,7 @@ import { apiError } from './errors';
 import { historyWeekStart } from '../domain/history';
 import { z } from 'zod';
 import { addDays } from '../domain/day-picker';
-import { activityText } from '../domain/activity';
+import { activityLines } from '../domain/activity';
 import { parseSearchQuery, searchLocation } from '../domain/search';
 import { Hono } from 'hono';
 import { serveStatic } from '@hono/node-server/serve-static';
@@ -319,12 +319,7 @@ export function createApp(options: {
       taskDetailResponseSchema.parse({
         task,
         subtasks: repositories.tasks.subtasks(task.id),
-        activity: repositories.tasks.events(task.id).map((event) => ({
-          type: event.type,
-          at: event.at,
-          day: event.day,
-          text: activityText(event),
-        })),
+        activity: activityLines(repositories.tasks.events(task.id)),
       }),
     );
   });

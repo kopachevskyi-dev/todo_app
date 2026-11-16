@@ -86,7 +86,7 @@ it('counts done tasks and moves an open planned task back with a new placement a
   );
   const detail = await app.request(`/api/tasks/${id}`);
   expect(await detail.json()).toMatchObject({
-    activity: [{ type: 'moved_to_backlog', day: null }],
+    activity: [{ type: 'returned', day: null }],
   });
 });
 

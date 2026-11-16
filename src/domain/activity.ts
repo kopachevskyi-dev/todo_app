@@ -1,71 +1,12 @@
 import { dateLabel } from '../shared/dates';
 import type { ActivityType } from '../shared/contract';
-export type DetailPart = 'description' | 'list' | 'subtasks';
 
-/** A stored task event; `details_added` keeps its parts in `data.parts`. */
+/** A stored task event, including legacy detail edits. */
 export interface ActivityEvent {
   type: ActivityType;
   at: string;
   day?: string | null;
-  data?: { parts?: DetailPart[]; listName?: string } | null;
-}
-
-export interface DetailsEditResult {
-  kind: 'update' | 'create';
-  at: string;
-  parts: DetailPart[];
-}
-
-/** Merge an edit into the latest `details_added` event when it is within 15 minutes. */
-export function applyDetailsEdit(
-  latest: { at: string; parts: DetailPart[] } | null,
-  part: DetailPart,
-  now: Date,
-): DetailsEditResult {
-  const elapsed = latest
-    ? now.getTime() - new Date(latest.at).getTime()
-    : Infinity;
-  if (latest && elapsed >= 0 && elapsed <= 15 * 60 * 1000)
-    return {
-      kind: 'update',
-      at: latest.at,
-      parts: [...new Set([...latest.parts, part])],
-    };
-  return { kind: 'create', at: now.toISOString(), parts: [part] };
-}
-
-export function activityText(event: ActivityEvent): string {
-  const day = event.day
-    ? dateLabel(event.day, { month: 'short', day: 'numeric' })
-    : '';
-  switch (event.type) {
-    case 'added_to_backlog':
-      return 'added to backlog';
-    case 'added_to_today':
-      return 'added to today';
-    case 'details_added': {
-      const parts = event.data?.parts ?? [];
-      if (parts.length === 1 && parts[0] === 'list' && event.data?.listName)
-        return `list set to ${event.data.listName}`;
-      const words =
-        parts.length > 1
-          ? `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`
-          : parts.join('');
-      return `${words} added`;
-    }
-    case 'planned':
-      return `planned for ${day}`;
-    case 'completed':
-      return 'completed';
-    case 'reopened':
-      return 'reopened';
-    case 'moved_to_backlog':
-      return 'moved to backlog';
-    case 'missed':
-      return `missed ${day}, moved to backlog`;
-    default:
-      return event.type;
-  }
+  data?: { parts?: string[]; listName?: string } | null;
 }
 
 export interface ActivityLine {
@@ -75,8 +16,49 @@ export interface ActivityLine {
   text: string;
 }
 
-/** Maps stored events to the four v3 activity lines. */
+/**
+ * Stored kind → v3 activity (events arrive in chronological order):
+ * added_to_backlog → added, "Added to Backlog"
+ * added_to_today → added + planned, "Added to Backlog" + "Planned for {day}"
+ * planned → planned, "Planned for {day}"
+ * completed → completed, "Completed"
+ * moved_to_backlog / missed → returned, "Returned to Backlog"
+ * details_added → hidden
+ * reopened → hidden; cancels the preceding completion
+ */
 export function activityLines(events: ActivityEvent[]): ActivityLine[] {
-  void events;
-  throw new Error('not implemented');
+  const lines: ActivityLine[] = [];
+  for (const event of events) {
+    const add = (type: ActivityLine['type'], text: string) =>
+      lines.push({ type, at: event.at, day: event.day ?? null, text });
+    const plannedText = () =>
+      `Planned for ${event.day ? dateLabel(event.day, { month: 'short', day: 'numeric' }) : ''}`;
+    switch (event.type) {
+      case 'added_to_backlog':
+        add('added', 'Added to Backlog');
+        break;
+      case 'added_to_today':
+        add('added', 'Added to Backlog');
+        add('planned', plannedText());
+        break;
+      case 'planned':
+        add('planned', plannedText());
+        break;
+      case 'completed':
+        add('completed', 'Completed');
+        break;
+      case 'moved_to_backlog':
+      case 'missed':
+        add('returned', 'Returned to Backlog');
+        break;
+      case 'reopened': {
+        const index = lines.findLastIndex((line) => line.type === 'completed');
+        if (index !== -1) lines.splice(index, 1);
+        break;
+      }
+      case 'details_added':
+        break;
+    }
+  }
+  return lines;
 }
