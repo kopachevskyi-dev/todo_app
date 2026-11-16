@@ -1,7 +1,7 @@
 import { useRef, useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useSearch } from '@tanstack/react-router';
-import { BottomSheet, Button, Popover, QuickAdd } from './components';
+import { BottomSheet, Button, Icon, Popover, QuickAdd } from './components';
 import { useCreateTask, type CaptureDraft } from './useCreateTask';
 import { api } from './api';
 import { queryKeys } from './query-keys';
@@ -65,19 +65,34 @@ export function Capture({
   const options =
     picker === 'list' ? (
       <div className="list-options">
-        <Button variant="ghost" onClick={() => update({ listId: null })}>
-          No list
-        </Button>
         {lists.data?.lists.map((item) => (
-          <Button
+          <button
+            type="button"
+            className={mobile ? 'list-option' : 'button button-ghost'}
+            aria-pressed={selectedList?.id === item.id}
             key={item.id}
-            variant="ghost"
             onClick={() => update({ listId: item.id })}
           >
             <span className="list-dot" style={{ background: item.color }} />
-            {item.name}
-          </Button>
+            <span className={mobile ? 'list-option-name' : undefined}>
+              {item.name}
+            </span>
+            {mobile && selectedList?.id === item.id && (
+              <Icon name="check" size={16} />
+            )}
+          </button>
         ))}
+        <button
+          type="button"
+          className={mobile ? 'list-option' : 'button button-ghost'}
+          aria-pressed={!selectedList}
+          onClick={() => update({ listId: null })}
+        >
+          <span className={mobile ? 'list-option-name' : undefined}>
+            No list
+          </span>
+          {mobile && !selectedList && <Icon name="check" size={16} />}
+        </button>
         {lists.isError && <p role="alert">Could not load lists.</p>}
       </div>
     ) : null;
@@ -136,9 +151,11 @@ export function Capture({
       {picker === 'list' &&
         (mobile ? (
           <BottomSheet
-            label={`Choose a ${picker}`}
+            label="Choose a list"
+            className="list-dialog capture-list-dialog"
             onClose={() => setPicker(undefined)}
           >
+            <h3>Choose a list</h3>
             {options}
           </BottomSheet>
         ) : (
