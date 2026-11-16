@@ -1,5 +1,5 @@
 import { Icon, SectionLabel } from './components';
-import { completionTime, dateLabel } from './dates';
+import { completionTime } from './dates';
 import type { z } from 'zod';
 import type { historyResponseSchema } from '../shared/contract';
 type Day = z.infer<typeof historyResponseSchema>['days'][number];
@@ -51,13 +51,7 @@ export function HistoryDayGroups({
                           {row.list?.name ?? 'No list'} · moved to backlog
                         </span>
                       </span>
-                      <span className="history-missed-tag">
-                        was{' '}
-                        {dateLabel(selected.day, {
-                          month: 'short',
-                          day: 'numeric',
-                        })}
-                      </span>
+                      <span className="history-missed-tag">Missed</span>
                     </div>
                   ) : (
                     <a
