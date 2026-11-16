@@ -1,0 +1,1 @@
+-- Placeholder: the v3 list palette migration is implemented in the ticket.

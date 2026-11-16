@@ -123,3 +123,25 @@ it('accepts the Blue preset when creating a list and rejects a color outside the
   );
   expect(outside.status).toBe(400);
 });
+
+it('defaults a new list to the first unused v3 palette color', async () => {
+  const app = start();
+  for (const [name, color] of [
+    ['Personal', '#3aa77a'],
+    ['Work', '#4a86e8'],
+    ['Home', '#e8a33c'],
+  ] as const) {
+    const list = await listByName(app, name);
+    const patched = await app.request(
+      `/api/lists/${list.id}`,
+      send('PATCH', { color }),
+    );
+    expect(patched.status).toBe(200);
+  }
+  const created = await app.request(
+    '/api/lists',
+    send('POST', { name: 'Errands' }),
+  );
+  expect(created.status).toBe(201);
+  expect(((await created.json()) as { list: List }).list.color).toBe('#e05a4f');
+});
