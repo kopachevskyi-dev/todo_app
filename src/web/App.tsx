@@ -25,7 +25,7 @@ import { api } from './api';
 import { useCompletion } from './useCompletion';
 import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
 import { BottomSheet, Button, Icon, Popover } from './components';
-import { Lists } from './Lists';
+import { ListFilters, ListManagement } from './Lists';
 import { Upcoming } from './Upcoming';
 import { History } from './History';
 import { captureLayout } from './layout-animation';
@@ -40,10 +40,16 @@ function useMedia(query: string) {
     () => window.matchMedia(query).matches,
   );
 }
-const tabs = [
+const mobileTabs = [
   { to: '/backlog', label: 'Backlog', icon: 'backlog' },
   { to: '/today', label: 'Today', icon: 'today' },
   { to: '/history', label: 'History', icon: 'history' },
+] as const;
+const tabs = [
+  { to: '/today', label: 'Today' },
+  { to: '/backlog', label: 'Backlog' },
+  { to: '/upcoming', label: 'Upcoming' },
+  { to: '/history', label: 'History' },
 ] as const;
 
 export function App() {
@@ -54,7 +60,7 @@ export function App() {
   const { task, lists: listFilter, q, from } = useSearch({ strict: false });
   const navigate = useNavigate();
   const mobile = useMedia('(max-width: 767px)');
-  const desktop = useMedia('(min-width: 1216px)');
+  const desktop = useMedia('(min-width: 1100px)');
   const [capturing, setCapturing] = useState(false);
   const [captureDrafts, setCaptureDrafts] = useState<
     Record<'backlog' | 'today', CaptureDraft>
@@ -86,9 +92,7 @@ export function App() {
     queryFn: () => api.search(q!.trim()),
     enabled: isSearch && Boolean(q?.trim()),
   });
-  const title =
-    tabs.find((tab) => tab.to === path)?.label ??
-    (path === '/upcoming' ? 'Upcoming' : 'Search');
+  const title = tabs.find((tab) => tab.to === path)?.label ?? 'Search';
   // Pending UI comes from the mutation, so focus refetches cannot erase it.
   const pendingCreates = useMutationState({
     filters: { mutationKey: createTaskMutationKey, status: 'pending' },
@@ -125,15 +129,16 @@ export function App() {
     queryKey: queryKeys.backlogList(),
     queryFn: () => api.backlog(),
     enabled: isBacklog,
-    select: (data) => ({
-      tasks: [
+    select: (data) => {
+      const allTasks = [
         ...pendingBacklog
           .slice()
           .reverse()
           .map(({ row }) => row),
         ...data.tasks,
-      ].filter(matchesList),
-    }),
+      ];
+      return { tasks: allTasks.filter(matchesList), allTasks };
+    },
   });
   const today = useQuery({
     queryKey: queryKeys.todayList(),
@@ -141,6 +146,7 @@ export function App() {
     enabled: isToday,
     select: (data) => ({
       ...data,
+      allTasks: [...data.open, ...data.done],
       open: data.open.filter(matchesList),
       done: data.done.filter(matchesList),
     }),
@@ -163,7 +169,6 @@ export function App() {
   const upcoming = useQuery({
     queryKey: queryKeys.upcoming,
     queryFn: api.upcoming,
-    enabled: isToday || path === '/upcoming',
   });
   const rows = isToday ? today.data?.open : backlog.data?.tasks;
   const rowContainer = useRef<HTMLUListElement>(null);
@@ -190,7 +195,7 @@ export function App() {
   };
   const nav = (
     <>
-      {tabs.map((tab) => (
+      {mobileTabs.map((tab) => (
         <Link
           key={tab.to}
           to={tab.to}
@@ -199,16 +204,9 @@ export function App() {
           className="nav-link"
         >
           <span className="nav-icon">
-            <Icon name={tab.icon} size={mobile ? 22 : 20} />
+            <Icon name={tab.icon} size={22} />
           </span>
           <span className="nav-label">{tab.label}</span>
-          {!mobile && tab.to !== '/history' && (
-            <span className="nav-count">
-              {tab.to === '/backlog'
-                ? (counts.data?.backlog ?? 0)
-                : (counts.data?.todayOpen ?? 0)}
-            </span>
-          )}
         </Link>
       ))}
     </>
@@ -216,130 +214,237 @@ export function App() {
   return (
     <div className={`app-shell ${mobile && task ? 'task-pushed' : ''}`}>
       {!mobile && (
-        <div className="sidebar">
-          <div className="sidebar-top">
-            <div className="app-name">Tasks</div>
-            <div role="search" aria-label="Search tasks">
-              <SearchField
-                screen={path}
-                query={isSearch ? (q ?? '') : ''}
-                onQuery={changeQuery}
-                onEscape={leaveSearch}
-              />
-            </div>
+        <header className="top-bar">
+          <div className="app-brand">
+            <span className="app-logo">
+              <Icon name="check" size={16} />
+            </span>
+            <span className="app-name">Tasks</span>
           </div>
-          <nav aria-label="Sections">{nav}</nav>
-          <Lists
-            lists={lists.data?.lists ?? []}
-            active={selectedIds}
-            mobile={false}
-            onFilter={filterList}
-          />
-          {lists.isError && <p role="alert">Could not load lists.</p>}
-        </div>
+          <nav aria-label="Sections" className="nav-pill">
+            {tabs.map((tab) => {
+              const count =
+                tab.to === '/today'
+                  ? counts.data?.todayOpen
+                  : tab.to === '/backlog'
+                    ? counts.data?.backlog
+                    : tab.to === '/upcoming'
+                      ? upcoming.data?.days.reduce(
+                          (sum, day) => sum + day.tasks.length,
+                          0,
+                        )
+                      : undefined;
+              return (
+                <Link
+                  key={tab.to}
+                  to={tab.to}
+                  search={{}}
+                  aria-current={path === tab.to ? 'page' : undefined}
+                  className="nav-link"
+                >
+                  <span className="nav-label">{tab.label}</span>
+                  {count !== undefined && count > 0 && (
+                    <span className="nav-count"> {count}</span>
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+          <div role="search" aria-label="Search tasks" className="top-search">
+            <SearchField
+              screen={path}
+              query={isSearch ? (q ?? '') : ''}
+              onQuery={changeQuery}
+              onEscape={leaveSearch}
+            />
+          </div>
+        </header>
       )}
       {!(mobile && task) && (
-        <main className="main-column">
-          <ScreenHeader
-            mobile={mobile}
-            isSearch={isSearch}
-            leaveSearch={leaveSearch}
-            title={title}
-            isToday={isToday}
-            today={today}
-            upcomingCount={
-              upcoming.data?.days.reduce(
-                (count, day) => count + day.tasks.length,
-                0,
-              ) ?? 0
-            }
-            isBacklog={isBacklog}
-            list={listFilter}
-            rows={rows}
-            counts={counts}
-            changeQuery={changeQuery}
-            path={path}
-            q={q}
-            search={search}
-            planButton={planButton}
-            openPlanner={openPlanner}
-          />
-          {mobile && (isBacklog || isToday) && (
-            <Lists
-              lists={lists.data?.lists ?? []}
-              active={selectedIds}
-              mobile
-              onFilter={filterList}
-            />
-          )}
-          {(isBacklog || isToday || path === '/history') && (
-            <div className="filter-scope">
-              <span>{listFilter ? `Showing: ${scope}` : 'All lists'}</span>
-              {listFilter && (
-                <Button variant="ghost" onClick={() => filterList()}>
-                  Show all
-                </Button>
-              )}
-              {listFilter && isToday && today.data && (
-                <span>
-                  {today.data.open.length + today.data.done.length} shown
-                </span>
-              )}
-            </div>
-          )}
-          {completion.isError && (
-            <p role="alert" className="field-error">
-              {completion.error.message}
-            </p>
-          )}
-          {path === '/upcoming' && (
-            <Upcoming
-              upcoming={upcoming}
-              task={task}
-              onOpen={openTask}
-              completion={completion}
-            />
-          )}
-          {path === '/history' && <History onOpen={openTask} />}
-          {isToday && (
-            <Today
+        <div className="content-grid">
+          <main className="main-column">
+            <ScreenHeader
               mobile={mobile}
+              isSearch={isSearch}
+              leaveSearch={leaveSearch}
+              title={title}
+              isToday={isToday}
               today={today}
-              scope={scope}
-              unfinishedCount={
-                picker.pickerBacklog.data?.tasks.filter((row) => row.missedFrom)
-                  .length ?? 0
+              upcomingCount={
+                upcoming.data?.days.reduce(
+                  (count, day) => count + day.tasks.length,
+                  0,
+                ) ?? 0
               }
-              reviewButton={reviewButton}
-              openReview={() => picker.openPlanner(true)}
-              backlogCount={counts.data?.backlog ?? 0}
-              onCapture={() => setCapturing(true)}
-              activeList={activeList}
+              isBacklog={isBacklog}
+              list={listFilter}
+              rows={rows}
+              counts={counts}
+              changeQuery={changeQuery}
+              path={path}
+              q={q}
+              search={search}
               planButton={planButton}
               openPlanner={openPlanner}
-              rowContainer={rowContainer}
-              task={task}
-              list={listFilter}
-              openTask={openTask}
-              completion={completion}
             />
-          )}
-          {isSearch && q?.trim() && (
-            <Search search={search} q={q} task={task} openTask={openTask} />
-          )}
-          {isBacklog && (
-            <Backlog
+            {!mobile && (
+              <ListManagement
+                lists={lists.data?.lists ?? []}
+                active={selectedIds}
+                mobile={mobile}
+                onFilter={filterList}
+              />
+            )}
+            <section
+              className={mobile ? 'screen-content' : 'list-card'}
+              aria-label="Tasks"
+            >
+              {!mobile && path !== '/history' && (
+                <h2 className="list-card-title">
+                  {isToday
+                    ? 'Today’s plan'
+                    : isBacklog
+                      ? 'All tasks'
+                      : isSearch
+                        ? 'Results'
+                        : 'Next days'}
+                </h2>
+              )}
+              {path !== '/history' && (!mobile || isBacklog || isToday) && (
+                <ListFilters
+                  lists={lists.data?.lists ?? []}
+                  active={selectedIds}
+                  mobile={mobile}
+                  onFilter={filterList}
+                  tasks={
+                    isToday
+                      ? (today.data?.allTasks ?? [])
+                      : isBacklog
+                        ? (backlog.data?.allTasks ?? [])
+                        : isSearch
+                          ? (search.data?.results ?? [])
+                          : (upcoming.data?.days.flatMap((day) => day.tasks) ??
+                            [])
+                  }
+                />
+              )}
+              {mobile && (isBacklog || isToday) && (
+                <ListManagement
+                  lists={lists.data?.lists ?? []}
+                  active={selectedIds}
+                  mobile
+                  onFilter={filterList}
+                />
+              )}
+              {lists.isError && <p role="alert">Could not load lists.</p>}
+              {(isBacklog ||
+                isToday ||
+                path === '/history' ||
+                path === '/upcoming' ||
+                isSearch) && (
+                <div className="filter-scope">
+                  <span>{listFilter ? `Showing: ${scope}` : 'All lists'}</span>
+                  {listFilter && (
+                    <Button variant="ghost" onClick={() => filterList()}>
+                      Show all
+                    </Button>
+                  )}
+                  {listFilter && isToday && today.data && (
+                    <span>
+                      {today.data.open.length + today.data.done.length} shown
+                    </span>
+                  )}
+                </div>
+              )}
+              {completion.isError && (
+                <p role="alert" className="field-error">
+                  {completion.error.message}
+                </p>
+              )}
+              {path === '/upcoming' && (
+                <Upcoming
+                  upcoming={upcoming}
+                  task={task}
+                  onOpen={openTask}
+                  completion={completion}
+                  list={listFilter}
+                />
+              )}
+              {path === '/history' && (
+                <History
+                  onOpen={openTask}
+                  mobile={mobile}
+                  onFilter={filterList}
+                />
+              )}
+              {isToday && (
+                <Today
+                  mobile={mobile}
+                  today={today}
+                  scope={scope}
+                  unfinishedCount={
+                    picker.pickerBacklog.data?.tasks.filter(
+                      (row) => row.missedFrom,
+                    ).length ?? 0
+                  }
+                  reviewButton={reviewButton}
+                  openReview={() => picker.openPlanner(true)}
+                  backlogCount={counts.data?.backlog ?? 0}
+                  onCapture={() => setCapturing(true)}
+                  activeList={activeList}
+                  planButton={planButton}
+                  openPlanner={openPlanner}
+                  rowContainer={rowContainer}
+                  task={task}
+                  list={listFilter}
+                  openTask={openTask}
+                  completion={completion}
+                />
+              )}
+              {isSearch && q?.trim() && (
+                <Search
+                  search={search}
+                  q={q}
+                  task={task}
+                  openTask={openTask}
+                  list={listFilter}
+                />
+              )}
+              {isBacklog && (
+                <Backlog
+                  mobile={mobile}
+                  backlog={backlog}
+                  activeList={activeList}
+                  rowContainer={rowContainer}
+                  task={task}
+                  list={listFilter}
+                  openTask={openTask}
+                  completion={completion}
+                />
+              )}
+            </section>
+          </main>
+          {!mobile && (
+            <TaskSurface
+              desktop={desktop}
               mobile={mobile}
-              backlog={backlog}
-              activeList={activeList}
-              rowContainer={rowContainer}
               task={task}
-              list={listFilter}
-              openTask={openTask}
-              completion={completion}
+              closeTask={closeTask}
+              path={path}
+              title={title}
             />
           )}
-        </main>
+        </div>
+      )}
+      {mobile && (
+        <TaskSurface
+          desktop={desktop}
+          mobile={mobile}
+          task={task}
+          closeTask={closeTask}
+          path={path}
+          title={title}
+        />
       )}
       {isToday &&
         planning &&
@@ -357,14 +462,6 @@ export function App() {
             <BacklogPicker mobile={mobile} picker={picker} />
           </Popover>
         ))}
-      <TaskSurface
-        desktop={desktop}
-        mobile={mobile}
-        task={task}
-        closeTask={closeTask}
-        path={path}
-        title={title}
-      />
       {mobile && !task && (
         <>
           <nav aria-label="Sections" className="tab-bar">

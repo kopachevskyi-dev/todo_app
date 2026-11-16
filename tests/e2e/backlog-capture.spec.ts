@@ -20,13 +20,13 @@ test('desktop: Enter adds the task as the first row, clears and focuses the fiel
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(server.url, ['One', 'Two']);
     await page.goto(`${server.url}/backlog`);
-    const nav = page.getByRole('navigation');
+    const nav = page.getByRole('navigation', { name: 'Sections' });
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('2');
     await expect(
       page.getByRole('main').getByRole('heading', { name: 'Backlog' }),
@@ -76,7 +76,7 @@ test('desktop: opening a row sets ?task=<id>, survives reload, and the empty pan
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -103,7 +103,7 @@ test('tablet 1000x800: the detail opens as a drawer over a scrim; Escape closes 
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {

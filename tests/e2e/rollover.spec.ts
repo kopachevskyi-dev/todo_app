@@ -41,7 +41,7 @@ test('the open app rolls a task to the Backlog at midnight without a reload', as
     await expect(main).not.toContainText('Pay rent');
 
     await page
-      .getByRole('navigation')
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /Backlog/ })
       .click();
     const first = main.getByRole('listitem').first();

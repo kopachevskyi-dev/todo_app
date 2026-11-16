@@ -48,7 +48,7 @@ test('production clock powers History and the task Day label', async ({
     await expect(main.getByRole('group', { name: 'Week days' })).toBeVisible();
 
     await page
-      .getByRole('navigation')
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /Today/ })
       .click();
     await main.getByRole('listitem').filter({ hasText: 'Today task' }).click();
@@ -69,7 +69,7 @@ test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task m
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const { server } = await startSeeded(page);
   try {
@@ -93,7 +93,7 @@ test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task m
     await panel.getByRole('button', { name: 'Move to backlog' }).click();
 
     await page
-      .getByRole('navigation')
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /Backlog/ })
       .click();
     await expect(main.getByRole('listitem').first()).toContainText(LICENSE);

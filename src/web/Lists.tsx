@@ -4,17 +4,55 @@ import { type List } from '../shared/contract';
 import { api } from './api';
 import { queryKeys } from './query-keys';
 import { invalidateTaskQueries } from './invalidate-task-queries';
-import {
-  BottomSheet,
-  Button,
-  ConfirmDialog,
-  Icon,
-  Modal,
-  SectionLabel,
-} from './components';
+import { BottomSheet, Button, ConfirmDialog, Icon, Modal } from './components';
 import { ListForm } from './ListForm';
 
-export function Lists({
+export function ListFilters({
+  lists,
+  active,
+  onFilter,
+  tasks,
+  mobile = false,
+}: {
+  lists: List[];
+  active: string[];
+  onFilter: (id?: string) => void;
+  tasks: { listId: string | null }[];
+  mobile?: boolean;
+}) {
+  return (
+    <div role="group" aria-label="Filter by list" className="list-chips">
+      {!mobile && (
+        <button
+          className="list-link"
+          aria-pressed={!active.length}
+          onClick={() => onFilter()}
+        >
+          All <span className="chip-count">{tasks.length}</span>
+        </button>
+      )}
+      {lists.map((list) => (
+        <button
+          key={list.id}
+          className="list-link"
+          aria-pressed={active.includes(list.id)}
+          onClick={() => onFilter(list.id)}
+        >
+          <span className="list-dot" style={{ background: list.color }} />
+          {list.name}
+          {!mobile && (
+            <span className="chip-count">
+              {' '}
+              {tasks.filter((task) => task.listId === list.id).length}
+            </span>
+          )}
+        </button>
+      ))}
+    </div>
+  );
+}
+
+export function ListManagement({
   lists,
   active,
   onFilter,
@@ -54,26 +92,13 @@ export function Lists({
   const Container = mobile ? BottomSheet : Modal;
   return (
     <>
-      <nav aria-label="Lists" className={mobile ? 'list-chips' : 'lists'}>
-        {!mobile && <SectionLabel>Lists</SectionLabel>}
-        {lists.map((list) => (
-          <div className="list-control" key={list.id}>
-            <button
-              className="list-link"
-              aria-pressed={active.includes(list.id)}
-              onClick={() => onFilter(list.id)}
-            >
-              <span className="list-dot" style={{ background: list.color }} />
-              {list.name}
-            </button>
-          </div>
-        ))}
-      </nav>
       <div className="list-management-actions">
-        <button className="new-list" onClick={() => startEditing()}>
-          <Icon name="plus" size={14} />
-          New list
-        </button>
+        {mobile && (
+          <button className="new-list" onClick={() => startEditing()}>
+            <Icon name="plus" size={14} />
+            New list
+          </button>
+        )}
         <Button
           variant="ghost"
           onClick={() => {

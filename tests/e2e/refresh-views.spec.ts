@@ -39,7 +39,7 @@ async function listId(url: string, name: string) {
   return found.id;
 }
 
-const nav = (page: Page) => page.getByRole('navigation');
+const nav = (page: Page) => page.getByRole('navigation', { name: 'Sections' });
 const main = (page: Page) => page.getByRole('main');
 const rows = (page: Page) => page.locator('.task-list li');
 
@@ -54,7 +54,7 @@ async function closeCard(page: Page) {
   if (test.info().project.name === 'mobile')
     await page.getByRole('link', { name: /back/i }).click();
 }
-/** The sidebar count only exists on desktop; mobile has no count to check. */
+/** The top-bar count only exists on desktop; mobile has no count to check. */
 async function expectBacklogCount(page: Page, count: string) {
   if (test.info().project.name === 'desktop')
     await expect(

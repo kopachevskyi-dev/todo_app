@@ -33,6 +33,11 @@ export function SearchField({
           timer.current = setTimeout(() => onQuery(value), 200);
         }}
         onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            clearTimeout(timer.current);
+            onQuery(draft.value);
+          }
           if (event.key === 'Escape') {
             event.preventDefault();
             clearTimeout(timer.current);

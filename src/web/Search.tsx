@@ -7,12 +7,18 @@ export function Search({
   q,
   task,
   openTask,
+  list,
 }: {
+  list?: string;
   search: UseQueryResult<Awaited<ReturnType<typeof api.search>>>;
   q?: string;
   task?: string;
   openTask: (id: string) => void;
 }) {
+  const results = search.data?.results.filter(
+    (row) =>
+      !list || Boolean(row.listId && list.split(',').includes(row.listId)),
+  );
   return (
     <>
       {search.isPending && <p role="status">Searching…</p>}
@@ -29,17 +35,15 @@ export function Search({
           </Button>
         </p>
       )}
-      {search.data?.results.length === 0 && (
-        <EmptyPanel>No tasks match</EmptyPanel>
-      )}
+      {results?.length === 0 && <EmptyPanel>No tasks match</EmptyPanel>}
       <ul className="task-list">
-        {search.data?.results.map((row) => (
+        {results?.map((row) => (
           <TaskRow
             key={row.id}
             task={row}
             selected={row.id === task}
             location={searchLocationText(row.location)}
-            href={`/search?${new URLSearchParams({ q: q ?? '', task: row.id })}`}
+            href={`/search?${new URLSearchParams({ q: q ?? '', ...(list ? { lists: list } : {}), task: row.id })}`}
             onOpen={() => openTask(row.id)}
           />
         ))}
