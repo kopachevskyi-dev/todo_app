@@ -3,13 +3,12 @@ import { useEscape } from './useEscape';
 import { browserTimeZone } from './dates';
 import { today } from './useToday';
 import { queryKeys } from './query-keys';
-import { TaskDetailFooter } from './TaskDetailFooter';
 import { TaskActivity } from './TaskActivity';
 import { useDeleteTask } from './useDeleteTask';
 import { useTaskEditor } from './useTaskEditor';
-import { useRef, useState } from 'react';
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { ListForm } from './ListForm';
+import { useRef, useState, type ReactNode } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { ListPicker } from './ListPicker';
 import type { TaskDetailData } from './task-detail-types';
 import { formatActivityTimestamp } from './dates';
 import { api } from './api';
@@ -18,37 +17,22 @@ import { Subtasks } from './Subtasks';
 import { formatDay } from '../domain/day-picker';
 import { completionTime } from './dates';
 import { useCompletion } from './useCompletion';
-import {
-  BottomSheet,
-  Button,
-  ConfirmDialog,
-  Checkbox,
-  Icon,
-  Popover,
-} from './components';
+import { Button, ConfirmDialog, Checkbox, Icon } from './components';
 
 export function TaskDetail({
   detail,
   onClose,
   mobile,
   history = false,
+  navigation,
 }: {
   history?: boolean;
+  navigation: ReactNode;
   detail: TaskDetailData;
   onClose: () => void;
   mobile: boolean;
 }) {
   const { task } = detail;
-  const client = useQueryClient();
-  const [creatingList, setCreatingList] = useState(false);
-  const createList = useMutation({
-    mutationFn: api.createList,
-    onSuccess: async ({ list }) => {
-      await client.invalidateQueries({ queryKey: queryKeys.lists });
-      save({ listId: list.id });
-      setCreatingList(false);
-    },
-  });
   const completion = useCompletion();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
   const [error, setError] = useState<string>();
@@ -63,10 +47,7 @@ export function TaskDetail({
   };
   const [choosingList, setChoosingList] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreAnchor = useRef<HTMLButtonElement>(null);
 
-  const anchor = useRef<HTMLButtonElement>(null);
   const {
     title,
     setTitle,
@@ -101,45 +82,25 @@ export function TaskDetail({
   const selectedList = lists.data?.lists.find(
     (list) => list.id === task.listId,
   );
-  const listOptions = (
-    <div className="list-options">
-      <Button
-        variant="ghost"
-        onClick={() => {
-          save({ listId: null });
-          setChoosingList(false);
-        }}
-      >
-        No list
-      </Button>
-      {lists.data?.lists.map((list) => (
+  return (
+    <div
+      className={`task-detail ${task.completedAt ? 'task-detail-done' : ''}`}
+    >
+      <div className="detail-header">
+        {navigation}
         <Button
-          key={list.id}
-          variant="ghost"
+          variant="icon"
+          className="detail-delete"
+          aria-label="Delete task"
+          disabled={deleting || planning}
           onClick={() => {
-            save({ listId: list.id });
-            setChoosingList(false);
+            flushDescription();
+            setConfirming(true);
           }}
         >
-          <span className="list-dot" style={{ background: list.color }} />
-          {list.name}
+          <Icon name="trash" size={16} />
         </Button>
-      ))}
-      <Button
-        variant="ghost"
-        onClick={() => {
-          setChoosingList(false);
-          createList.reset();
-          setCreatingList(true);
-        }}
-      >
-        New list
-      </Button>
-      {lists.isError && <p role="alert">Could not load lists.</p>}
-    </div>
-  );
-  return (
-    <div className="task-detail">
+      </div>
       <div className="detail-title-row">
         <Checkbox
           label={`${task.completedAt ? 'Reopen' : 'Complete'} "${task.title}"`}
@@ -170,40 +131,7 @@ export function TaskDetail({
             }
           }}
         />
-        <Button
-          ref={moreAnchor}
-          variant="ghost"
-          aria-label="More task actions"
-          aria-haspopup="menu"
-          aria-expanded={moreOpen}
-          onClick={() => setMoreOpen(!moreOpen)}
-        >
-          ⋯
-        </Button>
       </div>
-      {moreOpen && (
-        <Popover
-          anchor={moreAnchor}
-          label="Task actions"
-          onClose={() => setMoreOpen(false)}
-        >
-          <div role="menu" aria-label="Task actions">
-            <Button
-              autoFocus
-              role="menuitem"
-              variant="ghost"
-              disabled={deleting}
-              onClick={() => {
-                setMoreOpen(false);
-                flushDescription();
-                setConfirming(true);
-              }}
-            >
-              Delete
-            </Button>
-          </div>
-        </Popover>
-      )}
       {task.completedAt && (
         <div className="status-pill">
           <Icon name="check" size={14} />
@@ -224,7 +152,6 @@ export function TaskDetail({
         <div className="field-row">
           <span>List</span>
           <button
-            ref={anchor}
             type="button"
             className={`field-value ${!selectedList ? 'empty-value' : ''}`}
             aria-label={`List ${selectedList?.name ?? 'No list'}`}
@@ -238,6 +165,7 @@ export function TaskDetail({
               />
             )}
             {selectedList?.name ?? 'No list'}
+            <Icon name="chevron" size={14} />
           </button>
         </div>
         <div className="field-row">
@@ -251,8 +179,8 @@ export function TaskDetail({
             disabled={Boolean(task.completedAt) || planning || deleting}
             onClick={() => setChoosingDay(true)}
           >
-            <Icon name="today" size={18} />
             {planning ? 'Saving…' : dayLabel}
+            <Icon name="chevron" size={14} />
           </button>
         </div>
       </div>
@@ -277,18 +205,6 @@ export function TaskDetail({
           )}
         </p>
       )}
-      <TaskDetailFooter
-        task={task}
-        deleting={deleting}
-        flushDescription={flushDescription}
-        planning={planning}
-        history={history}
-        setPlanning={setPlanning}
-        queue={queue}
-        setError={setError}
-        onClose={onClose}
-        completion={completion}
-      />
       {choosingDay && (
         <DayPickerDialog
           mobile={mobile}
@@ -301,40 +217,23 @@ export function TaskDetail({
           }}
         />
       )}
-      {choosingList &&
-        (mobile ? (
-          <BottomSheet
-            label="Choose a list"
-            onClose={() => setChoosingList(false)}
-          >
-            <h3>Choose a list</h3>
-            {listOptions}
-          </BottomSheet>
-        ) : (
-          <Popover
-            anchor={anchor}
-            label="Choose a list"
-            onClose={() => setChoosingList(false)}
-          >
-            {listOptions}
-          </Popover>
-        ))}
-      {creatingList && (
-        <ListForm
+      {choosingList && (
+        <ListPicker
           lists={lists.data?.lists ?? []}
+          loadError={lists.isError}
+          selected={task.listId}
           mobile={mobile}
-          pending={createList.isPending}
-          error={createList.isError ? createList.error.message : undefined}
-          onSave={(values) => createList.mutate(values)}
-          onClose={() => {
-            if (!createList.isPending) setCreatingList(false);
-          }}
+          onChoose={(listId) => save({ listId })}
+          onDeleted={onClose}
+          onClose={() => setChoosingList(false)}
         />
       )}
       {confirming && (
         <ConfirmDialog
           title="Delete task"
           confirmLabel="Delete"
+          mobile={mobile}
+          pending={deleting}
           onClose={() => setConfirming(false)}
           onConfirm={() => {
             void remove();

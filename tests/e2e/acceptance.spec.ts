@@ -132,7 +132,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await detail.getByRole('button', { name: /^List/ }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: 'Personal' })
+      .getByRole('button', { name: 'Personal', exact: true })
       .click();
     await detail.getByRole('button', { name: /^Activity/ }).click();
     await expect(detail.locator('.activity li')).toHaveText([
@@ -190,9 +190,6 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       /Planned for Nov 4/,
       /Completed/,
     ]);
-    await expect(
-      page.getByRole('button', { name: 'Move to backlog' }),
-    ).toBeVisible();
   } finally {
     await server.stop();
   }

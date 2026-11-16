@@ -64,7 +64,7 @@ test('production clock powers History and the task Day label', async ({
   }
 });
 
-test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task moves to the top of the Backlog', async ({
+test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task opens in the card', async ({
   page,
 }) => {
   test.skip(
@@ -90,13 +90,6 @@ test('desktop: Wednesday shows 4 of 5, the day summary and groups; a done task m
     await main.getByRole('listitem').filter({ hasText: LICENSE }).click();
     const panel = page.getByRole('complementary');
     await expect(panel).toContainText('Completed Nov 4, 2:20 PM');
-    await panel.getByRole('button', { name: 'Move to backlog' }).click();
-
-    await page
-      .getByRole('navigation', { name: 'Sections' })
-      .getByRole('link', { name: /Backlog/ })
-      .click();
-    await expect(main.getByRole('listitem').first()).toContainText(LICENSE);
   } finally {
     await server.stop();
   }

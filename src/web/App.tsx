@@ -28,7 +28,7 @@ import { api } from './api';
 import { useCompletion } from './useCompletion';
 import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
 import { BottomSheet, Button, Icon, Modal } from './components';
-import { ListFilters, ListManagement } from './Lists';
+import { ListFilters } from './Lists';
 import { Upcoming } from './Upcoming';
 import { History } from './History';
 import { captureLayout } from './layout-animation';
@@ -279,14 +279,6 @@ export function App() {
               openPlanner={openPlanner}
               onCapture={() => setCapturing(true)}
             />
-            {!mobile && (
-              <ListManagement
-                lists={lists.data?.lists ?? []}
-                active={selectedIds}
-                mobile={mobile}
-                onFilter={filterList}
-              />
-            )}
             <div
               className={
                 hasWidgets
@@ -352,14 +344,6 @@ export function App() {
                                   (day) => day.tasks,
                                 ) ?? [])
                       }
-                    />
-                  )}
-                  {mobile && (isBacklog || isToday) && (
-                    <ListManagement
-                      lists={lists.data?.lists ?? []}
-                      active={selectedIds}
-                      mobile
-                      onFilter={filterList}
                     />
                   )}
                   {lists.isError && <p role="alert">Could not load lists.</p>}

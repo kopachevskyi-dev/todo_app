@@ -145,15 +145,12 @@ test('deleting "Pay rent" planned for Wed, Nov 11 drops the Nov 11 day load in t
     await closeCard(page);
 
     await rows(page).filter({ hasText: 'Pay rent' }).click();
-    await page.getByRole('button', { name: /more/i }).click();
-    await page.getByRole('menuitem', { name: 'Delete' }).click();
+    await page.getByRole('button', { name: 'Delete task' }).click();
     await page
-      .getByRole('dialog', { name: 'Delete task' })
-      .getByRole('button', { name: 'Delete' })
+      .getByRole('dialog')
+      .getByRole('button', { name: 'Delete', exact: true })
       .click();
-    await expect(
-      page.getByRole('dialog', { name: 'Delete task' }),
-    ).toBeHidden();
+    await expect(page.getByRole('dialog')).toBeHidden();
     await expect(rows(page).filter({ hasText: 'Pay rent' })).toHaveCount(0);
 
     await rows(page).filter({ hasText: 'Other' }).click();
