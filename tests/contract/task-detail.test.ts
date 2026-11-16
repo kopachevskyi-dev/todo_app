@@ -12,6 +12,45 @@ it('parses the detail example, with two subtasks (one done) and planned and comp
   expect(types).toContain('completed');
 });
 
+it('accepts the four v3 activity items and rejects a stored-only kind', () => {
+  const base = examples.taskDetail;
+  const items = [
+    {
+      type: 'added',
+      at: '2026-11-02T14:12:00.000Z',
+      day: null,
+      text: 'Added to Backlog',
+    },
+    {
+      type: 'planned',
+      at: '2026-11-09T14:00:00.000Z',
+      day: '2026-11-10',
+      text: 'Planned for Nov 10',
+    },
+    {
+      type: 'returned',
+      at: '2026-11-10T23:59:00.000Z',
+      day: '2026-11-10',
+      text: 'Returned to Backlog',
+    },
+    {
+      type: 'completed',
+      at: '2026-11-10T14:00:00.000Z',
+      day: '2026-11-10',
+      text: 'Completed',
+    },
+  ];
+  expect(
+    taskDetailResponseSchema.parse({ ...base, activity: items }).activity,
+  ).toEqual(items);
+  expect(
+    taskDetailResponseSchema.safeParse({
+      ...base,
+      activity: [{ ...items[0], type: 'details_added' }],
+    }).success,
+  ).toBe(false);
+});
+
 it('returns the detail example for the fixture task', async () => {
   const app = testApp();
   try {

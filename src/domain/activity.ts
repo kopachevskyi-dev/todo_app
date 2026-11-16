@@ -67,3 +67,16 @@ export function activityText(event: ActivityEvent): string {
       return event.type;
   }
 }
+
+export interface ActivityLine {
+  type: 'added' | 'planned' | 'returned' | 'completed';
+  at: string;
+  day: string | null;
+  text: string;
+}
+
+/** Maps stored events to the four v3 activity lines. */
+export function activityLines(events: ActivityEvent[]): ActivityLine[] {
+  void events;
+  throw new Error('not implemented');
+}
