@@ -4,27 +4,20 @@ import {
   type UseQueryResult,
 } from '@tanstack/react-query';
 import { api } from './api';
-import { Button, EmptyPanel, Icon, TaskRow } from './components';
-import { Capture } from './Capture';
+import { Button, EmptyPanel, TaskRow } from './components';
 import { Fragment, type RefObject } from 'react';
 import { queryKeys } from './query-keys';
 import { moveTodayTask } from './today-order';
 import { useNotification } from './notification-context';
-import type { TodayResponse, List } from '../shared/contract';
+import type { TodayResponse } from '../shared/contract';
 import { useCompletion } from './useCompletion';
 
 export function Today({
   mobile,
   today,
-  activeList,
   scope,
   backlogCount,
-  unfinishedCount,
-  reviewButton,
-  openReview,
   onCapture,
-  planButton,
-  openPlanner,
   rowContainer,
   task,
   list,
@@ -33,15 +26,9 @@ export function Today({
 }: {
   mobile: boolean;
   today: UseQueryResult<Awaited<ReturnType<typeof api.today>>>;
-  activeList?: List;
   scope?: string;
   backlogCount: number;
-  unfinishedCount: number;
-  reviewButton: RefObject<HTMLButtonElement | null>;
-  openReview: () => void;
   onCapture: () => void;
-  planButton: RefObject<HTMLButtonElement | null>;
-  openPlanner: () => void;
   rowContainer: RefObject<HTMLUListElement | null>;
   task?: string;
   list?: string;
@@ -78,22 +65,6 @@ export function Today({
   };
   return (
     <>
-      {!mobile && (
-        <div className="today-capture">
-          <Capture target="today" list={activeList} />
-          {(backlogCount > 0 || (today.data?.progress.total ?? 0) > 0) && (
-            <Button ref={planButton} variant="outline" onClick={openPlanner}>
-              <Icon name="backlog" size={18} />
-              Add from Backlog
-            </Button>
-          )}
-        </div>
-      )}
-      {unfinishedCount > 0 && (
-        <Button ref={reviewButton} variant="ghost" onClick={openReview}>
-          Review {unfinishedCount} unfinished
-        </Button>
-      )}
       {today.isPending && <p role="status">Loading tasks…</p>}
       {today.isError && (
         <p role="alert" className="field-error">
@@ -121,7 +92,9 @@ export function Today({
                   if (mobile) onCapture();
                   else
                     document
-                      .querySelector<HTMLInputElement>('.today-capture input')
+                      .querySelector<HTMLInputElement>(
+                        '.quick-add-widget input',
+                      )
                       ?.focus();
                 }}
               >
@@ -139,13 +112,17 @@ export function Today({
               {index === today.data.open.length &&
                 today.data.done.length > 0 && (
                   <li role="presentation" className="done-section">
-                    <h2 className="section-label">Completed</h2>
+                    <h2 className="section-label">
+                      Completed{' '}
+                      <span aria-hidden="true">· {today.data.done.length}</span>
+                    </h2>
                   </li>
                 )}
               <TaskRow
                 key={row.id}
                 task={row}
                 selected={row.id === task}
+                upNext={!list && index === 0 && !row.completedAt}
                 href={`/today?${new URLSearchParams({ ...(list ? { lists: list } : {}), task: row.id })}`}
                 onOpen={() => openTask(row.id)}
                 onToggle={() =>

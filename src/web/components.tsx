@@ -150,8 +150,10 @@ export function TaskRow({
   onToggle,
   pending,
   orderControls,
+  upNext = false,
 }: {
   orderControls?: ReactNode;
+  upNext?: boolean;
   onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
@@ -178,7 +180,7 @@ export function TaskRow({
     <li
       data-layout-id={task.id}
       data-layout-group={task.completedAt ? 'done' : 'open'}
-      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''}`}
+      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''} ${upNext ? 'up-next' : ''}`}
       inert={creating}
       aria-busy={creating || undefined}
     >
@@ -228,6 +230,7 @@ export function TaskRow({
           <span className="row-title">{task.title}</span>
           {meta && <span className="row-meta">{meta}</span>}
         </span>
+        {upNext && <span className="up-next-tag">Up next</span>}
         {creating && <span className="row-meta">Saving…</span>}
         {task.completedAt && !location && (
           <time className="completion-time" dateTime={task.completedAt}>
