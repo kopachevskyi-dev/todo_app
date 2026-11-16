@@ -30,6 +30,7 @@ import { createTaskMutationKey, type CreateTaskContext } from './useCreateTask';
 import { BottomSheet, Button, Icon, Modal } from './components';
 import { ListFilters } from './Lists';
 import { Upcoming } from './Upcoming';
+import { UpcomingWidgets } from './UpcomingWidgets';
 import { History } from './History';
 import { captureLayout } from './layout-animation';
 
@@ -72,7 +73,8 @@ export function App() {
   const planButton = useRef<HTMLButtonElement>(null);
   const isBacklog = path === '/backlog';
   const isToday = path === '/today';
-  const hasWidgets = isToday || isBacklog;
+  const isUpcoming = path === '/upcoming';
+  const hasWidgets = isToday || isBacklog || isUpcoming;
   const completion = useCompletion();
   const isSearch = path === '/search';
   const changeQuery = (value: string) => {
@@ -258,7 +260,7 @@ export function App() {
       {!(mobile && task) && (
         <div className="content-grid">
           <main
-            className={`main-column ${hasWidgets && !(desktop && task) ? 'today-main' : ''} ${isBacklog ? 'backlog-main' : ''}`}
+            className={`main-column ${hasWidgets && !(desktop && task) ? 'today-main' : ''} ${isBacklog ? 'backlog-main' : ''} ${isUpcoming ? 'upcoming-main' : ''}`}
           >
             <ScreenHeader
               mobile={mobile}
@@ -318,6 +320,16 @@ export function App() {
                           {today.data.progress.total} done
                         </span>
                       )}
+                      {isUpcoming && upcoming.data && (
+                        <span className="row-meta">
+                          {
+                            upcoming.data.days
+                              .flatMap((day) => day.tasks)
+                              .filter(matchesList).length
+                          }{' '}
+                          planned
+                        </span>
+                      )}
                       {isBacklog && backlog.data && (
                         <span className="row-meta">
                           {backlog.data.tasks.length} of{' '}
@@ -326,12 +338,12 @@ export function App() {
                       )}
                     </div>
                   )}
-                  {path !== '/history' && (!mobile || isBacklog || isToday) && (
+                  {path !== '/history' && (!mobile || hasWidgets) && (
                     <ListFilters
                       lists={lists.data?.lists ?? []}
                       active={selectedIds}
-                      mobile={mobile}
-                      showCounts={!mobile || isBacklog}
+                      mobile={mobile && !isUpcoming}
+                      showCounts={!mobile || isBacklog || isUpcoming}
                       onFilter={filterList}
                       tasks={
                         isToday
@@ -425,6 +437,22 @@ export function App() {
                   )}
                 </section>
               </div>
+              {isUpcoming && !(desktop && task) && upcoming.data && (
+                <UpcomingWidgets
+                  upcoming={upcoming.data}
+                  lists={lists.data?.lists ?? []}
+                  onFilter={(id) => {
+                    void navigate({
+                      to: '/upcoming',
+                      search: (previous) => ({
+                        ...previous,
+                        lists: id,
+                        task: undefined,
+                      }),
+                    });
+                  }}
+                />
+              )}
               {isToday && !(desktop && task) && (
                 <TodayWidgets
                   showQuickAdd={!mobile && !capturing}
