@@ -9,5 +9,11 @@ export function progressWidget(counts: {
   done: number;
   total: number;
 }): ProgressWidget {
-  throw new Error(`not implemented: ${counts.total}`);
+  const fill = counts.total ? (counts.done / counts.total) * 100 : 0;
+  return {
+    badge: `${counts.done} of ${counts.total}`,
+    percent: Math.round(fill),
+    unit: '% of today',
+    fill,
+  };
 }

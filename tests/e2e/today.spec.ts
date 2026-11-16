@@ -87,7 +87,7 @@ test.describe('Today hero and Quick add', () => {
       await expect(row).toHaveCount(1);
       await expect(row).toContainText('Work');
       const today = (await (
-        await fetch(`${server.url}/api/today`, { headers })
+        await fetch(`${server.url}/api/views/today`, { headers })
       ).json()) as { open: { title: string; listId: string | null }[] };
       expect(today.open.find((t) => t.title === 'Write report')?.listId).toBe(
         work,
