@@ -1,14 +1,14 @@
 import { z } from 'zod';
 
 export const listPalette = [
-  { name: 'Red', hex: '#E3686A' },
-  { name: 'Teal', hex: '#5FB4C6' },
-  { name: 'Yellow', hex: '#F0C24B' },
-  { name: 'Purple', hex: '#8E7CC3' },
-  { name: 'Green', hex: '#6FBF8A' },
-  { name: 'Blue', hex: '#6A93D4' },
-  { name: 'Orange', hex: '#E8975A' },
-  { name: 'Pink', hex: '#D985A8' },
+  { name: 'Mint', hex: '#3aa77a' },
+  { name: 'Sky', hex: '#4a86e8' },
+  { name: 'Sun', hex: '#e8a33c' },
+  { name: 'Coral', hex: '#e05a4f' },
+  { name: 'Lavender', hex: '#8b6ad8' },
+  { name: 'Tangerine', hex: '#ee7d3b' },
+  { name: 'Ocean', hex: '#2a9bb5' },
+  { name: 'Plum', hex: '#b25a9c' },
 ] as const;
 export const listColors = listPalette.map(({ hex }) => hex) as [
   (typeof listPalette)[number]['hex'],
@@ -90,7 +90,7 @@ export const examples = {
       {
         id: '01JBX0000000000000000PERSN',
         name: 'Personal',
-        color: '#E3686A',
+        color: '#e05a4f',
         position: 0,
       },
     ],
@@ -130,7 +130,7 @@ export const examples = {
         list: {
           id: '01JBX0000000000000000PERSN',
           name: 'Personal',
-          color: '#E3686A',
+          color: '#e05a4f',
           position: 0,
         },
         day: '2026-11-10',
@@ -194,7 +194,7 @@ export const examples = {
             list: {
               id: '01JBX0000000000000000H0ME0',
               name: 'Home',
-              color: '#F0C24B',
+              color: '#e8a33c',
               position: 2,
             },
           },
@@ -385,7 +385,7 @@ export const examples = {
               list: {
                 id: '01JBX0000000000000000PERSN',
                 name: 'Personal',
-                color: '#E3686A',
+                color: '#e05a4f',
                 position: 0,
               },
             },

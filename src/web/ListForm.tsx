@@ -1,9 +1,10 @@
 import { useId, useState } from 'react';
-import { listPalette, type List } from '../shared/contract';
+import { listColors, listPalette, type List } from '../shared/contract';
 import { BottomSheet, Button, Icon, Modal } from './components';
 
 export function ListForm({
   list,
+  lists,
   mobile,
   pending,
   error,
@@ -11,6 +12,7 @@ export function ListForm({
   onClose,
 }: {
   list?: List;
+  lists: List[];
   mobile: boolean;
   pending: boolean;
   error?: string;
@@ -18,7 +20,11 @@ export function ListForm({
   onClose: () => void;
 }) {
   const [name, setName] = useState(list?.name ?? '');
-  const [color, setColor] = useState<List['color']>(list?.color ?? '#8E7CC3');
+  const [color, setColor] = useState<List['color']>(
+    list?.color ??
+      listColors.find((color) => !lists.some((list) => list.color === color)) ??
+      listColors[0],
+  );
   const nameId = useId();
   const errorId = useId();
   const Container = mobile ? BottomSheet : Modal;

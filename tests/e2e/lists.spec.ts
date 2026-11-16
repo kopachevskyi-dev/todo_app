@@ -59,7 +59,7 @@ test('desktop: create, rename, recolor and delete a list; its tasks stay without
     await expect(lists.last()).toContainText('Errands');
     await expect(lists.last().locator('.list-dot')).toHaveCSS(
       'background-color',
-      'rgb(142, 124, 195)',
+      'rgb(58, 167, 122)',
     );
 
     await page
@@ -71,12 +71,12 @@ test('desktop: create, rename, recolor and delete a list; its tasks stay without
       .click();
     const form = page.getByRole('dialog').last();
     await form.getByRole('textbox', { name: /list name/i }).fill('Shop');
-    await form.getByRole('button', { name: 'Green', exact: true }).click();
+    await form.getByRole('button', { name: 'Lavender', exact: true }).click();
     await form.getByRole('button', { name: 'Save', exact: true }).click();
     await expect(lists.last()).toContainText('Shop');
     await expect(lists.last().locator('.list-dot')).toHaveCSS(
       'background-color',
-      'rgb(111, 191, 138)',
+      'rgb(139, 106, 216)',
     );
 
     await manage
@@ -173,26 +173,26 @@ test('desktop: a new list is created with its color in one form and keeps it aft
     await newListButton(page).click();
     const dialog = page.getByRole('dialog');
     await dialog.getByRole('textbox', { name: /name/i }).fill('Errands');
-    await dialog.getByRole('button', { name: /^Blue/ }).click();
+    await dialog.getByRole('button', { name: /^Sky/ }).click();
     await dialog.getByRole('button', { name: 'Save', exact: true }).click();
 
     const item = sidebarItem(page, 'Errands');
     await expect(item).toBeVisible();
     await expect(item.locator('.list-dot')).toHaveCSS(
       'background-color',
-      'rgb(106, 147, 212)',
+      'rgb(74, 134, 232)',
     );
     await page.reload();
     await expect(sidebarItem(page, 'Errands').locator('.list-dot')).toHaveCSS(
       'background-color',
-      'rgb(106, 147, 212)',
+      'rgb(74, 134, 232)',
     );
   } finally {
     await server.stop();
   }
 });
 
-test('desktop: renaming and recoloring a list in Manage lists shows Shop in Orange everywhere after reload', async ({
+test('desktop: renaming and recoloring a list in Manage lists shows Shop in Tangerine everywhere after reload', async ({
   page,
 }) => {
   test.skip(
@@ -221,20 +221,20 @@ test('desktop: renaming and recoloring a list in Manage lists shows Shop in Oran
       .click();
     const form = page.getByRole('dialog').last();
     await form.getByRole('textbox', { name: /name/i }).fill('Shop');
-    await form.getByRole('button', { name: /^Orange/ }).click();
+    await form.getByRole('button', { name: /^Tangerine/ }).click();
     await form.getByRole('button', { name: 'Save', exact: true }).click();
     await page.reload();
 
-    const orange = 'rgb(232, 151, 90)';
+    const tangerine = 'rgb(238, 125, 59)';
     await expect(sidebarItem(page, 'Shop').locator('.list-dot')).toHaveCSS(
       'background-color',
-      orange,
+      tangerine,
     );
     const row = rows(page).filter({ hasText: 'Buy milk' });
     await expect(row).toContainText('Shop');
     await expect(row.locator('.list-dot')).toHaveCSS(
       'background-color',
-      orange,
+      tangerine,
     );
     await row.click();
     await page
@@ -246,7 +246,7 @@ test('desktop: renaming and recoloring a list in Manage lists shows Shop in Oran
     ).toBeVisible();
     await expect(page.locator('.list-dot').last()).toHaveCSS(
       'background-color',
-      orange,
+      tangerine,
     );
   } finally {
     await server.stop();
@@ -283,7 +283,7 @@ test('mobile: with six lists and a 40-character name, the New list form fits the
     const viewport = page.viewportSize();
     if (!viewport) throw new Error('Missing viewport');
     const swatchButtons = dialog.getByRole('button', {
-      name: /^(Red|Teal|Yellow|Purple|Green|Blue|Orange|Pink)/,
+      name: /^(Mint|Sky|Sun|Coral|Lavender|Tangerine|Ocean|Plum)/,
     });
     const targets = [
       dialog.getByRole('textbox', { name: /name/i }),
