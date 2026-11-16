@@ -1240,17 +1240,11 @@ h3 {
 .backlog-option {
   justify-content: space-between;
 }
-.popover:has(.planner-rows) {
-  width: 360px;
-  max-height: min(520px, calc(100dvh - 32px));
-  padding: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
+
 .planner-title {
-  margin: 4px 0 0;
-  font: var(--font-h2);
+  margin: 0;
+  font-size: 20px;
+  font-weight: 500;
 }
 .planner-rows {
   min-height: 0;
@@ -1263,11 +1257,11 @@ h3 {
 }
 .planner-row {
   width: 100%;
-  min-height: 54px;
-  padding: 8px;
+  min-height: 56px;
+  padding: 10px 12px;
   border: 0;
-  border-radius: var(--r-cell-m);
-  background: transparent;
+  border-radius: 14px;
+  background: var(--row);
   color: var(--text);
   display: flex;
   align-items: center;
@@ -1290,8 +1284,8 @@ h3 {
   color: var(--surface-raised);
 }
 .planner-check.checked {
-  border-color: var(--focus);
-  background: var(--focus);
+  border-color: var(--ink);
+  background: var(--ink);
 }
 .planner-row-text {
   min-width: 0;
@@ -2071,7 +2065,8 @@ button.check-hit:disabled {
   grid-template-columns: minmax(0, 1fr);
 }
 .today-primary,
-.today-widgets {
+.today-widgets,
+.backlog-widgets {
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2267,6 +2262,10 @@ button.check-hit:disabled {
 .quick-widget-field input:focus {
   border-color: var(--ink);
 }
+.quick-widget-field input:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
 .quick-widget-field .button {
   flex: none;
   width: 44px;
@@ -2283,10 +2282,12 @@ button.check-hit:disabled {
   }
 }
 @media (max-width: 767px) {
-  .today-widgets {
+  .today-widgets,
+  .backlog-widgets {
     padding: 0 16px;
   }
-  .today-widgets .quick-add-widget {
+  .today-widgets .quick-add-widget,
+  .backlog-widgets .quick-add-widget {
     display: none;
   }
   .today-primary > .screen-content {
@@ -2302,4 +2303,156 @@ button.check-hit:disabled {
   .today-primary .task-list {
     margin: 0;
   }
+}
+
+/* Backlog v3 and the shared Add from Backlog chooser. */
+.backlog-main .list-chips {
+  gap: 6px;
+  margin: 0 -18px;
+  padding: 2px 18px 4px;
+}
+.backlog-main .list-chips > .list-link {
+  min-height: 32px;
+  gap: 8px;
+  padding: 0 12px;
+  border: 0;
+  background: var(--row);
+  color: var(--ink);
+  font-size: 12px;
+  white-space: nowrap;
+}
+.backlog-main .list-chips > .list-link[aria-pressed='true'] {
+  background: var(--ink);
+  color: var(--card);
+  font-weight: 400;
+}
+.backlog-main .list-chips .list-dot {
+  width: 3px;
+  height: 12px;
+  border-radius: 2px;
+}
+.waiting-returned .widget-badge {
+  background: var(--warm-soft);
+  color: var(--warm-ink);
+}
+.by-list-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.by-list-widget .widget-heading {
+  margin-bottom: 8px;
+}
+.by-list-widget > button {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  margin: 0 -10px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+  font-size: 13px;
+  cursor: pointer;
+}
+.by-list-widget > button:hover {
+  background: var(--row);
+}
+.by-list-widget > button > :nth-child(2) {
+  flex: 1;
+}
+.by-list-widget > button > :last-child {
+  color: var(--meta);
+}
+.by-list-bar,
+.planner-list-bar {
+  flex: none;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+}
+.backlog-section .section-label,
+.planner-rows .section-label {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 2px 10px;
+  font-size: 12px;
+  font-weight: 400;
+}
+.backlog-section .section-label::after,
+.planner-rows .section-label::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line);
+}
+.task-row.returned .checkbox:not(.checked) {
+  border: 1.5px dashed #b5b5bb;
+}
+.missed-tag {
+  flex: none;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--warm-soft);
+  color: var(--warm-ink);
+  font-size: 11px;
+  white-space: nowrap;
+}
+.empty-panel > strong,
+.empty-panel > span {
+  display: block;
+}
+.empty-panel > strong {
+  margin-bottom: 6px;
+  color: var(--ink);
+  font-weight: 500;
+}
+.backlog-picker-dialog .modal-content,
+.capture-dialog .modal-content {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100% - 32px));
+  max-height: 80dvh;
+  padding: 22px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-popover);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  background: var(--card);
+}
+.planner-rows > section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.planner-row.row-selected {
+  background: var(--lime-soft);
+}
+.planner-check {
+  background: var(--card);
+}
+.planner-list-bar {
+  height: 32px;
+}
+.planner-row-text .row-meta {
+  display: block;
+  line-height: 1.5;
+}
+.planner-submit {
+  min-height: 48px;
+}
+.planner-submit:disabled {
+  background: var(--panel);
+  color: var(--meta);
+  opacity: 1;
+}
+.bottom-sheet:has(.planner-rows) .modal-content {
+  gap: 14px;
+  background: var(--card);
 }

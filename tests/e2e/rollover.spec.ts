@@ -48,7 +48,7 @@ test('the open app rolls a task to the Backlog at midnight without a reload', as
       .click();
     const first = main.getByRole('listitem').first();
     await expect(first).toContainText('Pay rent');
-    await expect(first).toContainText('from Wed, Nov 4');
+    await expect(first).toContainText('was Nov 4');
   } finally {
     await server.stop();
   }

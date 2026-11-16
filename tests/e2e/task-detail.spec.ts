@@ -116,7 +116,7 @@ test('desktop: Cancel keeps the task; confirming Delete removes the row, closes 
       .click();
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(0);
     await expect(page).not.toHaveURL(/task=/);
-    await expect(page.getByText('Select a task to add details')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeVisible();
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('1');
   } finally {
     await server.stop();

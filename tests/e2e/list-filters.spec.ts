@@ -53,7 +53,9 @@ async function createList(url: string, name: string) {
 const main = (page: Page) => page.getByRole('main');
 const rows = (page: Page) => main(page).getByRole('listitem');
 const listButton = (page: Page, name: string) =>
-  main(page).getByRole('button', { name: new RegExp(`^${name}\\b`) });
+  page
+    .getByRole('group', { name: 'Filter by list', exact: true })
+    .getByRole('button', { name: new RegExp(`^${name}\\b`) });
 const sections = (page: Page) =>
   page.getByRole('navigation', { name: 'Sections' });
 

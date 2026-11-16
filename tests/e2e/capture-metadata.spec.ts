@@ -23,13 +23,14 @@ async function seedBacklog(url: string, title: string) {
 
 const mobile = () => test.info().project.name === 'mobile';
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
-/** The capture area: the desktop field's screen, or the mobile sheet once opened. */
+/** Open the full capture dialog to choose list and day metadata. */
 async function openCapture(page: Page) {
-  if (mobile()) {
-    await page.getByRole('button', { name: 'Add task' }).click();
-    return page.getByRole('dialog', { name: 'New task' });
-  }
-  return page.getByRole('main');
+  await page
+    .getByRole('button', {
+      name: mobile() ? 'Add task' : 'New task',
+    })
+    .click();
+  return page.getByRole('dialog', { name: 'New task' });
 }
 const field = (area: ReturnType<Page['locator']>) =>
   area.getByRole('textbox', { name: 'Task title' });
