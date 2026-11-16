@@ -248,7 +248,7 @@ async function expectFocusRing(page: Page) {
 /** The design ring belongs to the focused row link itself. */
 async function expectRowFocusRing(page: Page) {
   const focused = page.locator(':focus');
-  await expect(focused).toHaveCSS('outline', 'rgb(47, 111, 222) solid 2px');
+  await expect(focused).toHaveCSS('outline', 'rgb(74, 134, 232) solid 2px');
   await expect(focused).toHaveCSS('outline-offset', '2px');
 }
 
