@@ -100,8 +100,7 @@ test('desktop: Cancel keeps the task; confirming Delete removes the row, closes 
     await rows(page).filter({ hasText: TITLE }).click();
     const panel = page.getByRole('complementary');
 
-    await panel.getByRole('button', { name: /more/i }).click();
-    await panel.getByRole('menuitem', { name: 'Delete' }).click();
+    await panel.getByRole('button', { name: 'Delete task' }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toContainText(
       "Delete this task? This can't be undone.",
@@ -110,8 +109,7 @@ test('desktop: Cancel keeps the task; confirming Delete removes the row, closes 
     await expect(dialog).toBeHidden();
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(1);
 
-    await panel.getByRole('button', { name: /more/i }).click();
-    await panel.getByRole('menuitem', { name: 'Delete' }).click();
+    await panel.getByRole('button', { name: 'Delete task' }).click();
     await page
       .getByRole('dialog')
       .getByRole('button', { name: 'Delete', exact: true })
