@@ -37,7 +37,7 @@ async function createTask(app: App, title: string, listId?: string) {
   return ((await response.json()) as { task: Task }).task;
 }
 
-it('creates a list with the default Purple color last, rejects a duplicate name ignoring case, and rejects an invalid color', async () => {
+it('creates a list with the first unused Mint color last, rejects a duplicate name ignoring case, and rejects an invalid color', async () => {
   const app = start();
   const created = await app.request(
     '/api/lists',
@@ -47,7 +47,7 @@ it('creates a list with the default Purple color last, rejects a duplicate name 
   const { list } = (await created.json()) as { list: List };
   expect(list).toMatchObject({
     name: 'Errands',
-    color: '#8E7CC3',
+    color: '#3aa77a',
     position: 3,
   });
 
@@ -107,15 +107,15 @@ it('filters the backlog by listId and creates a task in the given list', async (
   expect(tasks.map((task) => task.id)).toEqual([shelf.id]);
 });
 
-it('accepts the Blue preset when creating a list and rejects a color outside the eight presets', async () => {
+it('accepts the Sky preset when creating a list and rejects a color outside the eight presets', async () => {
   const app = start();
   const created = await app.request(
     '/api/lists',
-    send('POST', { name: 'Errands', color: '#6A93D4' }),
+    send('POST', { name: 'Errands', color: '#4a86e8' }),
   );
   expect(created.status).toBe(201);
   const { list } = (await created.json()) as { list: List };
-  expect(list).toMatchObject({ name: 'Errands', color: '#6A93D4' });
+  expect(list).toMatchObject({ name: 'Errands', color: '#4a86e8' });
 
   const outside = await app.request(
     '/api/lists',
