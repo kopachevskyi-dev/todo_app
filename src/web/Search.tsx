@@ -35,7 +35,12 @@ export function Search({
           </Button>
         </p>
       )}
-      {results?.length === 0 && <EmptyPanel>No tasks match</EmptyPanel>}
+      {results?.length === 0 && (
+        <EmptyPanel>
+          <strong>No matching tasks</strong>
+          <span>Try a different search.</span>
+        </EmptyPanel>
+      )}
       <ul className="task-list">
         {results?.map((row) => (
           <TaskRow
