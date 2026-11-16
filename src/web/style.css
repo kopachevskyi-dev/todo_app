@@ -314,11 +314,6 @@ h3 {
   color: var(--text);
   font-weight: 600;
 }
-.nav-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
 .nav-label {
   flex: 1;
 }
@@ -814,7 +809,7 @@ h3 {
     display: contents;
   }
   .main-column {
-    padding: max(24px, env(safe-area-inset-top)) 0 100px;
+    padding: max(20px, env(safe-area-inset-top)) 0 120px;
     gap: 12px;
     flex: 1;
   }
@@ -847,49 +842,47 @@ h3 {
   }
   .tab-bar {
     position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
+    bottom: max(12px, env(safe-area-inset-bottom));
+    left: 12px;
+    right: 12px;
+    z-index: 10;
     display: flex;
-    height: calc(68px + env(safe-area-inset-bottom));
-    padding-bottom: env(safe-area-inset-bottom);
-    background: var(--surface);
-    border-top: 1px solid var(--divider-menu);
+    gap: 2px;
+    padding: 4px;
+    background: var(--card);
+    border-radius: var(--r-pill);
+    box-shadow: var(--shadow-fab);
   }
   .tab-bar .nav-link {
     flex: 1;
-    flex-direction: column;
-    align-items: center;
+    min-width: 0;
+    height: 44px;
     justify-content: center;
-    gap: 3px;
     padding: 0;
     font: var(--font-tab);
-    border-radius: 0;
+    border-radius: var(--r-pill);
   }
   .tab-bar .nav-label {
     flex: none;
   }
-  .tab-bar .nav-icon {
-    width: 56px;
-    height: 30px;
-    border-radius: var(--r-tab);
-  }
   .tab-bar .nav-link[aria-current='page'] {
-    background: transparent;
-    font-weight: 600;
+    background: var(--ink);
+    color: var(--card);
+    font-weight: 500;
   }
-  .tab-bar .nav-link[aria-current='page'] .nav-icon {
-    background: var(--nav-active);
+  .tab-bar .nav-link:active {
+    transform: scale(0.95);
   }
   .fab {
     position: fixed;
-    bottom: calc(84px + env(safe-area-inset-bottom));
+    bottom: calc(72px + max(12px, env(safe-area-inset-bottom)));
     right: max(16px, env(safe-area-inset-right));
+    z-index: 11;
     width: 56px;
     height: 56px;
     padding: 0;
     border-radius: var(--r-fab);
-    box-shadow: var(--shadow-fab);
+    box-shadow: 0 10px 26px rgba(0, 0, 0, 0.22);
   }
   .pushed-detail {
     padding: max(16px, env(safe-area-inset-top))
@@ -1091,15 +1084,43 @@ h3 {
   color: var(--done-text);
 }
 
+.day-dialog:not(.bottom-sheet) .modal-content {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: min(460px, calc(100% - 32px));
+  padding: 22px;
+  border-radius: 24px;
+  box-shadow: var(--shadow-popover);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+.day-dialog.bottom-sheet .modal-content {
+  padding-bottom: max(24px, env(safe-area-inset-bottom));
+}
+.day-dialog .sheet-handle {
+  width: 36px;
+}
+.day-dialog h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 500;
+}
+.day-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
 .day-option {
   width: 100%;
-  min-height: 44px;
-  padding: 10px 12px;
+  min-height: 48px;
+  padding: 0 14px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
   border: 0;
-  border-radius: var(--r-row);
+  border-radius: 14px;
   background: var(--row);
   color: var(--text);
   font: var(--font-body);
@@ -1110,88 +1131,21 @@ h3 {
 .day-option.selected-day {
   background: var(--row-selected);
 }
-.day-option[aria-pressed='true'] {
-  background: var(--row-selected);
-  font-weight: 500;
-}
 .day-load {
   margin-left: auto;
   white-space: nowrap;
   color: var(--text-muted);
   font: var(--font-meta);
 }
-.day-option svg:last-child {
-  color: var(--focus);
-}
-.day-option[aria-pressed='true'] svg {
-  stroke-width: 2.6;
-}
-.day-divider {
-  height: 1px;
-  margin: 8px 0;
-  background: var(--divider-menu);
+.day-option svg {
+  flex: none;
+  color: var(--text);
 }
 .backlog-option {
-  color: var(--text-muted);
   justify-content: space-between;
-}
-.calendar-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font: var(--font-label);
-}
-.calendar-grid {
-  display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 2px;
-}
-.calendar-weekday {
-  text-align: center;
-  padding: 8px 0;
-  font: var(--font-meta);
-  color: var(--text-muted);
-}
-.calendar-day {
-  min-height: 40px;
-  border: 2px solid transparent;
-  border-radius: var(--r-control);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: transparent;
-  color: var(--text);
-  font: var(--font-label);
-  cursor: pointer;
-}
-.calendar-day small {
-  font: var(--font-meta);
-  color: var(--text-muted);
-}
-.calendar-day:hover {
-  background: var(--row-selected);
-}
-.calendar-day[aria-current='date'] span {
-  text-decoration: underline;
-  text-underline-offset: 3px;
-  font-weight: 600;
-}
-.calendar-day.selected-day {
-  border-color: var(--focus);
-}
-.calendar-day:disabled {
-  opacity: 0.4;
-  cursor: default;
 }
 .detail-footer .plan-action {
   margin-left: auto;
-}
-.popover:has(.day-picker) {
-  animation: day-menu-in 140ms ease-out;
-  transform-origin: top left;
-  max-height: calc(100dvh - 32px);
-  overflow-y: auto;
 }
 .popover:has(.planner-rows) {
   width: 360px;
@@ -1262,31 +1216,9 @@ h3 {
 .bottom-sheet:has(.planner-rows) .planner-rows {
   max-height: 50dvh;
 }
-@keyframes day-menu-in {
-  from {
-    opacity: 0;
-    transform: scale(0.97);
-  }
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
 @media (max-width: 767px) {
-  .day-option {
-    min-height: 52px;
-    border-radius: var(--r-cell-m);
-  }
-  .calendar-day {
-    min-height: 44px;
-  }
   .detail-footer .plan-action {
     flex: 1;
-  }
-}
-@media (prefers-reduced-motion: reduce) {
-  .popover:has(.day-picker) {
-    animation: none;
   }
 }
 
@@ -1682,12 +1614,6 @@ h3 {
   background: var(--nav-active);
 }
 
-.upcoming-link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--text-2);
-}
 .upcoming-agenda {
   display: grid;
   gap: 28px;
@@ -1919,7 +1845,8 @@ button.check-hit:disabled {
   color: var(--meta);
 }
 @media (prefers-reduced-motion: reduce) {
-  .button:active:not(:disabled) {
+  .button:active:not(:disabled),
+  .tab-bar .nav-link:active {
     transform: none;
   }
 }
