@@ -64,7 +64,7 @@ test('mobile: description and list persist; the row shows Personal and the activ
     await page.getByRole('button', { name: /^List/ }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: 'Personal' })
+      .getByRole('button', { name: 'Personal', exact: true })
       .click();
     await page.getByRole('link', { name: /back/i }).click();
     await expect(rows(page).first()).toContainText('Personal');

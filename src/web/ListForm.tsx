@@ -10,6 +10,7 @@ export function ListForm({
   error,
   onSave,
   onClose,
+  onDelete,
 }: {
   list?: List;
   lists: List[];
@@ -18,6 +19,7 @@ export function ListForm({
   error?: string;
   onSave: (values: { name: string; color: List['color'] }) => void;
   onClose: () => void;
+  onDelete?: () => void;
 }) {
   const [name, setName] = useState(list?.name ?? '');
   const [color, setColor] = useState<List['color']>(
@@ -76,6 +78,16 @@ export function ListForm({
           </p>
         )}
         <div className="dialog-actions">
+          {onDelete && (
+            <Button
+              variant="ghost"
+              className="delete-list"
+              onClick={onDelete}
+              disabled={pending}
+            >
+              Delete
+            </Button>
+          )}
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Cancel
           </Button>
