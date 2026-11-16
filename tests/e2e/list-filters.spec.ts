@@ -53,9 +53,8 @@ async function createList(url: string, name: string) {
 const main = (page: Page) => page.getByRole('main');
 const rows = (page: Page) => main(page).getByRole('listitem');
 const listButton = (page: Page, name: string) =>
-  page.getByRole('button', { name, exact: true });
-const sections = (page: Page) =>
-  page.getByRole('navigation', { name: 'Sections' });
+  main(page).getByRole('button', { name: new RegExp(`^${name}\\b`) });
+const sections = (page: Page) => page.getByRole('banner');
 
 test('Backlog: Work and Home combine with OR, tasks without a list are left out, scope is shown', async ({
   page,
@@ -227,7 +226,7 @@ test('Today: all tasks done says so and keeps the Completed group visible', asyn
 test('desktop: the History filter survives a reload', async ({ page }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'History shows list controls only in the desktop sidebar.',
+    'History shows list chips only on desktop.',
   );
   const server = await startTestServer(page);
   try {

@@ -36,7 +36,9 @@ async function seed(
 }
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 const sidebarItem = (page: Page, name: string) =>
-  page.getByRole('button', { name: new RegExp(`^${name}$`) });
+  page
+    .getByRole('main')
+    .getByRole('button', { name: new RegExp(`^${name}\\b`) });
 
 test('desktop: create, rename, recolor and delete a list; its tasks stay without a list', async ({
   page,
