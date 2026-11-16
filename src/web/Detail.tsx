@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { queryKeys } from './query-keys';
 import { useQuery } from '@tanstack/react-query';
 import { api } from './api';
@@ -8,8 +9,10 @@ export function Detail({
   onClose,
   mobile,
   history = false,
+  navigation,
 }: {
   history?: boolean;
+  navigation: ReactNode;
   id?: string;
   onClose: () => void;
   mobile: boolean;
@@ -34,6 +37,7 @@ export function Detail({
       onClose={onClose}
       mobile={mobile}
       history={history}
+      navigation={navigation}
     />
   ) : (
     <p role="status">Loading task…</p>

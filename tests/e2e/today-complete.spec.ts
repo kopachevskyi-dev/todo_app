@@ -70,7 +70,9 @@ test('desktop: checking a task moves it under Completed with its time, updates p
     await rows(page).filter({ hasText: LICENSE }).click();
     const panel = page.getByRole('complementary');
     await expect(panel).toContainText('Completed at 2:20 PM');
-    await panel.getByRole('button', { name: 'Reopen' }).click();
+    await panel
+      .getByRole('checkbox', { name: `Reopen "${LICENSE}"` })
+      .uncheck();
 
     await expect(main).toContainText('1 of 5 done');
     await expect(

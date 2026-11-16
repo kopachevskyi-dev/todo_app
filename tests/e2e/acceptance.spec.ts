@@ -190,9 +190,6 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       /Planned for Nov 4/,
       /Completed/,
     ]);
-    await expect(
-      page.getByRole('button', { name: 'Move to backlog' }),
-    ).toBeVisible();
   } finally {
     await server.stop();
   }

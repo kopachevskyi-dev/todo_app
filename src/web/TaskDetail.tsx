@@ -3,11 +3,10 @@ import { useEscape } from './useEscape';
 import { browserTimeZone } from './dates';
 import { today } from './useToday';
 import { queryKeys } from './query-keys';
-import { TaskDetailFooter } from './TaskDetailFooter';
 import { TaskActivity } from './TaskActivity';
 import { useDeleteTask } from './useDeleteTask';
 import { useTaskEditor } from './useTaskEditor';
-import { useRef, useState } from 'react';
+import { useRef, useState, type ReactNode } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { ListPicker } from './ListPicker';
 import type { TaskDetailData } from './task-detail-types';
@@ -18,15 +17,17 @@ import { Subtasks } from './Subtasks';
 import { formatDay } from '../domain/day-picker';
 import { completionTime } from './dates';
 import { useCompletion } from './useCompletion';
-import { Button, ConfirmDialog, Checkbox, Icon, Popover } from './components';
+import { Button, ConfirmDialog, Checkbox, Icon } from './components';
 
 export function TaskDetail({
   detail,
   onClose,
   mobile,
   history = false,
+  navigation,
 }: {
   history?: boolean;
+  navigation: ReactNode;
   detail: TaskDetailData;
   onClose: () => void;
   mobile: boolean;
@@ -46,10 +47,7 @@ export function TaskDetail({
   };
   const [choosingList, setChoosingList] = useState(false);
   const [confirming, setConfirming] = useState(false);
-  const [moreOpen, setMoreOpen] = useState(false);
-  const moreAnchor = useRef<HTMLButtonElement>(null);
 
-  const anchor = useRef<HTMLButtonElement>(null);
   const {
     title,
     setTitle,
@@ -85,7 +83,24 @@ export function TaskDetail({
     (list) => list.id === task.listId,
   );
   return (
-    <div className="task-detail">
+    <div
+      className={`task-detail ${task.completedAt ? 'task-detail-done' : ''}`}
+    >
+      <div className="detail-header">
+        {navigation}
+        <Button
+          variant="icon"
+          className="detail-delete"
+          aria-label="Delete task"
+          disabled={deleting || planning}
+          onClick={() => {
+            flushDescription();
+            setConfirming(true);
+          }}
+        >
+          <Icon name="trash" size={16} />
+        </Button>
+      </div>
       <div className="detail-title-row">
         <Checkbox
           label={`${task.completedAt ? 'Reopen' : 'Complete'} "${task.title}"`}
@@ -116,40 +131,7 @@ export function TaskDetail({
             }
           }}
         />
-        <Button
-          ref={moreAnchor}
-          variant="ghost"
-          aria-label="More task actions"
-          aria-haspopup="menu"
-          aria-expanded={moreOpen}
-          onClick={() => setMoreOpen(!moreOpen)}
-        >
-          ⋯
-        </Button>
       </div>
-      {moreOpen && (
-        <Popover
-          anchor={moreAnchor}
-          label="Task actions"
-          onClose={() => setMoreOpen(false)}
-        >
-          <div role="menu" aria-label="Task actions">
-            <Button
-              autoFocus
-              role="menuitem"
-              variant="ghost"
-              disabled={deleting}
-              onClick={() => {
-                setMoreOpen(false);
-                flushDescription();
-                setConfirming(true);
-              }}
-            >
-              Delete
-            </Button>
-          </div>
-        </Popover>
-      )}
       {task.completedAt && (
         <div className="status-pill">
           <Icon name="check" size={14} />
@@ -170,7 +152,6 @@ export function TaskDetail({
         <div className="field-row">
           <span>List</span>
           <button
-            ref={anchor}
             type="button"
             className={`field-value ${!selectedList ? 'empty-value' : ''}`}
             aria-label={`List ${selectedList?.name ?? 'No list'}`}
@@ -184,6 +165,7 @@ export function TaskDetail({
               />
             )}
             {selectedList?.name ?? 'No list'}
+            <Icon name="chevron" size={14} />
           </button>
         </div>
         <div className="field-row">
@@ -197,8 +179,8 @@ export function TaskDetail({
             disabled={Boolean(task.completedAt) || planning || deleting}
             onClick={() => setChoosingDay(true)}
           >
-            <Icon name="today" size={18} />
             {planning ? 'Saving…' : dayLabel}
+            <Icon name="chevron" size={14} />
           </button>
         </div>
       </div>
@@ -223,18 +205,6 @@ export function TaskDetail({
           )}
         </p>
       )}
-      <TaskDetailFooter
-        task={task}
-        deleting={deleting}
-        flushDescription={flushDescription}
-        planning={planning}
-        history={history}
-        setPlanning={setPlanning}
-        queue={queue}
-        setError={setError}
-        onClose={onClose}
-        completion={completion}
-      />
       {choosingDay && (
         <DayPickerDialog
           mobile={mobile}
@@ -262,6 +232,8 @@ export function TaskDetail({
         <ConfirmDialog
           title="Delete task"
           confirmLabel="Delete"
+          mobile={mobile}
+          pending={deleting}
           onClose={() => setConfirming(false)}
           onConfirm={() => {
             void remove();

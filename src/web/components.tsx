@@ -412,24 +412,31 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   onClose,
+  mobile = false,
+  pending = false,
 }: {
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  mobile?: boolean;
+  pending?: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const Container = mobile ? BottomSheet : Modal;
   return (
-    <Modal label={title} className="confirm-dialog" onClose={onClose}>
+    <Container label={title} className="confirm-dialog" onClose={onClose}>
       <h3>{title}</h3>
       <div>{children}</div>
       <div className="dialog-actions">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={pending}>
           Cancel
         </Button>
-        <Button onClick={onConfirm}>{confirmLabel}</Button>
+        <Button onClick={onConfirm} disabled={pending}>
+          {confirmLabel}
+        </Button>
       </div>
-    </Modal>
+    </Container>
   );
 }
 export function Popover({

@@ -16,6 +16,22 @@ export function TaskSurface({
   path: string;
   title: string;
 }) {
+  const navigation = mobile ? (
+    <Link
+      to={path as '/backlog' | '/today' | '/history' | '/search' | '/upcoming'}
+      search={(previous) => ({ ...previous, task: undefined })}
+      aria-label={`Back to ${title}`}
+      className="detail-back"
+    >
+      <Icon name="chevron-left" size={16} />
+      Back
+    </Link>
+  ) : (
+    <Button variant="ghost" className="detail-back" onClick={closeTask}>
+      <Icon name="chevron-left" size={16} />
+      Close
+    </Button>
+  );
   return (
     <>
       {desktop && (
@@ -23,19 +39,12 @@ export function TaskSurface({
           className={`detail-panel ${task ? 'has-task' : ''}`}
           aria-label="Task details"
         >
-          {task && (
-            <div className="detail-header">
-              <span>Task</span>
-              <Button variant="ghost" aria-label="Close" onClick={closeTask}>
-                <Icon name="close" />
-              </Button>
-            </div>
-          )}
           <Detail
             id={task}
             onClose={closeTask}
             mobile={mobile}
             history={path === '/history'}
+            navigation={navigation}
           />
         </aside>
       )}
@@ -45,39 +54,23 @@ export function TaskSurface({
           className="detail-drawer"
           onClose={closeTask}
         >
-          <div className="detail-header">
-            <span>Task</span>
-            <Button variant="ghost" aria-label="Close" onClick={closeTask}>
-              <Icon name="close" />
-            </Button>
-          </div>
           <Detail
             id={task}
             onClose={closeTask}
             mobile={mobile}
             history={path === '/history'}
+            navigation={navigation}
           />
         </Modal>
       )}
       {mobile && task && (
         <main className="pushed-detail">
-          <Link
-            to={
-              path as
-                '/backlog' | '/today' | '/history' | '/search' | '/upcoming'
-            }
-            search={(previous) => ({ ...previous, task: undefined })}
-            aria-label={`Back to ${title}`}
-            className="back-link"
-          >
-            <Icon name="chevron-left" size={18} />
-            {title}
-          </Link>
           <Detail
             id={task}
             onClose={closeTask}
             mobile={mobile}
             history={path === '/history'}
+            navigation={navigation}
           />
         </main>
       )}
