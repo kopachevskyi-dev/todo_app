@@ -8,6 +8,7 @@ export default tseslint.config(
   {
     ignores: [
       'dist/**',
+      'docs/design/**',
       'node_modules/**',
       '.corepack/**',
       '.pnpm-store/**',

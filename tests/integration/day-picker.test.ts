@@ -87,7 +87,7 @@ it('plans a missed backlog task: sets day, clears missedFrom, records planned, l
     activity: { type: string; day: string | null; text: string }[];
   };
   expect(detail.activity.filter((a) => a.type === 'planned')).toMatchObject([
-    { day: '2026-11-04', text: 'planned for Nov 4' },
+    { day: '2026-11-04', text: 'Planned for Nov 4' },
   ]);
   expect(await backlogIds()).not.toContain(id);
 });

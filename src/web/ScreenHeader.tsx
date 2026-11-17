@@ -1,4 +1,3 @@
-import { Link } from '@tanstack/react-router';
 import { dateLabel } from './dates';
 import type { RefObject } from 'react';
 import type { UseQueryResult } from '@tanstack/react-query';
@@ -13,7 +12,6 @@ export function ScreenHeader({
   title,
   isToday,
   today,
-  upcomingCount,
   isBacklog,
   list,
   rows,
@@ -24,6 +22,7 @@ export function ScreenHeader({
   search,
   planButton,
   openPlanner,
+  onCapture,
 }: {
   mobile: boolean;
   isSearch: boolean;
@@ -31,7 +30,6 @@ export function ScreenHeader({
   title: string;
   isToday: boolean;
   today: UseQueryResult<Awaited<ReturnType<typeof api.today>>>;
-  upcomingCount: number;
   isBacklog: boolean;
   list?: string;
   rows?: TaskRow[];
@@ -42,9 +40,12 @@ export function ScreenHeader({
   search: UseQueryResult<Awaited<ReturnType<typeof api.search>>>;
   planButton: RefObject<HTMLButtonElement | null>;
   openPlanner: () => void;
+  onCapture: () => void;
 }) {
   return (
-    <header className={`screen-header ${isToday ? 'today-header' : ''}`}>
+    <header
+      className={`screen-header ${isToday || isBacklog ? 'today-header' : ''}`}
+    >
       {mobile && isSearch && (
         <button className="back-link search-back" onClick={leaveSearch}>
           <Icon name="chevron-left" size={18} />
@@ -86,11 +87,21 @@ export function ScreenHeader({
           {q.trim()}"
         </p>
       )}
+      {path === '/history' && <p>What you planned and what you finished.</p>}
+      {path === '/upcoming' && <p>Tasks planned for the days ahead.</p>}
       {isBacklog && (
         <p>
           Everything you need to do someday.
           <span className="desktop-subtitle"> No date until you plan it.</span>
         </p>
+      )}
+      {isBacklog && !mobile && (
+        <div className="today-tools">
+          <Button onClick={onCapture}>
+            <Icon name="plus" size={16} />
+            New task
+          </Button>
+        </div>
       )}
       {isToday && today.data && (
         <p className="today-date">
@@ -101,41 +112,21 @@ export function ScreenHeader({
           })}
         </p>
       )}
-      {isToday && (
-        <Link to="/upcoming" className="upcoming-link">
-          Upcoming{upcomingCount > 0 ? ` · ${upcomingCount}` : ''}
-        </Link>
-      )}
       {isToday && today.data && (
         <div className="today-tools">
-          <div className="today-progress">
-            <span>
-              {today.data.progress.done} of {today.data.progress.total} done
-            </span>
-            <div
-              className="progress-track"
-              role="progressbar"
-              aria-label="Tasks completed today"
-              aria-valuemin={0}
-              aria-valuemax={today.data.progress.total}
-              aria-valuenow={today.data.progress.done}
-            >
-              <div
-                className="progress-fill"
-                style={{
-                  width: `${today.data.progress.total ? (today.data.progress.done / today.data.progress.total) * 100 : 0}%`,
-                }}
-              />
-            </div>
-          </div>
-          {mobile &&
-            (today.data.progress.total > 0 ||
-              (counts.data?.backlog ?? 0) > 0) && (
-              <Button ref={planButton} variant="outline" onClick={openPlanner}>
-                <Icon name="backlog" size={18} />
-                Add from Backlog
-              </Button>
-            )}
+          {(today.data.progress.total > 0 ||
+            (counts.data?.backlog ?? 0) > 0) && (
+            <Button ref={planButton} variant="outline" onClick={openPlanner}>
+              <Icon name="backlog" size={18} />
+              Add from Backlog
+            </Button>
+          )}
+          {!mobile && (
+            <Button onClick={onCapture}>
+              <Icon name="plus" size={16} />
+              New task
+            </Button>
+          )}
         </div>
       )}
     </header>

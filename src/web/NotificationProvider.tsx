@@ -7,11 +7,15 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
   const show = useCallback((value: Notification) => setNotification(value), []);
+  const paused = Boolean(notification?.actions?.length && (hovered || focused));
   useEffect(() => {
-    if (!notification || hovered || focused) return;
-    const timer = setTimeout(() => setNotification(undefined), 6000);
+    if (!notification || paused) return;
+    const timer = setTimeout(
+      () => setNotification(undefined),
+      notification.duration ?? 4000,
+    );
     return () => clearTimeout(timer);
-  }, [notification, hovered, focused]);
+  }, [notification, paused]);
 
   return (
     <NotificationContext.Provider value={show}>

@@ -38,9 +38,11 @@ test('opening Upcoming from Today lists "Dentist" under Tue, Nov 17; changing it
     });
 
     await page.goto(`${server.url}/today`);
-    await main(page)
-      .getByRole('link', { name: /^Upcoming · 1$/ })
-      .click();
+    const upcoming = page
+      .getByRole('navigation', { name: 'Sections' })
+      .getByRole('link', { name: /^Upcoming\b/ });
+    if (!isMobile) await expect(upcoming).toContainText('1');
+    await upcoming.click();
     await expect(page).toHaveURL(/\/upcoming$/);
     await expect(group(page, 'Tue, Nov 17')).toContainText('Dentist');
 
@@ -64,13 +66,85 @@ test('with no future tasks, Upcoming reads "Nothing planned ahead" with "Plan fr
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/today`);
-    await main(page)
+    await page
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /^Upcoming$/ })
       .click();
     await expect(main(page)).toContainText('Nothing planned ahead');
     await expect(
       main(page).getByRole('link', { name: 'Plan from Backlog' }),
     ).toBeVisible();
+  } finally {
+    await server.stop();
+  }
+});
+
+const planned = async (
+  url: string,
+  title: string,
+  day: string,
+  listName?: string,
+) => {
+  const created = await api(url, 'POST', '/api/tasks', {
+    title,
+    target: 'backlog',
+  });
+  const { task } = (await created.json()) as { task: { id: string } };
+  if (listName) {
+    const lists = (await (await api(url, 'GET', '/api/lists')).json()) as {
+      lists: { id: string; name: string }[];
+    };
+    const found = lists.lists.find((list) => list.name === listName);
+    await api(url, 'PATCH', `/api/tasks/${task.id}`, { listId: found!.id });
+  }
+  await api(url, 'POST', `/api/tasks/${task.id}/plan`, { day });
+};
+
+test('with tasks on Tomorrow and next Monday, Upcoming groups them under "Wed, Nov 11 · 1" and "Mon, Nov 16 · 1"', async ({
+  page,
+}) => {
+  const server = await startTestServer(page);
+  try {
+    await planned(server.url, 'Call plumber', '2026-11-11');
+    await planned(server.url, 'Plan sprint', '2026-11-16');
+    await page.goto(`${server.url}/upcoming`);
+
+    const tomorrow = main(page).getByRole('region', {
+      name: 'Wed, Nov 11 · 1',
+      exact: true,
+    });
+    const monday = main(page).getByRole('region', {
+      name: 'Mon, Nov 16 · 1',
+      exact: true,
+    });
+    await expect(tomorrow).toContainText('Call plumber');
+    await expect(monday).toContainText('Plan sprint');
+  } finally {
+    await server.stop();
+  }
+});
+
+test('clicking Work in the By list widget makes the Work filter active and hides Home tasks', async ({
+  page,
+}) => {
+  const server = await startTestServer(page);
+  try {
+    await planned(server.url, 'Work item', '2026-11-11', 'Work');
+    await planned(server.url, 'Home item', '2026-11-12', 'Home');
+    await page.goto(`${server.url}/upcoming`);
+
+    await page
+      .getByRole('region', { name: 'By list' })
+      .getByRole('button', { name: /^Work\b/ })
+      .click();
+
+    await expect(
+      main(page)
+        .getByRole('group', { name: 'Filter by list' })
+        .getByRole('button', { name: /^Work\b/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
+    await expect(main(page)).toContainText('Work item');
+    await expect(main(page)).not.toContainText('Home item');
   } finally {
     await server.stop();
   }

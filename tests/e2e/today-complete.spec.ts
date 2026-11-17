@@ -38,7 +38,7 @@ test('desktop: checking a task moves it under Completed with its time, updates p
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -62,13 +62,17 @@ test('desktop: checking a task moves it under Completed with its time, updates p
     );
     await expect(main).toContainText('2 of 5 done');
     await expect(
-      page.getByRole('navigation').getByRole('link', { name: /Today/ }),
+      page
+        .getByRole('navigation', { name: 'Sections' })
+        .getByRole('link', { name: /Today/ }),
     ).toContainText('3');
 
     await rows(page).filter({ hasText: LICENSE }).click();
     const panel = page.getByRole('complementary');
     await expect(panel).toContainText('Completed at 2:20 PM');
-    await panel.getByRole('button', { name: 'Reopen' }).click();
+    await panel
+      .getByRole('checkbox', { name: `Reopen "${LICENSE}"` })
+      .uncheck();
 
     await expect(main).toContainText('1 of 5 done');
     await expect(

@@ -24,9 +24,9 @@ it('migrates a fresh SQLite file and returns exactly the seeded lists in order',
   expect(
     body.lists.map(({ name, color, position }) => ({ name, color, position })),
   ).toEqual([
-    { name: 'Personal', color: '#E3686A', position: 0 },
-    { name: 'Work', color: '#5FB4C6', position: 1 },
-    { name: 'Home', color: '#F0C24B', position: 2 },
+    { name: 'Personal', color: '#e05a4f', position: 0 },
+    { name: 'Work', color: '#2a9bb5', position: 1 },
+    { name: 'Home', color: '#e8a33c', position: 2 },
   ]);
 });
 

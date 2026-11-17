@@ -10,7 +10,7 @@ import {
   type Ref,
 } from 'react';
 import { flushSync } from 'react-dom';
-import { completionTime } from './dates';
+import { completionTime, dateLabel } from './dates';
 import { rowMetaText } from '../domain/row-meta';
 import type { TaskRow as TaskRowData } from '../shared/contract';
 
@@ -150,8 +150,12 @@ export function TaskRow({
   onToggle,
   pending,
   orderControls,
+  upNext = false,
+  showMissed = false,
 }: {
   orderControls?: ReactNode;
+  upNext?: boolean;
+  showMissed?: boolean;
   onToggle?: () => Promise<unknown>;
   pending?: boolean;
   location?: string;
@@ -164,7 +168,7 @@ export function TaskRow({
   const meta = [
     rowMetaText({
       listName: task.list?.name ?? null,
-      missedFrom: task.missedFrom,
+      missedFrom: showMissed ? null : task.missedFrom,
       subtaskCount: 0,
     }),
     task.subtaskCount > 0
@@ -178,7 +182,7 @@ export function TaskRow({
     <li
       data-layout-id={task.id}
       data-layout-group={task.completedAt ? 'done' : 'open'}
-      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''}`}
+      className={`task-row ${selected ? 'selected' : ''} ${task.completedAt ? 'done' : ''} ${creating ? 'pending' : ''} ${upNext ? 'up-next' : ''} ${showMissed && task.missedFrom ? 'returned' : ''}`}
       inert={creating}
       aria-busy={creating || undefined}
     >
@@ -219,20 +223,21 @@ export function TaskRow({
         }}
         aria-current={selected ? 'true' : undefined}
       >
+        <span
+          className="list-dot row-list-bar"
+          style={{ background: task.list?.color ?? 'var(--check-border)' }}
+          aria-hidden="true"
+        />
         <span className="row-text">
           <span className="row-title">{task.title}</span>
-          {meta && (
-            <span className="row-meta">
-              {task.list && (
-                <span
-                  className="list-dot"
-                  style={{ background: task.list.color }}
-                />
-              )}
-              {meta}
-            </span>
-          )}
+          {meta && <span className="row-meta">{meta}</span>}
         </span>
+        {upNext && <span className="up-next-tag">Up next</span>}
+        {showMissed && task.missedFrom && (
+          <span className="missed-tag">
+            was {dateLabel(task.missedFrom, { month: 'short', day: 'numeric' })}
+          </span>
+        )}
         {creating && <span className="row-meta">Saving…</span>}
         {task.completedAt && !location && (
           <time className="completion-time" dateTime={task.completedAt}>
@@ -279,13 +284,13 @@ export function QuickAdd({
       }}
     >
       <div className="quick-field">
-        <Icon name="plus" />
+        {!mobile && <Icon name="plus" />}
         <input
           ref={inputRef}
           aria-label="Task title"
           aria-describedby={id}
           aria-invalid={Boolean(error)}
-          placeholder={`Add to ${target}`}
+          placeholder={`Add to ${target}${mobile ? '…' : ''}`}
           value={value}
           onChange={(event) => onChange(event.target.value)}
         />
@@ -309,18 +314,21 @@ export function QuickAdd({
             : 'A title is enough. Add details, a list or a day later.'}
         </p>
         {mobile && (
-          <div className="capture-actions">
-            {onClose && (
-              <Button type="button" variant="outline" onClick={onClose}>
-                Close
-              </Button>
-            )}
-            <Button type="submit" disabled={pending}>
-              Add
-            </Button>
-          </div>
+          <Button type="submit" disabled={pending}>
+            Add
+          </Button>
         )}
       </div>
+      {mobile && onClose && (
+        <Button
+          className="capture-close"
+          variant="ghost"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <Icon name="close" size={18} />
+        </Button>
+      )}
     </form>
   );
 }
@@ -414,24 +422,31 @@ export function ConfirmDialog({
   confirmLabel,
   onConfirm,
   onClose,
+  mobile = false,
+  pending = false,
 }: {
   title: string;
   children: ReactNode;
   confirmLabel: string;
+  mobile?: boolean;
+  pending?: boolean;
   onConfirm: () => void;
   onClose: () => void;
 }) {
+  const Container = mobile ? BottomSheet : Modal;
   return (
-    <Modal label={title} className="confirm-dialog" onClose={onClose}>
+    <Container label={title} className="confirm-dialog" onClose={onClose}>
       <h3>{title}</h3>
       <div>{children}</div>
       <div className="dialog-actions">
-        <Button variant="outline" onClick={onClose}>
+        <Button variant="outline" onClick={onClose} disabled={pending}>
           Cancel
         </Button>
-        <Button onClick={onConfirm}>{confirmLabel}</Button>
+        <Button onClick={onConfirm} disabled={pending}>
+          {confirmLabel}
+        </Button>
       </div>
-    </Modal>
+    </Container>
   );
 }
 export function Popover({

@@ -35,19 +35,22 @@ function seed(databasePath: string) {
   }
 }
 
-test('desktop: typing in the sidebar search shows the result with its location; click opens it; Escape returns', async ({
+test('desktop: typing in the top-bar search shows the result with its location; click opens it; Escape returns', async ({
   page,
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     seed(server.databasePath);
     await page.goto(`${server.url}/backlog`);
 
-    const field = page.getByRole('search').getByPlaceholder('Search');
+    const field = page
+      .getByRole('banner')
+      .getByRole('search', { name: 'Search tasks' })
+      .getByPlaceholder('Search');
     await field.fill('license');
     await expect(page).toHaveURL(/\/search\?q=license/);
     const main = page.getByRole('main');
@@ -71,30 +74,39 @@ test('desktop: typing in the sidebar search shows the result with its location; 
 test('desktop: a single match reads "1 result for"', async ({ page }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     seed(server.databasePath);
     await page.goto(`${server.url}/backlog`);
-    await page.getByRole('search').getByPlaceholder('Search').fill('milk');
+    await page
+      .getByRole('banner')
+      .getByRole('search', { name: 'Search tasks' })
+      .getByPlaceholder('Search')
+      .fill('milk');
     await expect(page.getByRole('main')).toContainText('1 result for "milk"');
   } finally {
     await server.stop();
   }
 });
 
-test('desktop: the sidebar search is a search landmark', async ({ page }) => {
+test('desktop: the top-bar search is a search landmark', async ({ page }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await page.goto(`${server.url}/backlog`);
-    await expect(page.getByRole('search')).toBeVisible();
     await expect(
-      page.getByRole('search').getByPlaceholder('Search'),
+      page.getByRole('banner').getByRole('search', { name: 'Search tasks' }),
+    ).toBeVisible();
+    await expect(
+      page
+        .getByRole('banner')
+        .getByRole('search', { name: 'Search tasks' })
+        .getByPlaceholder('Search'),
     ).toBeVisible();
     await expect(
       page.getByRole('navigation', { name: 'Search tasks' }),
@@ -109,16 +121,23 @@ test('desktop: Escape after reloading the search page returns to Backlog', async
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     seed(server.databasePath);
     await page.goto(`${server.url}/backlog`);
-    await page.getByRole('search').getByPlaceholder('Search').fill('license');
+    await page
+      .getByRole('banner')
+      .getByRole('search', { name: 'Search tasks' })
+      .getByPlaceholder('Search')
+      .fill('license');
     await expect(page).toHaveURL(/\/search\?q=license/);
     await page.reload();
-    const field = page.getByRole('search').getByPlaceholder('Search');
+    const field = page
+      .getByRole('banner')
+      .getByRole('search', { name: 'Search tasks' })
+      .getByPlaceholder('Search');
     await expect(field).toHaveValue('license');
     await field.press('Escape');
     await expect(page).toHaveURL(/\/backlog/);
@@ -127,7 +146,7 @@ test('desktop: Escape after reloading the search page returns to Backlog', async
   }
 });
 
-test('mobile: Search on Backlog, typing "zzz" shows "No tasks match"', async ({
+test('mobile: Search on Backlog, typing "zzz" shows the "No matching tasks" empty state', async ({
   page,
 }) => {
   test.skip(
@@ -140,7 +159,95 @@ test('mobile: Search on Backlog, typing "zzz" shows "No tasks match"', async ({
     await page.goto(`${server.url}/backlog`);
     await page.getByRole('button', { name: 'Search' }).click();
     await page.getByRole('textbox').fill('zzz');
-    await expect(page.getByText('No tasks match')).toBeVisible();
+    await expect(page.getByText('No matching tasks')).toBeVisible();
+  } finally {
+    await server.stop();
+  }
+});
+
+async function createTask(url: string, title: string) {
+  const response = await fetch(`${url}/api/tasks`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Timezone': 'UTC' },
+    body: JSON.stringify({ title, target: 'backlog' }),
+  });
+  expect(response.status).toBe(201);
+}
+
+test('desktop: searching "milk" lists only "Buy milk" among "Buy milk" and "Call mom"', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
+  try {
+    await createTask(server.url, 'Buy milk');
+    await createTask(server.url, 'Call mom');
+    await page.goto(`${server.url}/backlog`);
+    await page
+      .getByRole('banner')
+      .getByRole('search', { name: 'Search tasks' })
+      .getByPlaceholder('Search')
+      .fill('milk');
+    const rows = page.getByRole('main').getByRole('listitem');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('Buy milk');
+    await expect(page.getByRole('main')).not.toContainText('Call mom');
+  } finally {
+    await server.stop();
+  }
+});
+
+test('desktop: a query with no match shows the "No matching tasks" empty state with a muted body', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name !== 'desktop',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
+  );
+  const server = await startTestServer(page);
+  try {
+    await createTask(server.url, 'Buy milk');
+    await page.goto(`${server.url}/backlog`);
+    await page
+      .getByRole('banner')
+      .getByRole('search', { name: 'Search tasks' })
+      .getByPlaceholder('Search')
+      .fill('zzz');
+    const main = page.getByRole('main');
+    await expect(main.getByText('No matching tasks')).toBeVisible();
+    await expect(main.getByText('No tasks match')).toHaveCount(0);
+    await expect(main.getByRole('listitem')).toHaveCount(0);
+    await expect(main.locator('.empty-panel > strong')).toHaveText(
+      'No matching tasks',
+    );
+    await expect(main.locator('.empty-panel > span')).toHaveText(/\S/);
+  } finally {
+    await server.stop();
+  }
+});
+
+test('mobile: the header search icon opens results that list only "Buy milk" for "milk"', async ({
+  page,
+}) => {
+  test.skip(
+    test.info().project.name !== 'mobile',
+    'Exercises the mobile sheet, screen or navigation layout.',
+  );
+  const server = await startTestServer(page);
+  try {
+    await createTask(server.url, 'Buy milk');
+    await createTask(server.url, 'Call mom');
+    await page.goto(`${server.url}/backlog`);
+    await page.getByRole('button', { name: 'Search' }).click();
+    await page.getByRole('textbox').fill('milk');
+    await expect(page).toHaveURL(/\/search\?q=milk/);
+    const rows = page.getByRole('main').getByRole('listitem');
+    await expect(rows).toHaveCount(1);
+    await expect(rows.first()).toContainText('Buy milk');
+    await expect(page.getByRole('main')).not.toContainText('Call mom');
   } finally {
     await server.stop();
   }

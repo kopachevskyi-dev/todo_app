@@ -1,5 +1,9 @@
 import { expect, it } from 'vitest';
-import { examples, taskDetailResponseSchema } from '../../src/shared/contract';
+import {
+  activityExamples,
+  examples,
+  taskDetailResponseSchema,
+} from '../../src/shared/contract';
 import { subtasks, taskEvents, tasks } from '../../src/persistence/schema';
 import { testApp } from '../helpers/app';
 
@@ -10,6 +14,20 @@ it('parses the detail example, with two subtasks (one done) and planned and comp
   const types = example.activity.map((item) => item.type);
   expect(types).toContain('planned');
   expect(types).toContain('completed');
+});
+
+it('accepts the four v3 activity items and rejects a stored-only kind', () => {
+  const base = examples.taskDetail;
+  const items = activityExamples;
+  expect(
+    taskDetailResponseSchema.parse({ ...base, activity: items }).activity,
+  ).toEqual(items);
+  expect(
+    taskDetailResponseSchema.safeParse({
+      ...base,
+      activity: [{ ...items[0], type: 'details_added' }],
+    }).success,
+  ).toBe(false);
 });
 
 it('returns the detail example for the fixture task', async () => {
@@ -39,14 +57,14 @@ it('returns the detail example for the fixture task', async () => {
         example.activity.map((item, i) => ({
           id: `01JBX7Q3M2V8R4K9T6N0EVT${String(i + 1).padStart(3, '0')}`,
           taskId: task.id,
-          type: item.type,
+          type:
+            item.type === 'added'
+              ? ('added_to_backlog' as const)
+              : item.type === 'returned'
+                ? ('moved_to_backlog' as const)
+                : item.type,
           at: item.at,
           day: item.day,
-          // Only `details_added` text depends on stored data.
-          data:
-            item.type === 'details_added'
-              ? { parts: ['description', 'list'] }
-              : null,
         })),
       )
       .run();

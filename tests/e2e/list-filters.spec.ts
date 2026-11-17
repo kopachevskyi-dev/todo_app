@@ -53,7 +53,9 @@ async function createList(url: string, name: string) {
 const main = (page: Page) => page.getByRole('main');
 const rows = (page: Page) => main(page).getByRole('listitem');
 const listButton = (page: Page, name: string) =>
-  page.getByRole('button', { name, exact: true });
+  page
+    .getByRole('group', { name: 'Filter by list', exact: true })
+    .getByRole('button', { name: new RegExp(`^${name}\\b`) });
 const sections = (page: Page) =>
   page.getByRole('navigation', { name: 'Sections' });
 
@@ -227,7 +229,7 @@ test('Today: all tasks done says so and keeps the Completed group visible', asyn
 test('desktop: the History filter survives a reload', async ({ page }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'History shows list controls only in the desktop sidebar.',
+    'History shows list chips only on desktop.',
   );
   const server = await startTestServer(page);
   try {
@@ -245,6 +247,31 @@ test('desktop: the History filter survives a reload', async ({ page }) => {
       'aria-pressed',
       'true',
     );
+  } finally {
+    await server.stop();
+  }
+});
+
+test('a filter on a list that was deleted is dropped instead of hiding every row', async ({
+  page,
+}) => {
+  const server = await startTestServer(page);
+  try {
+    await seed(server.url, 'W1', 'Work');
+    await seed(server.url, 'N1', null);
+    const work = await listId(server.url, 'Work');
+    await page.goto(`${server.url}/backlog?lists=${work}`);
+    await expect(main(page)).not.toContainText('N1');
+
+    const removed = await fetch(`${server.url}/api/lists/${work}`, {
+      method: 'DELETE',
+      headers,
+    });
+    expect(removed.ok).toBe(true);
+    await page.reload();
+
+    await expect(main(page)).toContainText('N1');
+    await expect(page).not.toHaveURL(/lists=/);
   } finally {
     await server.stop();
   }

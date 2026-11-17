@@ -38,15 +38,17 @@ test('the open app rolls a task to the Backlog at midnight without a reload', as
 
     await expect(main).toContainText('Thursday, November 5');
     await expect(main).toContainText('Nothing planned for today');
-    await expect(main).not.toContainText('Pay rent');
+    await expect(
+      main.getByRole('listitem').filter({ hasText: 'Pay rent' }),
+    ).toHaveCount(0);
 
     await page
-      .getByRole('navigation')
+      .getByRole('navigation', { name: 'Sections' })
       .getByRole('link', { name: /Backlog/ })
       .click();
     const first = main.getByRole('listitem').first();
     await expect(first).toContainText('Pay rent');
-    await expect(first).toContainText('from Wed, Nov 4');
+    await expect(first).toContainText('was Nov 4');
   } finally {
     await server.stop();
   }

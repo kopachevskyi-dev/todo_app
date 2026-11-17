@@ -6,7 +6,9 @@ test.use({ timezoneId: 'America/New_York' });
 const LICENSE = "Renew driver's license";
 const rows = (page: Page) => page.getByRole('main').getByRole('listitem');
 const navLink = (page: Page, name: RegExp) =>
-  page.getByRole('navigation').getByRole('link', { name });
+  page
+    .getByRole('navigation', { name: 'Sections' })
+    .getByRole('link', { name });
 
 async function api(url: string, method: string, path: string, body?: unknown) {
   const response = await fetch(`${url}${path}`, {
@@ -97,7 +99,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await expectBacklogCount('8');
     await rows(page).first().click();
     await detail.getByRole('button', { name: /^Activity/ }).click();
-    await expect(detail).toContainText('added to backlog');
+    await expect(detail).toContainText('Added to Backlog');
     for (const id of monday) await complete(server.url, id);
 
     // 2. Tue Nov 3, 8:03 PM: description, 3 subtasks, list Personal.
@@ -130,10 +132,12 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await detail.getByRole('button', { name: /^List/ }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: 'Personal' })
+      .getByRole('button', { name: 'Personal', exact: true })
       .click();
     await detail.getByRole('button', { name: /^Activity/ }).click();
-    await expect(detail).toContainText('description, subtasks and list added');
+    await expect(detail.locator('.activity li')).toHaveText([
+      /Added to Backlog/,
+    ]);
 
     // 2b. 8:05 PM: plan for tomorrow.
     await at('2026-11-04T01:05:00.000Z');
@@ -142,7 +146,7 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
       page.getByRole('button', { name: /Tomorrow, Wed 4/ }),
     ).toContainText('4 tasks');
     await page.getByRole('button', { name: /Tomorrow, Wed 4/ }).click();
-    await expect(detail).toContainText('planned for Nov 4');
+    await expect(detail).toContainText('Planned for Nov 4');
     if (mobile)
       await page.getByRole('link', { name: 'Back to Backlog' }).click();
     await expectBacklogCount('7');
@@ -182,25 +186,21 @@ test('the section-7 core flow, Mon Nov 2 to Sun Nov 8', async ({
     await expect(main).toContainText('4 of 5 done · 1 moved to backlog');
     await main.getByRole('listitem').filter({ hasText: LICENSE }).click();
     await expect(detail.locator('.activity li')).toHaveText([
-      /added to backlog/,
-      /description, subtasks and list added/,
-      /planned for Nov 4/,
-      /completed/,
+      /Added to Backlog/,
+      /Planned for Nov 4/,
+      /Completed/,
     ]);
-    await expect(
-      page.getByRole('button', { name: 'Move to backlog' }),
-    ).toBeVisible();
   } finally {
     await server.stop();
   }
 });
 
-test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once planned again through the day picker', async ({
+test('desktop: a task that rolled over shows "was Nov 4" and loses it once planned again through the day picker', async ({
   page,
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -210,7 +210,7 @@ test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once
     await setClock(page, server.url, '2026-11-05T15:00:00.000Z');
     await page.goto(`${server.url}/backlog`);
     await expect(rows(page).first()).toContainText('Pay rent');
-    await expect(rows(page).first()).toContainText('from Wed, Nov 4');
+    await expect(rows(page).first()).toContainText('was Nov 4');
 
     await rows(page).first().click();
     const panel = page.getByRole('complementary');
@@ -220,7 +220,7 @@ test('desktop: a task that rolled over shows "from Wed, Nov 4" and loses it once
     await page.goto(`${server.url}/today`);
     const row = rows(page).filter({ hasText: 'Pay rent' });
     await expect(row).toHaveCount(1);
-    await expect(row).not.toContainText('from');
+    await expect(row).not.toContainText('was Nov 4');
   } finally {
     await server.stop();
   }
@@ -247,7 +247,7 @@ async function expectFocusRing(page: Page) {
 /** The design ring belongs to the focused row link itself. */
 async function expectRowFocusRing(page: Page) {
   const focused = page.locator(':focus');
-  await expect(focused).toHaveCSS('outline', 'rgb(47, 111, 222) solid 2px');
+  await expect(focused).toHaveCSS('outline', 'rgb(74, 134, 232) solid 2px');
   await expect(focused).toHaveCSS('outline-offset', '2px');
 }
 
@@ -256,7 +256,7 @@ test('desktop keyboard only: quick-add, rows, Day popover, Plan, Escape', async 
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -279,17 +279,17 @@ test('desktop keyboard only: quick-add, rows, Day popover, Plan, Escape', async 
     await expect(rows(page).first()).toContainText('Keyboard task');
     await expect(rows(page)).toHaveCount(3);
 
-    // Tab into the rows, arrow between them, Enter opens the detail.
+    // Quick add follows the rows; tab backwards to their first link.
     for (let i = 0; i < 30; i++) {
-      await page.keyboard.press('Tab');
+      await page.keyboard.press('Shift+Tab');
       await expectFocusRing(page);
-      const inRows = await page.evaluate(() =>
-        Boolean(
-          document.activeElement?.closest('main li') &&
-          document.activeElement.tagName === 'A',
-        ),
-      );
-      if (inRows) break;
+      if (
+        await rows(page)
+          .first()
+          .getByRole('link')
+          .evaluate((element) => element === document.activeElement)
+      )
+        break;
     }
     await expect(rows(page).first().getByRole('link')).toBeFocused();
     await expectRowFocusRing(page);
@@ -344,7 +344,7 @@ test('desktop: with the API unreachable, "Pay rent" stays in the field with an i
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {

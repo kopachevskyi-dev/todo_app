@@ -155,7 +155,7 @@ test('Tab moves from the row checkbox to the row link; Space completes without o
   }
 });
 
-test('Delete from the card menu removes the task after confirming; cancelling keeps it', async ({
+test('Delete from the card icon removes the task after confirming; cancelling keeps it', async ({
   page,
 }) => {
   const server = await startTestServer(page);
@@ -163,8 +163,7 @@ test('Delete from the card menu removes the task after confirming; cancelling ke
     const [id] = await seedToday(server.url, [TITLE]);
     await page.goto(`${server.url}/today?task=${id}`);
     const openDelete = async () => {
-      await card(page).getByRole('button', { name: /more/i }).click();
-      await page.getByRole('menuitem', { name: 'Delete' }).click();
+      await card(page).getByRole('button', { name: 'Delete task' }).click();
     };
 
     await openDelete();
@@ -188,22 +187,22 @@ test('Delete from the card menu removes the task after confirming; cancelling ke
   }
 });
 
-test('Activity is collapsed as "Activity (3)" on an open task and expanded on a completed one', async ({
+test('Activity is collapsed as "Activity (2)" on an open task and expanded on a completed one', async ({
   page,
 }) => {
   const server = await startTestServer(page);
   try {
-    const [id] = await seedToday(server.url, [TITLE]); // 1: added to today
+    const [id] = await seedToday(server.url, [TITLE]); // Added to Backlog and Planned for today
     await api(server.url, 'PATCH', `/api/tasks/${id}`, {
       description: 'Ask about Sunday',
-    }); // 2: description added
+    }); // Detail edits stay hidden
     await setClock(page, server.url, '2026-11-10T16:00:00.000Z');
     await api(server.url, 'POST', `/api/tasks/${id}/subtasks`, {
       title: 'Dial',
-    }); // 3: subtasks added (outside the 15-minute merge window)
+    }); // Subtask edits also stay hidden
     await page.goto(`${server.url}/today?task=${id}`);
 
-    const toggle = card(page).getByRole('button', { name: 'Activity (3)' });
+    const toggle = card(page).getByRole('button', { name: 'Activity (2)' });
     await expect(toggle).toHaveAttribute('aria-expanded', 'false');
     await expect(card(page).locator('.activity li')).toHaveCount(0);
 
@@ -217,7 +216,11 @@ test('Activity is collapsed as "Activity (3)" on an open task and expanded on a 
     await expect(
       card(page).getByRole('button', { name: /^Activity/ }),
     ).toHaveAttribute('aria-expanded', 'true');
-    await expect(card(page).locator('.activity li')).toHaveCount(4);
+    await expect(card(page).locator('.activity li')).toHaveText([
+      /Added to Backlog/,
+      /Planned for Nov 10/,
+      /Completed/,
+    ]);
   } finally {
     await server.stop();
   }

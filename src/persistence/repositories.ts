@@ -16,7 +16,6 @@ import {
 import type { AppDatabase } from './database';
 import { lists, subtasks, tasks, taskEvents } from './schema';
 import { createId } from './ids';
-import { applyDetailsEdit, type DetailPart } from '../domain/activity';
 import { listColors } from '../shared/contract';
 import type {
   CreateListRequest,
@@ -63,53 +62,6 @@ export function createRepositories(db: AppDatabase) {
   };
   const total = (where: ReturnType<typeof and>) =>
     db.select({ value: count() }).from(tasks).where(where).get()!.value;
-  const recordDetailsEdit = (
-    tx: Parameters<Parameters<AppDatabase['transaction']>[0]>[0],
-    taskId: string,
-    part: DetailPart,
-    now: Date,
-    listName?: string,
-  ) => {
-    const latest = tx
-      .select()
-      .from(taskEvents)
-      .where(
-        and(
-          eq(taskEvents.taskId, taskId),
-          eq(taskEvents.type, 'details_added'),
-        ),
-      )
-      .orderBy(desc(taskEvents.at), desc(sql`task_event.rowid`))
-      .get();
-    const result = applyDetailsEdit(
-      latest
-        ? {
-            at: latest.at,
-            parts: (latest.data?.parts ?? []) as DetailPart[],
-          }
-        : null,
-      part,
-      now,
-    );
-    const name = listName ?? latest?.data?.listName;
-    const data = { parts: result.parts, ...(name ? { listName: name } : {}) };
-    if (result.kind === 'update' && latest) {
-      tx.update(taskEvents)
-        .set({ data })
-        .where(eq(taskEvents.id, latest.id))
-        .run();
-    } else {
-      tx.insert(taskEvents)
-        .values({
-          id: createId(now),
-          taskId,
-          type: 'details_added',
-          at: result.at,
-          data,
-        })
-        .run();
-    }
-  };
   return {
     tasks: {
       rollover: (now: Date, timeZone: string) =>
@@ -470,30 +422,10 @@ export function createRepositories(db: AppDatabase) {
       delete: (id: string) => db.delete(tasks).where(eq(tasks.id, id)).run(),
       patch: (id: string, input: PatchTaskRequest, now: Date) =>
         transaction((tx) => {
-          const previous = tx
-            .select()
-            .from(tasks)
-            .where(eq(tasks.id, id))
-            .get()!;
           tx.update(tasks)
             .set({ ...input, updatedAt: now.toISOString() })
             .where(eq(tasks.id, id))
             .run();
-          const parts: DetailPart[] = [];
-          if (
-            input.description?.trim() &&
-            input.description !== previous.description
-          )
-            parts.push('description');
-          if (input.listId && input.listId !== previous.listId)
-            parts.push('list');
-          for (const part of parts) {
-            const listName = input.listId
-              ? tx.select().from(lists).where(eq(lists.id, input.listId)).get()
-                  ?.name
-              : undefined;
-            recordDetailsEdit(tx, id, part, now, listName);
-          }
           return tx
             .select(taskFields)
             .from(tasks)
@@ -536,7 +468,6 @@ export function createRepositories(db: AppDatabase) {
             .set({ updatedAt: now.toISOString() })
             .where(eq(tasks.id, taskId))
             .run();
-          recordDetailsEdit(tx, taskId, 'subtasks', now);
           return subtask;
         }),
       patch: (id: string, input: PatchSubtaskRequest, now: Date) =>
@@ -592,7 +523,7 @@ export function createRepositories(db: AppDatabase) {
                 listColors.find(
                   (color) => !existing.some((list) => list.color === color),
                 ) ??
-                '#8E7CC3',
+                listColors[0],
               position: (existing.at(-1)?.position ?? -1) + 1,
               createdAt: now.toISOString(),
             })

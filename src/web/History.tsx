@@ -1,4 +1,7 @@
+import { weekWidget } from './progress';
+import { StatWidget } from './StatWidget';
 import { dateLabel } from './dates';
+import { ListFilters } from './Lists';
 import { today as getToday } from './useToday';
 import { queryKeys } from './query-keys';
 import { HistoryDayGroups } from './HistoryDayGroups';
@@ -23,7 +26,15 @@ function weekLabel(start: string) {
   }`;
 }
 
-export function History({ onOpen }: { onOpen: (id: string) => void }) {
+export function History({
+  onOpen,
+  mobile,
+  onFilter,
+}: {
+  onOpen: (id: string) => void;
+  mobile: boolean;
+  onFilter: (id?: string) => void;
+}) {
   const { week, day, lists: list, task } = useSearch({ strict: false });
   const navigate = useNavigate();
   const lists = useQuery({ queryKey: queryKeys.lists, queryFn: api.lists });
@@ -51,6 +62,11 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
         };
         return {
           ...item,
+          allTasks: [
+            ...item.groups.done,
+            ...item.groups.notDone,
+            ...item.groups.planned,
+          ],
           groups,
           done: groups.done.length,
           notDone: groups.notDone.length,
@@ -69,7 +85,7 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
   const focusDay = useRef<string | undefined>(undefined);
   useEffect(() => {
     if (!selected || !weekStart) return;
-    if (week !== weekStart || day !== selected.day)
+    if ((week || day) && (week !== weekStart || day !== selected.day))
       void navigate({
         to: '/history',
         search: (previous) => ({
@@ -115,164 +131,174 @@ export function History({ onOpen }: { onOpen: (id: string) => void }) {
     );
   if (!history.data || !selected) return <p role="status">Loading history…</p>;
   const kind =
-    selected.day < history.data.today
-      ? 'past'
-      : selected.day === history.data.today
-        ? 'today'
-        : 'future';
+    selected.day < today ? 'past' : selected.day === today ? 'today' : 'future';
   const empty = !selected.done && !selected.notDone && !selected.planned;
+  const stat = weekWidget(history.data.days);
   return (
-    <div className="history-view">
-      <div className="history-toolbar">
-        <p>
-          {weekLabel(history.data.weekStart)}
-          <span className="desktop-subtitle">
-            {' '}
-            · what you planned and what you finished
-          </span>
-        </p>
-        <div className="week-arrows">
-          <Button
-            variant="icon"
-            aria-label="Previous week"
-            onClick={() => pageWeek(-7)}
-          >
-            <span className="previous-arrow">
-              <Icon name="chevron" size={18} />
-            </span>
-          </Button>
-          <Button
-            variant="icon"
-            aria-label="Next week"
-            onClick={() => pageWeek(7)}
-          >
-            <Icon name="chevron" size={18} />
-          </Button>
-        </div>
-      </div>
-      <select
-        className="history-mobile-filter"
-        aria-label="Filter by list"
-        multiple
-        value={list?.split(',') ?? []}
-        onChange={(event) => {
-          void navigate({
-            to: '/history',
-            search: (previous) => ({
-              ...previous,
-              lists:
-                Array.from(
-                  event.target.selectedOptions,
-                  (option) => option.value,
-                ).join(',') || undefined,
-              task: undefined,
-            }),
-          });
-        }}
-      >
-        {lists.data?.lists.map((item) => (
-          <option key={item.id} value={item.id}>
-            {item.name}
-          </option>
-        ))}
-      </select>
-      <div className="week-strip" role="group" aria-label="Week days">
-        {history.data.days.map((item) => {
-          const future = item.day > history.data.today;
-          const total = item.done + item.notDone + item.planned;
-          const ratio = future
-            ? item.planned
-              ? `${item.planned} planned`
-              : 'No plan'
-            : total
-              ? `${item.done} of ${total}`
-              : 'No plan';
-          const active = item.day === selected.day;
-          const label = `${fullDay(item.day)}: ${ratio}${!future && total ? ' done' : ''}${active ? ', selected' : ''}`;
-          const weekday = dateLabel(item.day, { weekday: 'short' });
-          return (
-            <button
-              key={item.day}
-              ref={(node) => {
-                if (node) buttons.current.set(item.day, node);
-                else buttons.current.delete(item.day);
-              }}
-              type="button"
-              className={`week-cell ${!total ? 'empty-day' : ''}`}
-              aria-label={label}
-              aria-pressed={active}
-              aria-current={
-                item.day === history.data.today ? 'date' : undefined
-              }
-              tabIndex={active ? 0 : -1}
-              onClick={() => choose(item.day)}
-              onKeyDown={(event) => {
-                const offset =
-                  event.key === 'ArrowRight'
-                    ? 1
-                    : event.key === 'ArrowLeft'
-                      ? -1
-                      : undefined;
-                if (
-                  offset !== undefined ||
-                  event.key === 'Home' ||
-                  event.key === 'End'
-                ) {
-                  event.preventDefault();
-                  choose(
-                    offset !== undefined
-                      ? addDays(item.day, offset)
-                      : addDays(
-                          history.data.weekStart,
-                          event.key === 'Home' ? 0 : 6,
-                        ),
-                    true,
-                  );
-                }
-              }}
-            >
-              <span className="week-weekday">
-                <span className="desktop-weekday">
-                  {weekday}
-                  {item.day === history.data.today ? ' · today' : ''}
+    <div className={`history-view ${task ? 'task-open' : ''}`}>
+      <div className="history-primary">
+        <section className="history-week-card">
+          <div className="history-toolbar">
+            <p>{weekLabel(history.data.weekStart)}</p>
+            <div className="week-arrows">
+              <Button
+                variant="icon"
+                aria-label="Previous week"
+                onClick={() => pageWeek(-7)}
+              >
+                <span className="previous-arrow">
+                  <Icon name="chevron" size={18} />
                 </span>
-                <span className="mobile-weekday">{weekday[0]}</span>
-              </span>
-              <span className="week-number">{Number(item.day.slice(-2))}</span>
-              <span className="week-track" aria-hidden="true">
-                <span
-                  className="week-fill"
-                  style={{ width: `${total ? (item.done / total) * 100 : 0}%` }}
-                />
-              </span>
-              <span className="week-ratio">{ratio}</span>
-            </button>
-          );
-        })}
+              </Button>
+              <Button
+                variant="icon"
+                aria-label="Next week"
+                onClick={() => pageWeek(7)}
+              >
+                <Icon name="chevron" size={18} />
+              </Button>
+            </div>
+          </div>
+          <div className="week-strip" role="group" aria-label="Week days">
+            {history.data.days.map((item) => {
+              const future = item.day > today;
+              const total = item.done + item.notDone + item.planned;
+              const ratio = future
+                ? item.planned
+                  ? `${item.planned} planned`
+                  : 'No plan'
+                : total
+                  ? `${item.done} of ${total}`
+                  : 'No plan';
+              const active = item.day === selected.day;
+              const label = `${fullDay(item.day)}: ${ratio}${!future && total ? ' done' : ''}${active ? ', selected' : ''}`;
+              const weekday = dateLabel(item.day, { weekday: 'short' });
+              return (
+                <button
+                  key={item.day}
+                  ref={(node) => {
+                    if (node) buttons.current.set(item.day, node);
+                    else buttons.current.delete(item.day);
+                  }}
+                  type="button"
+                  className={`week-cell ${!total ? 'empty-day' : ''}`}
+                  aria-label={label}
+                  aria-pressed={active}
+                  aria-current={item.day === today ? 'date' : undefined}
+                  tabIndex={active ? 0 : -1}
+                  onClick={() => choose(item.day)}
+                  onKeyDown={(event) => {
+                    const offset =
+                      event.key === 'ArrowRight'
+                        ? 1
+                        : event.key === 'ArrowLeft'
+                          ? -1
+                          : undefined;
+                    if (
+                      offset !== undefined ||
+                      event.key === 'Home' ||
+                      event.key === 'End'
+                    ) {
+                      event.preventDefault();
+                      choose(
+                        offset !== undefined
+                          ? addDays(item.day, offset)
+                          : addDays(
+                              history.data.weekStart,
+                              event.key === 'Home' ? 0 : 6,
+                            ),
+                        true,
+                      );
+                    }
+                  }}
+                >
+                  <span className="week-weekday">
+                    {item.day === today ? 'Today' : weekday}
+                  </span>
+                  <span className="week-number">
+                    {Number(item.day.slice(-2))}
+                  </span>
+                  <span className="week-track" aria-hidden="true">
+                    <span
+                      className="week-fill"
+                      style={{
+                        width: `${!future && total ? (item.done / total) * 100 : 0}%`,
+                      }}
+                    />
+                  </span>
+                  <span className="week-ratio">{ratio}</span>
+                </button>
+              );
+            })}
+          </div>
+        </section>
+        <section
+          key={selected.day}
+          className="history-day"
+          aria-label={fullDay(selected.day)}
+        >
+          <div className="history-day-heading">
+            <h2>{fullDay(selected.day)}</h2>
+            <p>
+              {empty
+                ? list
+                  ? 'No matching tasks planned this day.'
+                  : 'Nothing planned this day.'
+                : historySummary(selected, kind)}
+            </p>
+          </div>
+          <select
+            className="history-mobile-filter"
+            aria-label="Filter by list"
+            multiple
+            value={list?.split(',') ?? []}
+            onChange={(event) => {
+              void navigate({
+                to: '/history',
+                search: (previous) => ({
+                  ...previous,
+                  lists:
+                    Array.from(
+                      event.target.selectedOptions,
+                      (option) => option.value,
+                    ).join(',') || undefined,
+                  task: undefined,
+                }),
+              });
+            }}
+          >
+            {lists.data?.lists.map((item) => (
+              <option key={item.id} value={item.id}>
+                {item.name}
+              </option>
+            ))}
+          </select>
+          {!mobile && (
+            <ListFilters
+              lists={lists.data?.lists ?? []}
+              active={list?.split(',') ?? []}
+              onFilter={onFilter}
+              tasks={selected.allTasks}
+            />
+          )}
+          <HistoryDayGroups
+            selected={selected}
+            weekStart={history.data.weekStart}
+            list={list}
+            task={task}
+            onOpen={onOpen}
+          />
+        </section>
       </div>
-      <section
-        key={selected.day}
-        className="history-day"
-        aria-label={fullDay(selected.day)}
-      >
-        <div className="history-day-heading">
-          <h2>{fullDay(selected.day)}</h2>
-          <p>
-            {empty
-              ? list
-                ? 'No matching tasks planned this day.'
-                : 'Nothing planned this day.'
-              : historySummary(selected, kind)}
-          </p>
-        </div>
-        <HistoryDayGroups
-          selected={selected}
-          weekStart={history.data.weekStart}
-          list={list}
-          task={task}
-          onOpen={onOpen}
+      {!task && (
+        <StatWidget
+          title="Week"
+          badge={stat.badge}
+          number={stat.percent}
+          unit={stat.unit}
+          fill={stat.fill}
         />
-      </section>
+      )}
     </div>
   );
 }

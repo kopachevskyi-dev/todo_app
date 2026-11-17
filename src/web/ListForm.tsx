@@ -1,24 +1,32 @@
 import { useId, useState } from 'react';
-import { listPalette, type List } from '../shared/contract';
+import { listColors, listPalette, type List } from '../shared/contract';
 import { BottomSheet, Button, Icon, Modal } from './components';
 
 export function ListForm({
   list,
+  lists,
   mobile,
   pending,
   error,
   onSave,
   onClose,
+  onDelete,
 }: {
   list?: List;
+  lists: List[];
   mobile: boolean;
   pending: boolean;
   error?: string;
   onSave: (values: { name: string; color: List['color'] }) => void;
   onClose: () => void;
+  onDelete?: () => void;
 }) {
   const [name, setName] = useState(list?.name ?? '');
-  const [color, setColor] = useState<List['color']>(list?.color ?? '#8E7CC3');
+  const [color, setColor] = useState<List['color']>(
+    list?.color ??
+      listColors.find((color) => !lists.some((list) => list.color === color)) ??
+      listColors[0],
+  );
   const nameId = useId();
   const errorId = useId();
   const Container = mobile ? BottomSheet : Modal;
@@ -70,6 +78,16 @@ export function ListForm({
           </p>
         )}
         <div className="dialog-actions">
+          {onDelete && (
+            <Button
+              variant="ghost"
+              className="delete-list"
+              onClick={onDelete}
+              disabled={pending}
+            >
+              Delete
+            </Button>
+          )}
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Cancel
           </Button>

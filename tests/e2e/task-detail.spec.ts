@@ -18,7 +18,7 @@ test('desktop: Enter saves a renamed title across reload; clearing it and blurri
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
@@ -64,7 +64,7 @@ test('mobile: description and list persist; the row shows Personal and the activ
     await page.getByRole('button', { name: /^List/ }).click();
     await page
       .getByRole('dialog')
-      .getByRole('button', { name: 'Personal' })
+      .getByRole('button', { name: 'Personal', exact: true })
       .click();
     await page.getByRole('link', { name: /back/i }).click();
     await expect(rows(page).first()).toContainText('Personal');
@@ -77,7 +77,7 @@ test('mobile: description and list persist; the row shows Personal and the activ
       'Personal',
     );
     await page.getByRole('button', { name: /^Activity/ }).click();
-    await expect(page.getByText('description and list added')).toBeVisible();
+    await expect(page.locator('.activity li')).toHaveText([/Added to Backlog/]);
   } finally {
     await server.stop();
   }
@@ -88,20 +88,19 @@ test('desktop: Cancel keeps the task; confirming Delete removes the row, closes 
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(server.url, TITLE);
     await seed(server.url, 'Other');
     await page.goto(`${server.url}/backlog`);
-    const nav = page.getByRole('navigation');
+    const nav = page.getByRole('navigation', { name: 'Sections' });
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('2');
     await rows(page).filter({ hasText: TITLE }).click();
     const panel = page.getByRole('complementary');
 
-    await panel.getByRole('button', { name: /more/i }).click();
-    await panel.getByRole('menuitem', { name: 'Delete' }).click();
+    await panel.getByRole('button', { name: 'Delete task' }).click();
     const dialog = page.getByRole('dialog');
     await expect(dialog).toContainText(
       "Delete this task? This can't be undone.",
@@ -110,15 +109,14 @@ test('desktop: Cancel keeps the task; confirming Delete removes the row, closes 
     await expect(dialog).toBeHidden();
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(1);
 
-    await panel.getByRole('button', { name: /more/i }).click();
-    await panel.getByRole('menuitem', { name: 'Delete' }).click();
+    await panel.getByRole('button', { name: 'Delete task' }).click();
     await page
       .getByRole('dialog')
       .getByRole('button', { name: 'Delete', exact: true })
       .click();
     await expect(rows(page).filter({ hasText: TITLE })).toHaveCount(0);
     await expect(page).not.toHaveURL(/task=/);
-    await expect(page.getByText('Select a task to add details')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeVisible();
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('1');
   } finally {
     await server.stop();

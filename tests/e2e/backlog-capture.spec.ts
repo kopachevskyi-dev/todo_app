@@ -20,13 +20,13 @@ test('desktop: Enter adds the task as the first row, clears and focuses the fiel
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(server.url, ['One', 'Two']);
     await page.goto(`${server.url}/backlog`);
-    const nav = page.getByRole('navigation');
+    const nav = page.getByRole('navigation', { name: 'Sections' });
     await expect(nav.getByRole('link', { name: /Backlog/ })).toContainText('2');
     await expect(
       page.getByRole('main').getByRole('heading', { name: 'Backlog' }),
@@ -71,28 +71,33 @@ test('mobile: Add task opens the capture sheet; Add closes it and shows the task
   }
 });
 
-test('desktop: opening a row sets ?task=<id>, survives reload, and the empty panel shows its prompt', async ({
+test('desktop: opening a row sets ?task=<id>, survives reload, and widgets return when details close', async ({
   page,
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
     await seed(server.url, [TITLE]);
     await page.goto(`${server.url}/backlog`);
-    await expect(page.getByText('Select a task to add details')).toBeVisible();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeVisible();
 
     await rows(page).first().click();
     await expect(page).toHaveURL(/[?&]task=[0-9A-Z]{26}/);
     const detail = page.getByRole('complementary');
     await expect(detail).toContainText(TITLE);
-    await expect(page.getByText('Select a task to add details')).toBeHidden();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeHidden();
 
     await page.reload();
     await expect(page).toHaveURL(/[?&]task=[0-9A-Z]{26}/);
     await expect(page.getByRole('complementary')).toContainText(TITLE);
+    await page
+      .getByRole('complementary')
+      .getByRole('button', { name: 'Close', exact: true })
+      .click();
+    await expect(page.getByRole('region', { name: 'Waiting' })).toBeVisible();
   } finally {
     await server.stop();
   }
@@ -103,7 +108,7 @@ test('tablet 1000x800: the detail opens as a drawer over a scrim; Escape closes 
 }) => {
   test.skip(
     test.info().project.name !== 'desktop',
-    'Exercises desktop keyboard, sidebar or detail panel layout.',
+    'Exercises desktop keyboard, top bar or detail panel layout.',
   );
   const server = await startTestServer(page);
   try {
