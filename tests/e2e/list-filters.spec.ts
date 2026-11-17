@@ -251,3 +251,28 @@ test('desktop: the History filter survives a reload', async ({ page }) => {
     await server.stop();
   }
 });
+
+test('a filter on a list that was deleted is dropped instead of hiding every row', async ({
+  page,
+}) => {
+  const server = await startTestServer(page);
+  try {
+    await seed(server.url, 'W1', 'Work');
+    await seed(server.url, 'N1', null);
+    const work = await listId(server.url, 'Work');
+    await page.goto(`${server.url}/backlog?lists=${work}`);
+    await expect(main(page)).not.toContainText('N1');
+
+    const removed = await fetch(`${server.url}/api/lists/${work}`, {
+      method: 'DELETE',
+      headers,
+    });
+    expect(removed.ok).toBe(true);
+    await page.reload();
+
+    await expect(main(page)).toContainText('N1');
+    await expect(page).not.toHaveURL(/lists=/);
+  } finally {
+    await server.stop();
+  }
+});

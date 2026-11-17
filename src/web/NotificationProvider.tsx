@@ -12,7 +12,7 @@ export function NotificationProvider({ children }: { children: ReactNode }) {
     if (!notification || paused) return;
     const timer = setTimeout(
       () => setNotification(undefined),
-      notification.duration ?? 6000,
+      notification.duration ?? 4000,
     );
     return () => clearTimeout(timer);
   }, [notification, paused]);

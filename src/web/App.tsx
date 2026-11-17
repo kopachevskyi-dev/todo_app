@@ -14,7 +14,13 @@ import { BacklogPicker } from './BacklogPicker';
 import { SearchField } from './SearchField';
 import { Capture } from './Capture';
 import type { CaptureDraft } from './useCreateTask';
-import { useLayoutEffect, useRef, useState, useSyncExternalStore } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react';
 import {
   Link,
   useLocation,
@@ -125,6 +131,22 @@ export function App() {
       }),
     });
   };
+  const knownIds = lists.data?.lists.map((item) => item.id);
+  const staleFilter =
+    knownIds !== undefined && selectedIds.some((id) => !knownIds.includes(id));
+  useEffect(() => {
+    if (!staleFilter || !knownIds) return;
+    const kept = selectedIds.filter((id) => knownIds.includes(id));
+    void navigate({
+      to: path as '/backlog' | '/today' | '/history' | '/search' | '/upcoming',
+      search: (previous) => ({
+        ...previous,
+        lists: kept.length ? kept.join(',') : undefined,
+      }),
+      replace: true,
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [staleFilter, lists.data]);
   const backlog = useQuery({
     queryKey: queryKeys.backlogList(),
     queryFn: () => api.backlog(),
